@@ -1,0 +1,28 @@
+# Caddy listens on localhost:8443 (HTTP). Tailscale Serve terminates HTTPS on :443
+:8443 {
+	# Immich at /photos
+	handle_path /photos* {
+		uri strip_prefix /photos
+		reverse_proxy localhost:2283 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-For {remote}
+		}
+	}
+
+	# Plex at /plex
+	handle_path /plex* {
+		uri strip_prefix /plex
+		reverse_proxy localhost:32400 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-For {remote}
+		}
+	}
+
+	# Landing page
+	handle / {
+		root * /opt/homebrew/etc/caddy
+	file_server
+	}
+}

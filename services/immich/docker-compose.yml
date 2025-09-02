@@ -1,0 +1,76 @@
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    depends_on:
+      - redis
+      - database
+    environment:
+      - TZ=${TZ:-America/Los_Angeles}
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_USERNAME=immich
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - IMMICH_LOG_LEVEL=info
+      - IMMICH_ENV=production
+    volumes:
+      - ./config:/config
+      - /Volumes/Photos/originals:/usr/src/app/upload
+      - /Volumes/Photos/library:/usr/src/app/library
+    ports:
+      - "2283:2283"
+    restart: unless-stopped
+
+  immich-microservices:
+    image: ghcr.io/immich-app/immich-server:release
+    command: ["start-microservices.sh"]
+    depends_on:
+      - redis
+      - database
+    environment:
+      - TZ=${TZ:-America/Los_Angeles}
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_USERNAME=immich
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - IMMICH_LOG_LEVEL=info
+      - IMMICH_ENV=production
+    volumes:
+      - ./config:/config
+      - /Volumes/Photos/originals:/usr/src/app/upload
+      - /Volumes/Photos/library:/usr/src/app/library
+    restart: unless-stopped
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    depends_on:
+      - redis
+    environment:
+      - TZ=${TZ:-America/Los_Angeles}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./ml-cache:/cache
+    restart: unless-stopped
+
+  database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=immich
+      - POSTGRES_USER=immich
+      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+# Compose v2 syntax
+name: immich
