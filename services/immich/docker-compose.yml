@@ -1,4 +1,35 @@
-version: '3'
+
+version: "3.8"
 services:
-  immich:
-    image: immich-app
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich-server
+    depends_on:
+      - redis
+      - database
+      - immich-machine-learning
+    environment:
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - DB_HOST=database
+      - REDIS_HOST=redis
+      - IMMICH_MEDIA_LOCATION=/photos
+    volumes:
+      - /Volumes/Photos:/photos
+    ports:
+      - "2283:2283"
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich-ml
+  redis:
+    image: redis:7-alpine
+    container_name: immich-redis
+  database:
+    image: tensorchord/pgvecto-rs:pg14
+    container_name: immich-db
+    environment:
+      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
+    volumes:
+      - immich-db:/var/lib/postgresql/data
+
+volumes:
+  immich-db:

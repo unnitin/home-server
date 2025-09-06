@@ -1,12 +1,9 @@
-# Diagnostics
 
-Helper scripts for troubleshooting.
+Run these when something's off:
 
-
-## How to run diagnostics
-```bash
-# From repo root
-chmod +x diagnostics/*.sh
-diagnostics/run_all.sh
-```
-The runner prints PASS/WARN/FAIL per area and exits non-zero if any check failed.
+- `check_raid_status.sh`
+- `check_plex_native.sh`
+- `check_docker_services.sh`
+- `network_port_check.sh <host> <port>`
+- `collect_logs.sh`
+- `verify_media_paths.sh`

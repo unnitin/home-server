@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-
-echo 'Check RAID status'
+set -euo pipefail
+diskutil appleRAID list || true
