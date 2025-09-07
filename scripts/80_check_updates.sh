@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "$(dirname "$0")/_compose.sh"
+
 APPLY=0
 [[ "${1:-}" == "--apply" ]] && APPLY=1
 
@@ -11,6 +13,6 @@ if (( APPLY )); then
 fi
 
 echo "Refreshing Immich images..."
-( cd "$(dirname "$0")/../services/immich" && docker compose pull && (( APPLY )) && docker compose up -d || true )
+( cd "$(dirname "$0")/../services/immich" && compose pull && (( APPLY )) && compose up -d || true )
 
 echo "Done."

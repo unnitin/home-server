@@ -6,7 +6,7 @@
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>cd __REPO__/services/immich && /opt/homebrew/bin/docker compose up -d</string>
+    <string>__REPO__/scripts/compose_up_immich.sh</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>/tmp/immich.out</string>
