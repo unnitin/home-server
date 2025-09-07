@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 brew install caddy
-# Stage site
-mkdir -p /usr/local/var/www/hakuna_mateti || true
-cp -R "$(pwd)/services/caddy/site/." /usr/local/var/www/hakuna_mateti/ 2>/dev/null || true
-echo "Caddy installed."
+BREW_PREFIX="$(brew --prefix)"
+WEB_ROOT="${BREW_PREFIX}/var/www/hakuna_mateti"
+mkdir -p "$WEB_ROOT"
+cp -R "$(pwd)/services/caddy/site/." "$WEB_ROOT/" 2>/dev/null || true
+echo "Caddy installed. Site root: $WEB_ROOT"
