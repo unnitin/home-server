@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
-for d in "${MEDIA_MOUNT:-/Volumes/Media}" "${PHOTOS_MOUNT:-/Volumes/Photos}" "${ARCHIVE_MOUNT:-/Volumes/Archive}"; do
+M1="${MEDIA_MOUNT:-/Volumes/Media}"
+M2="${PHOTOS_MOUNT:-/Volumes/Photos}"
+M3="${ARCHIVE_MOUNT:-/Volumes/Archive}"
+for d in "$M1" "$M2" "$M3"; do
   echo "== $d =="
-  df -h "$d" 2>&1 || echo "not mounted"
+  if df -h "$d" 2>/dev/null; then
+    echo "- OK"
+  else
+    echo "- Not mounted"
+  fi
 done

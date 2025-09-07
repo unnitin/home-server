@@ -1,0 +1,53 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Thumbnails
+*.icloud
+Thumbs.db
+
+# Logs & temp
+*.log
+*.out
+*.err
+*.pid
+*.swp
+*.swo
+*.tmp
+*.bak
+*.old
+
+# Python cache (if any tooling used)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node/npm cache (if any JS tooling is added)
+node_modules/
+npm-debug.log*
+
+# Docker/Colima local volumes
+volumes/
+data/
+.env
+
+# Homebrew temp
+brew*.lock
+
+# User override env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE/editor config
+.vscode/
+.idea/
+*.iml
+
+# OS backup files
+*.~*

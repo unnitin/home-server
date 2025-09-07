@@ -1,3 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-pgrep -fl "Plex Media Server" && echo "Plex is running" || echo "Plex not running"
+if pgrep -fl "Plex Media Server" >/dev/null; then
+  echo "Plex is running"; exit 0
+else
+  echo "Plex not running"; exit 1
+fi
