@@ -1,5 +1,4 @@
-
-version: "3.8"
+# docker-compose.yml — Immich (server + ML + Redis + Postgres w/ VectorChord)
 services:
   immich-server:
     image: ghcr.io/immich-app/immich-server:release
@@ -9,25 +8,38 @@ services:
       - database
       - immich-machine-learning
     environment:
-      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
       - DB_HOST=database
+      - DB_PORT=5432
+      - DB_DATABASE=immich
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
       - REDIS_HOST=redis
       - IMMICH_MEDIA_LOCATION=/photos
     volumes:
       - /Volumes/Photos:/photos
     ports:
       - "2283:2283"
+    restart: unless-stopped
+
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:release
     container_name: immich-ml
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     container_name: immich-redis
+    restart: unless-stopped
+
   database:
-    image: tensorchord/pgvecto-rs:pg14
+    image: ghcr.io/immich-app/postgres:16-vectorchord0.3.0-pgvectors0.2.1
     container_name: immich-db
     environment:
+      - POSTGRES_DB=immich
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD}
+    shm_size: 128mb
+    restart: unless-stopped
     volumes:
       - immich-db:/var/lib/postgresql/data
 
