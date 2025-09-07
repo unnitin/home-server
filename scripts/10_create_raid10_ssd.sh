@@ -3,9 +3,16 @@ set -euo pipefail
 source "$(pwd)/scripts/_raid_common.sh"
 require_guard
 parse_disks SSD_DISKS
+
+# Validate whole disks only
+for d in "${DISKS[@]}"; do
+  [[ "$d" =~ ^disk[0-9]+$ ]] || { echo "Use WHOLE disks like 'disk6', not '$d'"; exit 1; }
+done
+
 SSD_RAID_NAME="${SSD_RAID_NAME:-warmstore}"
 MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/Media}"
 
+delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$SSD_RAID_NAME"
 
 case "${#DISKS[@]}" in

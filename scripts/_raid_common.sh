@@ -37,6 +37,30 @@ delete_raid_by_name(){
   fi
 }
 
+# Remove any AppleRAID set that contains one of the given whole-disk IDs (destructive)
+delete_raids_containing_disks() {
+  local disks=("$@")
+  local listing pairs
+  listing="$(sudo diskutil appleRAID list)"
+  pairs="$(awk '
+    /RAID Set UUID:/ {uuid=$3}
+    /Members:/ {inmem=1; next}
+    inmem && /disk[0-9]+/ {print uuid, $NF}
+    /^=+$/ {inmem=0}
+  ' <<< "$listing")"
+
+  for d in "${disks[@]}"; do
+    [[ "$d" =~ ^disk[0-9]+$ ]] || continue
+    while read -r uuid member; do
+      [[ -z "$uuid" || -z "$member" ]] && continue
+      if [[ "$member" == "$d" ]]; then
+        echo "Deleting existing AppleRAID set $uuid because it includes $d"
+        sudo diskutil appleRAID delete "$uuid" || true
+      fi
+    done <<< "$pairs"
+  done
+}
+
 create_mirror(){
   local name="$1" d1="$2" d2="$3"
   sudo diskutil appleRAID create mirror "$name" APFS "$d1" "$d2"

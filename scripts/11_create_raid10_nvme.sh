@@ -3,9 +3,15 @@ set -euo pipefail
 source "$(pwd)/scripts/_raid_common.sh"
 require_guard
 parse_disks NVME_DISKS
+
+for d in "${DISKS[@]}"; do
+  [[ "$d" =~ ^disk[0-9]+$ ]] || { echo "Use WHOLE disks like 'disk6', not '$d'"; exit 1; }
+done
+
 NVME_RAID_NAME="${NVME_RAID_NAME:-faststore}"
 PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/Photos}"
 
+delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$NVME_RAID_NAME"
 
 case "${#DISKS[@]}" in

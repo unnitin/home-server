@@ -3,9 +3,15 @@ set -euo pipefail
 source "$(pwd)/scripts/_raid_common.sh"
 require_guard
 parse_disks COLD_DISKS
+
+for d in "${DISKS[@]}"; do
+  [[ "$d" =~ ^disk[0-9]+$ ]] || { echo "Use WHOLE disks like 'disk6', not '$d'"; exit 1; }
+done
+
 COLD_RAID_NAME="${COLD_RAID_NAME:-coldstore}"
 ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-/Volumes/Archive}"
 
+delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$COLD_RAID_NAME"
 
 case "${#DISKS[@]}" in
