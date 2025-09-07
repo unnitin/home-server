@@ -22,7 +22,13 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 banner(){ echo; echo "=== $* ==="; }
-confirm(){ read -r -p "$1 [y/N] " a || true; [[ "${a,,}" =~ ^y(es)?$ ]]; }
+confirm(){
+  read -r -p "$1 [y/N] " a || true
+  case "$a" in
+    [yY]|[yY][eE][sS]) return 0 ;;
+    *)                 return 1 ;;
+  esac
+}
 
 banner "Bootstrap"
 setup/setup.sh
