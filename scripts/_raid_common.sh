@@ -40,25 +40,44 @@ delete_raid_by_name(){
 # Remove any AppleRAID set that contains one of the given whole-disk IDs (destructive)
 delete_raids_containing_disks() {
   local disks=("$@")
-  local listing pairs
-  listing="$(sudo diskutil appleRAID list)"
-  pairs="$(awk '
-    /RAID Set UUID:/ {uuid=$3}
-    /Members:/ {inmem=1; next}
-    inmem && /disk[0-9]+/ {print uuid, $NF}
-    /^=+$/ {inmem=0}
-  ' <<< "$listing")"
+  local listing uuid inmem line dev root
 
-  for d in "${disks[@]}"; do
-    [[ "$d" =~ ^disk[0-9]+$ ]] || continue
-    while read -r uuid member; do
-      [[ -z "$uuid" || -z "$member" ]] && continue
-      if [[ "$member" == "$d" ]]; then
-        echo "Deleting existing AppleRAID set $uuid because it includes $d"
-        sudo diskutil appleRAID delete "$uuid" || true
-      fi
-    done <<< "$pairs"
-  done
+  listing="$(sudo diskutil appleRAID list)"
+
+  # Walk the output; for each set, capture its UUID and every 'diskN' we see,
+  # normalizing 'diskNsM' -> 'diskN' so slices still map to the whole disk.
+  # Then delete the set if any target disk matches.
+  while IFS= read -r line; do
+    case "$line" in
+      *"RAID Set UUID:"*)
+        uuid="$(awk -F': *' '{print $2}' <<<"$line")"
+        inmem=0
+        ;;
+      *"Members:"*)
+        inmem=1
+        ;;
+      "===="*)
+        inmem=0
+        ;;
+      *)
+        if (( inmem )); then
+          # Extract first disk token on the line, normalize slices to whole disk
+          dev="$(grep -Eo 'disk[0-9]+(s[0-9]+)?' <<<"$line" | head -n1 || true)"
+          [[ -n "$dev" ]] || continue
+          root="${dev%%s*}"   # disk6s2 -> disk6
+          for d in "${disks[@]}"; do
+            if [[ "$root" == "$d" ]]; then
+              echo "Deleting AppleRAID set $uuid (contains $root)"
+              sudo diskutil appleRAID delete "$uuid" || true
+              # after delete, stop scanning this set
+              inmem=0
+              break
+            fi
+          done
+        fi
+        ;;
+    esac
+  done <<< "$listing"
 }
 
 create_mirror(){
