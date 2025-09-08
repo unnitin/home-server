@@ -2,12 +2,6 @@
 # Destructively clean disks and remove any AppleRAID sets that include them.
 # Usage:
 #   RAID_I_UNDERSTAND_DATA_LOSS=1 scripts/cleanup_disks.sh disk6 [disk7 ...]
-#
-# Notes:
-# - This will DELETE any AppleRAID set that includes the specified disks.
-# - It then wipes the disks and reinitializes a fresh GUID map with a tiny APFS volume.
-# - Pass WHOLE disk identifiers (e.g., disk6), not slices (e.g., disk6s2).
-# - Run on macOS (uses diskutil/gpt).
 
 set -euo pipefail
 
@@ -31,33 +25,30 @@ done
 
 echo "=== AppleRAID cleanup (DESTRUCTIVE) ==="
 date
-
-# Build a robust map of RAID Set UUID -> member disks (normalized to whole disk)
 echo "[1/3] Inspecting AppleRAID sets..."
+
 LISTING="$(sudo diskutil appleRAID list || true)"
 
-# For each requested disk, find & delete any set that includes it
+# Delete any set that includes target disk(s).
 delete_sets_for_disk() {
   local target="$1"
-  # Find the first set that includes target; delete; repeat until none remain
   while : ; do
+    # BRE-safe extract: first token like diskNNN (ignores slice suffix)
     local uuid
     uuid="$(printf "%s\n" "$LISTING" | /usr/bin/awk -v tgt="$target" '
       /^RAID Set UUID:/ {u=$3}
       /^Members:/       {inmem=1; next}
       /^=+/             {inmem=0}
       inmem {
-        # extract first disk token; normalize diskNsM -> diskN
-        match($0, /disk[0-9]+(s[0-9]+)?/, m)
-        if (m[0] != "") {
-          gsub(/s[0-9]+$/, "", m[0])
-          if (m[0] == tgt) { print u; exit }
+        # find first disk token: disk + digits (no + or ?)
+        if (match($0, /disk[0-9][0-9]*/)) {
+          root=substr($0, RSTART, RLENGTH)   # e.g., disk6
+          if (root == tgt) { print u; exit }
         }
       }')"
     [[ -z "$uuid" ]] && break
     echo "→ Deleting AppleRAID set $uuid (contains $target)..."
     sudo diskutil appleRAID delete "$uuid" || true
-    # refresh listing in case there are multiple sets
     LISTING="$(sudo diskutil appleRAID list || true)"
   done
 }
@@ -72,7 +63,7 @@ for d in "$@"; do
   echo "→ Cleaning $dev"
   sudo diskutil unmountDisk force "$dev" || true
   sudo gpt destroy -f "$dev" || true
-  # Fresh GUID map + tiny APFS volume named 'temp' just to fully initialize the device
+  # Fresh GUID map + tiny APFS volume named 'temp'
   sudo diskutil eraseDisk APFS temp GPT "$dev"
 done
 
