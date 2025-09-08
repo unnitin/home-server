@@ -48,14 +48,24 @@ read -r -p "Proceed to (re)build arrays now? [y/N] " a; case "$a" in
     # Optional pre-clean (DESTRUCTIVE)—only runs if CLEAN_BEFORE_RAID=1
     scripts/09_preclean_disks_for_raid.sh
 
-    # Create & format (scripts will validate disk lists and require RAID_I_UNDERSTAND_DATA_LOSS=1)
-    [[ -n "${SSD_DISKS:-}"  ]] && scripts/10_create_raid10_ssd.sh
-    [[ -n "${NVME_DISKS:-}" ]] && scripts/11_create_raid10_nvme.sh
-    [[ -n "${COLD_DISKS:-}" ]] && scripts/13_create_raid_coldstore.sh
-    scripts/12_format_and_mount_raids.sh
+    # If you want trace logs, run this setup with: DEBUG=1 ./setup/setup_full.sh
+    if [[ "${DEBUG:-0}" == "1" ]]; then set -x; fi
+    if ! {
+      [[ -n "${SSD_DISKS:-}"  ]] && scripts/10_create_raid10_ssd.sh
+      [[ -n "${NVME_DISKS:-}" ]] && scripts/11_create_raid10_nvme.sh
+      [[ -n "${COLD_DISKS:-}" ]] && scripts/13_create_raid_coldstore.sh
+      scripts/12_format_and_mount_raids.sh
+    } |& tee /tmp/homelab_storage.log ; then
+      echo "❌ Storage step failed. See /tmp/homelab_storage.log for details."
+      exit 1
+    fi
+    if [[ "${DEBUG:-0}" == "1" ]]; then set +x; fi
     ;;
-  * ) echo "Skipping destructive storage step."; ;;
+  * )
+    echo "Skipping destructive storage step."
+    ;;
 esac
+
 
 
 banner "Launch at boot (launchd)"
