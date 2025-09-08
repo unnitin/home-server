@@ -25,25 +25,32 @@ fi
 
 run_clean() {
   local label="$1"; shift
-  local disks=("$@")
-  [[ ${#disks[@]} -gt 0 ]] || return 0
+  # Accept zero or more disks safely
+  if (( $# == 0 )); then
+    return 0
+  fi
 
-  echo "[preclean] $label: ${disks[*]}"
+  echo "[preclean] ${label}: $*"
   # Validate whole disks only
-  for d in "${disks[@]}"; do
+  local d
+  for d in "$@"; do
     [[ "$d" =~ ^disk[0-9]+$ ]] || { echo "[preclean] '$d' is not a whole disk id (e.g., disk6)"; exit 1; }
   done
 
-  RAID_I_UNDERSTAND_DATA_LOSS=1 "$CLEANER" "${disks[@]}"
+  RAID_I_UNDERSTAND_DATA_LOSS=1 "$CLEANER" "$@"
 }
 
-# Parse env into arrays safely
-read -r -a _SSD  <<< "${SSD_DISKS:-}"
-read -r -a _NVME <<< "${NVME_DISKS:-}"
-read -r -a _COLD <<< "${COLD_DISKS:-}"
+# Predeclare arrays (macOS bash 3.2 + set -u needs this)
+declare -a _SSD=() _NVME=() _COLD=()
 
-run_clean "SSD_DISKS"   "${_SSD[@]}"
-run_clean "NVME_DISKS"  "${_NVME[@]}"
-run_clean "COLD_DISKS"  "${_COLD[@]}"
+# Parse env into arrays (handle unset/empty safely)
+if [[ -n "${SSD_DISKS:-}"  ]]; then read -r -a _SSD  <<< "${SSD_DISKS}";  fi
+if [[ -n "${NVME_DISKS:-}" ]]; then read -r -a _NVME <<< "${NVME_DISKS}"; fi
+if [[ -n "${COLD_DISKS:-}" ]]; then read -r -a _COLD <<< "${COLD_DISKS}"; fi
+
+# Only invoke when elements exist (avoid unbound/empty @ expansion)
+(( ${#_SSD[@]}  )) && run_clean "SSD_DISKS"  "${_SSD[@]}"
+(( ${#_NVME[@]} )) && run_clean "NVME_DISKS" "${_NVME[@]}"
+(( ${#_COLD[@]} )) && run_clean "COLD_DISKS" "${_COLD[@]}"
 
 echo "[preclean] Done."
