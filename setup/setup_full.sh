@@ -4,18 +4,10 @@ set -euo pipefail
 # --- Self-heal executable bits (safe to run even if already set) ---
 _THIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 _REPO_ROOT="$(cd "$_THIS_DIR/.." && pwd)"
-if [[ ! -x "$_THIS_DIR/setup.sh" || ! -x "$_REPO_ROOT/scripts/20_install_colima_docker.sh" ]]; then
-  # Try helper (preferred)
-  if [[ -x "$_REPO_ROOT/scripts/make_executable.sh" ]]; then
-    bash "$_REPO_ROOT/scripts/make_executable.sh" || true
-  fi
-  # Fallback: set exec bits directly
-  chmod +x "$_THIS_DIR"/*.sh 2>/dev/null || true
-  chmod +x "$_REPO_ROOT/scripts"/*.sh 2>/dev/null || true
-  chmod +x "$_REPO_ROOT/diagnostics"/*.sh 2>/dev/null || true
-fi
 
-# (rest of your existing setup_full.sh follows below this header)
+# Ensure all scripts under setup/, scripts/, diagnostics/ are executable
+find "$_REPO_ROOT/setup" "$_REPO_ROOT/scripts" "$_REPO_ROOT/diagnostics" \
+  -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
 
 # Resolve repo root and continue with existing flow
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
