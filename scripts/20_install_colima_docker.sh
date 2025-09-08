@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Never run this via sudo: Homebrew refuses root installs and it breaks $HOME ownership.
+# Do not run via sudo; brew refuses root installs
 if [[ ${EUID:-0} -eq 0 ]]; then
-  echo "❌ Do not run this script with sudo. Run as your user; it will sudo only where needed."
+  echo "❌ Do not run this with sudo. Run as your user."
   exit 2
 fi
 
@@ -15,12 +15,10 @@ fi
 
 echo "=== Installing Colima + Docker CLI (via Homebrew) ==="
 
-# Formulas we actually need
 need_formula() { brew list --formula "$1" >/dev/null 2>&1 || brew install "$1"; }
 
 need_formula colima
-need_formula docker          # Docker CLI
-# Compose v2 is bundled with recent Docker; still install the plugin explicitly for safety:
+need_formula docker              # Docker CLI (includes Compose v2 in recent builds)
 brew list --formula docker-compose >/dev/null 2>&1 || brew install docker-compose || true
 
 echo "Colima and Docker installed."
