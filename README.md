@@ -47,6 +47,21 @@ Pick **one** of these entrypoints in `setup/`:
 
 **2 disks → mirror**, **4 disks → RAID10**. Rebuilds are **destructive** (backup → rebuild → restore). Scripts are **re-runnable** and delete any existing AppleRAID set with the same name.
 
+### Optional pre-clean before RAID (DESTRUCTIVE)
+
+To avoid “disk is already part of a RAID set” on re-runs, you can opt in to a pre-clean step that
+nukes any AppleRAID sets containing your target disks and re-initializes their partition maps.
+
+```bash
+# DESTRUCTIVE – double-check disk IDs with `diskutil list`
+export RAID_I_UNDERSTAND_DATA_LOSS=1
+export CLEAN_BEFORE_RAID=1
+
+# Choose your disks (WHOLE disk IDs, not slices)
+export SSD_DISKS="disk6 disk7"     # or NVME_DISKS / COLD_DISKS
+
+./setup/setup_full.sh
+
 ### Grow path example (2 → 4 SSDs for warmstore)
 1) Back up `/Volumes/Media` to external HDD (or to faststore/coldstore).  
 2) Rebuild with 4 disks.  
@@ -174,3 +189,5 @@ Example:
 diagnostics/check_raid_status.sh
 diagnostics/check_plex_native.sh
 ```
+
+
