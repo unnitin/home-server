@@ -27,10 +27,10 @@ fi
 echo -e "\n--- Immich containers ---"
 if command -v docker >/dev/null 2>&1; then
   cd "$(dirname "$0")/../services/immich"
-  if docker compose version >/dev/null 2>&1; then
-    docker compose ps || true
-  elif command -v docker-compose >/dev/null 2>&1; then
-    docker-compose ps || true
+  if scripts/compose_helper.sh services/immich version >/dev/null 2>&1; then
+    scripts/compose_helper.sh services/immich ps || true
+  elif command -v scripts/compose_helper.sh services/immich >/dev/null 2>&1; then
+    scripts/compose_helper.sh services/immich ps || true
   else
     echo "❌ Neither 'docker compose' nor 'docker-compose' found"
   fi

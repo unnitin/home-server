@@ -12,7 +12,7 @@ These helper scripts let you quickly verify the health of your home server.
   Confirms whether Plex Media Server is running natively.
 
 - **check_docker_services.sh**  
-  Runs `docker compose ps` in the Immich service folder to confirm containers are healthy.
+  Runs `scripts/compose_helper.sh services/immich ps` in the Immich service folder to confirm containers are healthy.
 
 - **network_port_check.sh <host> <port>**  
   Quickly test whether a host:port is reachable (defaults: localhost:2283).

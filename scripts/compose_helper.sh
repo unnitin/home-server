@@ -3,13 +3,13 @@ set -euo pipefail
 
 # --- Detect compose CLI ---
 compose_bin() {
-  if docker compose version >/dev/null 2>&1; then
+  if scripts/compose_helper.sh services/immich version >/dev/null 2>&1; then
     echo "docker compose"
-  elif command -v docker-compose >/dev/null 2>&1; then
+  elif command -v scripts/compose_helper.sh services/immich >/dev/null 2>&1; then
     echo "docker-compose"
   else
     echo "❌ Neither 'docker compose' nor 'docker-compose' found in PATH." >&2
-    echo "   Install Docker (CLI) or docker-compose v2." >&2
+    echo "   Install Docker (CLI) or scripts/compose_helper.sh services/immich v2." >&2
     exit 127
   fi
 }

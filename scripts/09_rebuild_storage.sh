@@ -6,7 +6,7 @@ fi
 [[ $# -gt 0 ]] || { echo "Usage: $0 faststore|warmstore|coldstore [...]"; exit 1; }
 
 echo "Stopping Immich and Plex..."
-( cd services/immich && docker compose down ) || true
+( cd services/immich && scripts/compose_helper.sh services/immich down ) || true
 pkill -f "Plex Media Server" || true
 
 for t in "$@"; do
@@ -21,6 +21,6 @@ done
 ./scripts/12_format_and_mount_raids.sh || true
 
 echo "Restarting services..."
-( cd services/immich && docker compose up -d ) || true
+( cd services/immich && scripts/compose_helper.sh services/immich up -d ) || true
 open -ga "Plex Media Server" || true
 echo "Rebuild complete."

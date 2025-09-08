@@ -6,7 +6,7 @@
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>__REPO__/scripts/compose_up_immich.sh</string>
+    <string>__REPO__/scripts/compose_helper.sh services/immich up -d</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>/tmp/immich.out</string>
