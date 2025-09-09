@@ -81,6 +81,11 @@ banner "Tailscale"
 scripts/90_install_tailscale.sh
 echo "Run: sudo tailscale up --accept-dns=true"
 
+banner "HTTPS Configuration"
+if confirm "Configure HTTPS serving with DNS fix?"; then
+    scripts/91_configure_https_dns.sh
+fi
+
 banner "Reverse proxy (optional)"
 if confirm "Enable Caddy reverse proxy?"; then
   scripts/35_install_caddy.sh

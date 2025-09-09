@@ -8,6 +8,10 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 **Need environment variables?** → [**⚙️ Environment Setup**](docs/ENVIRONMENT.md)  
 **Want detailed setup?** → [**📖 Detailed Setup Guide**](docs/SETUP.md)
 
+## 🔧 Recent Updates
+
+**HTTPS & DNS Fix (Latest)**: This setup now includes automatic HTTPS configuration with DNS resolution fixes for seamless access via secure URLs like `https://your-device.tailnet.ts.net`. The setup handles Homebrew prefix detection for both Intel and Apple Silicon Macs, and includes proper permission handling for storage operations.
+
 ## 📁 What You Get
 
 ### Core Services
