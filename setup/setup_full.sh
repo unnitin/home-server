@@ -55,7 +55,7 @@ read -r -p "Proceed to (re)build arrays now? [y/N] " a; case "$a" in
       [[ -n "${NVME_DISKS:-}" ]] && scripts/11_create_raid10_nvme.sh
       [[ -n "${COLD_DISKS:-}" ]] && scripts/13_create_raid_coldstore.sh
       scripts/12_format_and_mount_raids.sh
-    } |& tee /tmp/homelab_storage.log ; then
+    } 2>&1 | tee /tmp/homelab_storage.log ; then
       echo "❌ Storage step failed. See /tmp/homelab_storage.log for details."
       exit 1
     fi
