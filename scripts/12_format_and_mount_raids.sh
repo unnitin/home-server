@@ -29,7 +29,6 @@ bsd_for_raid_name() {
   '
 }
 
-
 # Return "APFS" if device contains APFS; else empty
 is_apfs() {
   local devnode="$1"
