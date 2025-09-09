@@ -66,8 +66,6 @@ read -r -p "Proceed to (re)build arrays now? [y/N] " a; case "$a" in
     ;;
 esac
 
-
-
 banner "Launch at boot (launchd)"
 scripts/40_configure_launchd.sh
 

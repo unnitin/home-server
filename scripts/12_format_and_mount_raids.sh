@@ -12,12 +12,23 @@ ensure_dir() { [[ -d "$1" ]] || mkdir -p "$1"; }
 # Return BSD device of the RAID set by name (e.g., disk8), or empty if not found.
 bsd_for_raid_name() {
   local name="$1"
-  # BRE-safe awk: no +/? — just extract fields by marker lines
   /usr/sbin/diskutil appleRAID list | /usr/bin/awk -v tgt="$name" '
-    /^ *RAID Set Name:/ { nm=$0; sub(/^ *RAID Set Name:[ ]*/, "", nm); if (nm==tgt) in=1; else in=0; next }
-    in && /^ *BSD Device Node:/ { dev=$0; sub(/^ *BSD Device Node:[ ]*/, "", dev); print dev; exit }
+    # if RAID Set Name == tgt, mark that the next matching field belongs to it
+    /^ *RAID Set Name:/ {
+      nm=$0
+      sub(/^ *RAID Set Name:[ ]*/,"",nm)
+      if (nm==tgt) hit=1; else hit=0
+      next
+    }
+    hit && /^ *BSD Device Node:/ {
+      dev=$0
+      sub(/^ *BSD Device Node:[ ]*/,"",dev)
+      print dev
+      exit
+    }
   '
 }
+
 
 # Return "APFS" if device contains APFS; else empty
 is_apfs() {
