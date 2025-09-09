@@ -69,7 +69,7 @@ esac
 
 
 banner "Launch at boot (launchd)"
-sudo scripts/40_configure_launchd.sh
+scripts/40_configure_launchd.sh
 
 banner "Tailscale"
 scripts/90_install_tailscale.sh
