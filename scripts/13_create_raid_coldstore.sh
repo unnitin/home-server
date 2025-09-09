@@ -16,7 +16,7 @@ delete_raid_by_name "$COLD_RAID_NAME"
 
 case "${#DISKS[@]}" in
   2)
-    dev=$(create_mirror "${COLD_RAID_NAME}_mirror" "${DISKS[0]}" "${DISKS[1]}")
+    dev=$(create_mirror "$COLD_RAID_NAME" "${DISKS[0]}" "${DISKS[1]}")
     ;;
   4)
     m1=$(create_mirror "${COLD_RAID_NAME}_m1" "${DISKS[0]}" "${DISKS[1]}")

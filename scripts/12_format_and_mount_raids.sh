@@ -7,22 +7,22 @@
 
 set -euo pipefail
 
-ensure_dir() { [[ -d "$1" ]] || mkdir -p "$1"; }
+ensure_dir() { [[ -d "$1" ]] || sudo mkdir -p "$1"; }
 
 # Return BSD device of the RAID set by name (e.g., disk8), or empty if not found.
 bsd_for_raid_name() {
   local name="$1"
   /usr/sbin/diskutil appleRAID list | /usr/bin/awk -v tgt="$name" '
-    # if RAID Set Name == tgt, mark that the next matching field belongs to it
-    /^ *RAID Set Name:/ {
+    # if Name == tgt, mark that the next matching field belongs to it
+    /^ *Name:/ {
       nm=$0
-      sub(/^ *RAID Set Name:[ ]*/,"",nm)
+      sub(/^ *Name:[ ]*/,"",nm)
       if (nm==tgt) hit=1; else hit=0
       next
     }
-    hit && /^ *BSD Device Node:/ {
+    hit && /^ *Device Node:/ {
       dev=$0
-      sub(/^ *BSD Device Node:[ ]*/,"",dev)
+      sub(/^ *Device Node:[ ]*/,"",dev)
       print dev
       exit
     }
