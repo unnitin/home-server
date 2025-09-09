@@ -1,44 +1,85 @@
 
-# Setup Scripts
+# 🔧 Setup Scripts
 
-This folder contains the entrypoints for setting up your Mac mini HomeServer.
+This folder contains the entry points for setting up your Mac mini HomeServer.
 
-## Scripts
+## 📋 Available Scripts
 
-- **setup.sh**  
-  Safe bootstrap (Homebrew + CLI tools only). Run this first to prepare your environment.  
-  ```bash
-  setup/setup.sh
-  ```
+### **setup.sh** - Safe Bootstrap
+Safe bootstrap (Homebrew + CLI tools only). Run this first to prepare your environment.
 
-- **setup_full.sh**  
-  Interactive full setup. Installs Docker/Colima, Immich, Plex, launchd jobs, Tailscale, and optional reverse proxy. Prompts you before destructive storage rebuilds.  
-  ```bash
-  setup/setup_full.sh
-  ```
+```bash
+setup/setup.sh
+```
 
-- **setup_flags.sh**  
-  Non-interactive, flag-driven setup. Lets you choose exactly which steps to run with command-line flags.  
-  ```bash
-  setup/setup_flags.sh --all
-  ```
+**What it does**:
+- Installs Homebrew package manager
+- Adds essential CLI tools (git, curl, rsync, etc.)
+- **Safe**: No system modifications or storage changes
 
-  Common flags:
-  - `--all` → bootstrap + Colima + Immich + Plex + launchd + tailscale-install + tailscale-serve-direct  
-  - `--rebuild=<targets>` → rebuild storage arrays (faststore, warmstore, coldstore). Requires `RAID_I_UNDERSTAND_DATA_LOSS=1` and disk envs.  
-  - `--format-mount` → after rebuild, format & mount arrays.  
-  - `--enable-proxy` → install & enable Caddy reverse proxy.  
-  - `--tailscale-up` → run `sudo tailscale up`.  
+---
 
-  Use `--help` for the full list.
+### **setup_full.sh** - Interactive Setup  
+Interactive full setup with confirmations. Installs Docker/Colima, Immich, Plex, launchd jobs, Tailscale, and optional reverse proxy.
 
-## Recommended use
+```bash
+setup/setup_full.sh
+```
 
-1. Start with `setup.sh` to bootstrap.  
-2. Run `setup_full.sh` if you want an interactive guided setup.  
-3. Use `setup_flags.sh` for scripted/automated installs.
+**Features**:
+- **Guided experience**: Prompts for each step
+- **Safety checks**: Confirms before destructive operations
+- **Flexible**: Skip or customize any component
+- **Recommended for**: First-time users
 
-See [../README-QUICKSTART.md](../README-QUICKSTART.md) for common usage examples.
+---
+
+### **setup_flags.sh** - Automated Setup
+Non-interactive, flag-driven setup. Choose exactly which steps to run with command-line flags.
+
+```bash
+setup/setup_flags.sh --all
+```
+
+**Common flags**:
+- `--all` → Complete setup (bootstrap + services + automation)
+- `--bootstrap` → Safe environment setup only
+- `--rebuild=<targets>` → Rebuild storage arrays (⚠️ destructive)
+- `--format-mount` → Format and mount arrays after rebuild
+- `--enable-proxy` → Install & enable Caddy reverse proxy
+- `--tailscale-up` → Connect to Tailscale network
+
+**Use `--help` for complete flag reference.**
+
+**Recommended for**: Automated deployments, advanced users
+
+---
+
+## 🎯 Recommended Workflow
+
+### For New Users
+1. **📋 [Quick Start Guide](../docs/QUICKSTART.md)** - 30-minute setup
+2. **setup.sh** → Safe bootstrap preparation
+3. **setup_full.sh** → Interactive guided setup
+
+### For Advanced Users
+1. **📖 [Detailed Setup Guide](../docs/SETUP.md)** - Comprehensive walkthrough
+2. **setup_flags.sh --all** → Automated complete setup
+3. **⚙️ [Environment Variables](../docs/ENVIRONMENT.md)** - Configuration reference
+
+### For Specific Tasks
+- **Storage only**: See **💾 [Storage Guide](../docs/STORAGE.md)**
+- **Services only**: Use **setup_flags.sh** with specific flags
+- **Remote access**: See **🔒 [Tailscale Guide](../docs/TAILSCALE.md)**
+
+---
+
+## 🔗 Related Documentation
+
+- **📋 [Quick Start Guide](../docs/QUICKSTART.md)** - Get running in 30 minutes
+- **📖 [Detailed Setup Guide](../docs/SETUP.md)** - Step-by-step comprehensive setup
+- **⚙️ [Environment Variables](../docs/ENVIRONMENT.md)** - Configuration reference
+- **🔧 [Troubleshooting](../docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 
 ## Examples for `setup_flags.sh`
