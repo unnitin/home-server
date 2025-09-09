@@ -1,47 +1,148 @@
 
-# Diagnostics Suite
+# 🔍 Diagnostics Suite
 
-These helper scripts let you quickly verify the health of your home server.
+These helper scripts let you quickly verify the health of your home server components.
 
-## Included scripts
+## 🚀 Quick Health Check
 
-- **check_raid_status.sh**  
-  Shows AppleRAID sets and members.
+**Run all diagnostics**:
+```bash
+./diagnostics/run_all.sh
+```
 
-- **check_plex_native.sh**  
-  Confirms whether Plex Media Server is running natively.
+## 📋 Individual Diagnostic Scripts
 
-- **check_docker_services.sh**  
-  Runs `scripts/compose_helper.sh services/immich ps` in the Immich service folder to confirm containers are healthy.
-
-- **network_port_check.sh <host> <port>**  
-  Quickly test whether a host:port is reachable (defaults: localhost:2283).
-
-- **collect_logs.sh**  
-  Collects `/tmp/*.out` and `/tmp/*.err` logs into a timestamped tarball (e.g., `/tmp/homeserver-logs-YYYYMMDD-HHMMSS.tgz`).
-
-- **verify_media_paths.sh**  
-  Checks that `/Volumes/Media`, `/Volumes/Photos`, and `/Volumes/Archive` exist and are mounted. Prints disk usage.
-
-## Usage examples
+### **check_raid_status.sh** - Storage Health
+Shows AppleRAID sets, members, and status for all storage arrays.
 
 ```bash
-# RAID health
-diagnostics/check_raid_status.sh
-
-# Plex running?
-diagnostics/check_plex_native.sh
-
-# Immich containers
-diagnostics/check_docker_services.sh
-
-# Ports
-diagnostics/network_port_check.sh localhost 32400  # Plex web UI
-diagnostics/network_port_check.sh localhost 2283   # Immich web
-
-# Collect logs
-diagnostics/collect_logs.sh
-
-# Check storage mountpoints
-diagnostics/verify_media_paths.sh
+./diagnostics/check_raid_status.sh
 ```
+
+**Checks**:
+- RAID array status (Online, Degraded, Failed)
+- Member disk health
+- Array capacity and usage
+
+---
+
+### **check_plex_native.sh** - Plex Service
+Confirms whether Plex Media Server is running natively and accessible.
+
+```bash
+./diagnostics/check_plex_native.sh
+```
+
+**Checks**:
+- Plex process running
+- Web interface accessibility
+- LaunchAgent status
+
+---
+
+### **check_docker_services.sh** - Immich Containers
+Verifies all Immich Docker containers are healthy and running.
+
+```bash
+./diagnostics/check_docker_services.sh
+```
+
+**Checks**:
+- Container status (running, healthy, restarting)
+- Colima VM status
+- Docker daemon connectivity
+
+---
+
+### **verify_media_paths.sh** - Storage Mounts
+Checks that storage volumes are mounted and accessible with disk usage.
+
+```bash
+./diagnostics/verify_media_paths.sh
+```
+
+**Checks**:
+- `/Volumes/Media` (warmstore)
+- `/Volumes/Photos` (faststore)  
+- `/Volumes/Archive` (coldstore)
+- Mount permissions and disk usage
+
+---
+
+### **network_port_check.sh** - Connectivity
+Tests whether services are reachable on expected ports.
+
+```bash
+./diagnostics/network_port_check.sh [host] [port]
+
+# Examples
+./diagnostics/network_port_check.sh localhost 32400  # Plex
+./diagnostics/network_port_check.sh localhost 2283   # Immich
+./diagnostics/network_port_check.sh localhost 8443   # Caddy
+```
+
+**Default**: Tests Immich on localhost:2283
+
+---
+
+### **collect_logs.sh** - Log Collection
+Collects system and service logs into a timestamped archive for troubleshooting.
+
+```bash
+./diagnostics/collect_logs.sh
+```
+
+**Collects**:
+- `/tmp/*.out` and `/tmp/*.err` logs
+- Service-specific logs
+- Creates: `/tmp/homeserver-logs-YYYYMMDD-HHMMSS.tgz`
+
+---
+
+## 🔧 Troubleshooting Integration
+
+### Quick Diagnosis
+```bash
+# Check everything at once
+./diagnostics/run_all.sh
+
+# Focus on specific issues
+./diagnostics/check_raid_status.sh      # Storage problems
+./diagnostics/check_docker_services.sh  # Immich issues
+./diagnostics/check_plex_native.sh      # Plex problems
+```
+
+### Performance Monitoring
+```bash
+# Check system resources
+top -l 1 | head -10
+df -h /Volumes/*
+
+# Test network connectivity
+./diagnostics/network_port_check.sh localhost 2283
+./diagnostics/network_port_check.sh localhost 32400
+```
+
+### Log Analysis
+```bash
+# Collect all logs for support
+./diagnostics/collect_logs.sh
+
+# Check specific service logs
+cd services/immich && docker compose logs
+tail -f ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Server.log
+```
+
+---
+
+## 🔗 Related Documentation
+
+- **🔧 [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)** - Comprehensive problem-solving
+- **💾 [Storage Management](../docs/STORAGE.md)** - RAID health and management
+- **🎬 [Plex Setup](../docs/PLEX.md)** - Plex-specific diagnostics
+- **📸 [Immich Setup](../docs/IMMICH.md)** - Photo service troubleshooting
+- **📖 [Detailed Setup Guide](../docs/SETUP.md)** - Complete system overview
+
+---
+
+**Having issues?** Start with `./diagnostics/run_all.sh` then check the **🔧 [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)** for specific solutions.

@@ -1,193 +1,150 @@
 # Mac Mini HomeServer (hakuna_mateti)
 
-A batteries-included setup for a Mac mini home server with **Native Plex**, **Immich** (self‑hosted photos), secure **remote access via Tailscale**, and a clean, growable **storage layout** on macOS (AppleRAID).
+A complete, batteries-included setup for a Mac mini home server featuring **Native Plex**, **Immich** (self-hosted photos), secure **remote access via Tailscale**, and a scalable **storage architecture** using macOS AppleRAID.
 
-## Features
-- **Plex** (native app) with hardware transcoding.
-- **Immich** (Docker via Colima) for multi-user photo backup & browsing.
-- **Secure remote access** using Tailscale HTTPS; optional **Caddy reverse proxy** for a single browser URL.
-- **Storage tiers** with growth path:
-  - `faststore` (NVMe): 2-disk **mirror** or 4-disk **RAID10**.
-  - `warmstore` (SSD): 2-disk **mirror** now, later 4-disk **RAID10**.
-  - `coldstore` (HDD): future archive tier; optional single external HDD works too.
-- **Re-runnable storage scripts**: tear down existing AppleRAID sets and rebuild (with a hard safety gate).
-- **Diagnostics** and **weekly update checks**.
-- **Google Takeout → Immich** helper.
+## 🚀 Quick Start
 
-## Repository layout
-```
-/                       # docs and entry points
-├─ README.md
-├─ README-QUICKSTART.md
-├─ ENVIRONMENT.md
-├─ setup/               # setup entrypoints
-│  ├─ setup.sh          # safe bootstrap (brew + CLI)
-│  ├─ setup_full.sh     # interactive full setup
-│  ├─ setup_flags.sh    # non-interactive flags
-│  └─ MANPAGE-setup_flags.md
-├─ scripts/             # RAID, tailscale, updates, helpers, etc.
-├─ services/            # immich, caddy (reverse proxy), etc.
-├─ launchd/             # autostart plists
-└─ diagnostics/         # health checks and logs helpers
-```
+**New to this setup?** → [**📋 Quick Start Guide**](docs/QUICKSTART.md)  
+**Need environment variables?** → [**⚙️ Environment Setup**](docs/ENVIRONMENT.md)  
+**Want detailed setup?** → [**📖 Detailed Setup Guide**](docs/SETUP.md)
 
-## Setup options
-Pick **one** of these entrypoints in `setup/`:
+## 📁 What You Get
 
-- `setup.sh` → **safe bootstrap only** (Homebrew + CLI tools).  
-- `setup_full.sh` → **interactive full** install with confirmations (Plex, Immich, optional rebuild, Tailscale, proxy).  
-- `setup_flags.sh` → **non-interactive**; run selected steps via flags. See `setup/MANPAGE-setup_flags.md`.
+### Core Services
+- **🎬 Plex Media Server** (native app) - Stream movies, TV shows, music with hardware transcoding
+- **📸 Immich** (Docker via Colima) - Self-hosted photo backup and browsing (Google Photos alternative)
+- **🔒 Tailscale** - Secure remote access with HTTPS to your services from anywhere
+- **🌐 Caddy Reverse Proxy** *(optional)* - Single URL access to all services
 
-> For a fast start, read **README-QUICKSTART.md**.
+### Storage Architecture
+- **⚡ faststore** (NVMe): High-speed storage for photos → `/Volumes/Photos`
+- **💾 warmstore** (SSD): Media library storage → `/Volumes/Media`  
+- **🗄️ coldstore** (HDD): Archive storage → `/Volumes/Archive`
 
-## Storage model
-- `faststore` (NVMe) → `/Volumes/Photos` (Immich/originals)
-- `warmstore` (SSD) → `/Volumes/Media` (Plex media)
-- `coldstore` (HDD/archive) → `/Volumes/Archive` (optional)
+**Storage Scaling**: 2 disks = mirror, 4 disks = RAID10. Rebuild scripts handle growth.
 
-**2 disks → mirror**, **4 disks → RAID10**. Rebuilds are **destructive** (backup → rebuild → restore). Scripts are **re-runnable** and delete any existing AppleRAID set with the same name.
+### Automation & Monitoring
+- **🤖 LaunchD Jobs** - Auto-start services on boot
+- **📊 Diagnostics Suite** - Health checks for all components
+- **🔄 Update Checker** - Weekly automated update checks
 
-### Optional pre-clean before RAID (DESTRUCTIVE)
+## 📚 Documentation
 
-To avoid “disk is already part of a RAID set” on re-runs, you can opt in to a pre-clean step that
-nukes any AppleRAID sets containing your target disks and re-initializes their partition maps.
+### Getting Started
+- [📋 **Quick Start Guide**](docs/QUICKSTART.md) - Get running in 30 minutes
+- [⚙️ **Environment Variables**](docs/ENVIRONMENT.md) - Configuration reference
+- [📖 **Detailed Setup Guide**](docs/SETUP.md) - Step-by-step comprehensive setup
 
+### Service Guides  
+- [🎬 **Plex Setup & Usage**](docs/PLEX.md) - Native Plex installation and configuration
+- [📸 **Immich Setup & Usage**](docs/IMMICH.md) - Photo management and Google Takeout import
+- [🔒 **Tailscale Setup & Usage**](docs/TAILSCALE.md) - Remote access configuration
+- [🌐 **Reverse Proxy Setup**](docs/REVERSE-PROXY.md) - Single URL access with Caddy
+
+### Advanced Topics
+- [💾 **Storage Management**](docs/STORAGE.md) - RAID setup, growth, and backups
+- [🤖 **Automation & LaunchD**](docs/AUTOMATION.md) - Auto-start and scheduled tasks
+- [📊 **Diagnostics & Monitoring**](docs/DIAGNOSTICS.md) - Health checks and troubleshooting
+- [🔧 **Troubleshooting**](docs/TROUBLESHOOTING.md) - Common issues and solutions
+
+## 🎯 Setup Options
+
+Choose your setup method:
+
+### 1. Interactive Setup (Recommended for first-time users)
 ```bash
-# DESTRUCTIVE – double-check disk IDs with `diskutil list`
-export RAID_I_UNDERSTAND_DATA_LOSS=1
-export CLEAN_BEFORE_RAID=1
-
-# Choose your disks (WHOLE disk IDs, not slices)
-export SSD_DISKS="disk6 disk7"     # or NVME_DISKS / COLD_DISKS
-
-./setup/setup_full.sh
-
-### Grow path example (2 → 4 SSDs for warmstore)
-1) Back up `/Volumes/Media` to external HDD (or to faststore/coldstore).  
-2) Rebuild with 4 disks.  
-3) Restore data back to `/Volumes/Media`.
-
-## Remote access
-- **Tailscale** gives you an encrypted VPN overlay and HTTPS:  
-  - Immich: `sudo tailscale serve --https=443   http://localhost:2283`  
-  - Plex:   `sudo tailscale serve --https=32400 http://localhost:32400`  
-- **Optional reverse proxy (Caddy)** provides a single browser origin:  
-  - `https://<macmini>.<tailnet>.ts.net/photos` → Immich  
-  - `https://<macmini>.<tailnet>.ts.net/plex` → Plex  
-  - A small landing page (“hakuna_mateti HomeServer”) with health dots is included.
-
-## Backups (simple external HDD)
-You can use any mounted folder (no RAID needed). Helpers (optional):
-- `scripts/14_backup_store.sh warmstore /Volumes/MyBackupDrive/MediaBackup`
-- `scripts/15_restore_store.sh /Volumes/MyBackupDrive/MediaBackup warmstore`
-
-Both use `rsync` and are **non-destructive** by default.
-
-## Diagnostics & updates
-- Diagnostics scripts in `diagnostics/` (e.g., RAID health, Plex process, Docker services).
-- Weekly update checks via launchd; run on demand with `scripts/80_check_updates.sh [--apply]`.
-
-## Environment variables
-See **ENVIRONMENT.md** for all variables, defaults, and what they control.
-
-## Notes
-- Tested on Apple Silicon macOS with Homebrew in `/opt/homebrew`.
-- AppleRAID lacks online expansion; you’ll rebuild to change level/width → use the provided backup/restore flow.
-- You can keep using **Tailscale direct ports** for mobile apps even if you enable the reverse proxy.
-
-## Repository tree
-
-```
-mac-mini-homeserver/
-├─ README.md
-├─ README-QUICKSTART.md
-├─ ENVIRONMENT.md
-├─ setup/
-│  ├─ setup.sh
-│  ├─ setup_full.sh
-│  ├─ setup_flags.sh
-│  └─ MANPAGE-setup_flags.md
-├─ scripts/
-│  ├─ 09_rebuild_storage.sh
-│  ├─ 10_create_raid10_ssd.sh
-│  ├─ 11_create_raid10_nvme.sh
-│  ├─ 12_format_and_mount_raids.sh
-│  ├─ 13_create_raid_coldstore.sh
-│  ├─ 14_backup_store.sh
-│  ├─ 15_restore_store.sh
-│  ├─ 20_install_colima_docker.sh
-│  ├─ 21_start_colima.sh
-│  ├─ 30_deploy_services.sh
-│  ├─ 31_install_native_plex.sh
-│  ├─ 35_install_caddy.sh
-│  ├─ 36_enable_reverse_proxy.sh
-│  ├─ 37_disable_reverse_proxy.sh
-│  ├─ 40_configure_launchd.sh
-│  ├─ 50_tune_power_network.sh
-│  ├─ 60_enable_ssh_firewall.sh
-│  ├─ 70_takeout_to_immich.sh
-│  ├─ 80_check_updates.sh
-│  ├─ 90_install_tailscale.sh
-│  └─ _raid_common.sh
-├─ services/
-│  ├─ immich/
-│  │  ├─ docker-compose.yml
-│  │  └─ .env.example
-│  └─ caddy/
-│     ├─ Caddyfile
-│     └─ site/index.html
-├─ launchd/
-│  ├─ io.homelab.colima.plist
-│  ├─ io.homelab.compose.immich.plist
-│  ├─ io.homelab.updatecheck.plist
-│  └─ io.homelab.tailscale.plist
-└─ diagnostics/
-   ├─ README.md
-   ├─ check_raid_status.sh
-   ├─ check_plex_native.sh
-   ├─ check_docker_services.sh
-   ├─ collect_logs.sh
-   ├─ network_port_check.sh
-   └─ verify_media_paths.sh
+cd /Users/nitinsrivastava/Documents/home-server
+setup/setup_full.sh
 ```
 
-## Tools just added
-
-- Google Takeout → Immich helper: `scripts/70_takeout_to_immich.sh /path/to/Takeout.zip`  
-  Optional env: `IMMICH_SERVER`, `IMMICH_API_KEY` (for `immich-go` CLI).
-
-- Diagnostics (see `diagnostics/`):
-  - `check_raid_status.sh`
-  - `check_plex_native.sh`
-  - `check_docker_services.sh`
-  - `network_port_check.sh <host> <port>`
-  - `collect_logs.sh`
-  - `verify_media_paths.sh`
-
-## New additions
-
-### Google Takeout → Immich helper
-Use `scripts/70_takeout_to_immich.sh` to import your Google Photos Takeout export.
-
+### 2. Quick Bootstrap (Safe preparation)
 ```bash
-scripts/70_takeout_to_immich.sh ~/Downloads/takeout-photos.zip
+setup/setup.sh
 ```
 
-- Extracts and stages media files for upload.  
-- If you install [`immich-go`](https://github.com/immich-app/immich-go) and set env vars, it will auto-upload:
-  - `IMMICH_SERVER=http://localhost:2283`
-  - `IMMICH_API_KEY=<your-api-key>`
-
-### Diagnostics suite
-See [`diagnostics/README.md`](diagnostics/README.md) for full details.
-
-- RAID, Plex, Docker, ports, logs, and storage checks.  
-- Run them individually as needed.
-
-Example:
+### 3. Automated Setup (For advanced users)
 ```bash
-diagnostics/check_raid_status.sh
-diagnostics/check_plex_native.sh
+setup/setup_flags.sh --all
 ```
 
+## 🌟 Post-Setup: Using Your Server
 
+After setup, you'll have access to:
+
+### 🎬 Plex Media Server
+- **Local**: http://localhost:32400/web
+- **Remote**: https://your-macmini.tailnet.ts.net:32400
+- **Via Proxy**: https://your-macmini.tailnet.ts.net/plex
+
+### 📸 Immich Photo Management  
+- **Local**: http://localhost:2283
+- **Remote**: https://your-macmini.tailnet.ts.net
+- **Via Proxy**: https://your-macmini.tailnet.ts.net/photos
+
+### 🏠 Server Dashboard *(with reverse proxy)*
+- **Home Page**: https://your-macmini.tailnet.ts.net
+- One-click access to all services with status indicators
+
+## 🗂️ Repository Structure
+
+```
+home-server/
+├── 📄 README.md                    # This file - main navigation
+├── 📁 docs/                       # 📚 Detailed documentation
+│   ├── QUICKSTART.md              # Quick start guide
+│   ├── SETUP.md                   # Detailed setup steps
+│   ├── ENVIRONMENT.md             # Environment variables
+│   ├── PLEX.md                    # Plex setup & usage
+│   ├── IMMICH.md                  # Immich setup & usage
+│   ├── TAILSCALE.md               # Remote access setup
+│   ├── REVERSE-PROXY.md           # Reverse proxy guide
+│   ├── STORAGE.md                 # Storage management
+│   ├── AUTOMATION.md              # LaunchD & automation
+│   ├── DIAGNOSTICS.md             # Monitoring & health checks
+│   └── TROUBLESHOOTING.md         # Common issues
+├── 🔧 setup/                      # Setup entry points
+│   ├── setup.sh                   # Safe bootstrap
+│   ├── setup_full.sh              # Interactive setup
+│   ├── setup_flags.sh             # Automated setup
+│   └── README.md                  # Setup documentation
+├── 📜 scripts/                    # Individual setup scripts
+├── 🐳 services/                   # Service configurations
+│   ├── immich/                    # Immich Docker setup
+│   └── caddy/                     # Reverse proxy config
+├── 🤖 launchd/                    # Auto-start configurations
+└── 🔍 diagnostics/                # Health check scripts
+```
+
+## 🚨 Important Notes
+
+- **macOS Compatibility**: Tested on Apple Silicon macOS with Homebrew
+- **Storage Rebuilds**: RAID operations are **destructive** - backup first!
+- **Security**: All remote access uses Tailscale's encrypted mesh VPN
+- **Updates**: Automated weekly update checks with manual approval
+
+## 💡 Common Use Cases
+
+### Fresh Installation
+1. [📋 Follow Quick Start](docs/QUICKSTART.md)
+2. [📖 Complete Detailed Setup](docs/SETUP.md) 
+3. [📸 Import Google Photos](docs/IMMICH.md#google-takeout-import)
+
+### Adding Storage
+1. [💾 Plan storage expansion](docs/STORAGE.md#scaling-storage)
+2. [🔧 Backup existing data](docs/STORAGE.md#backup-and-restore)
+3. [⚡ Rebuild RAID arrays](docs/STORAGE.md#rebuilding-arrays)
+
+### Remote Access Setup
+1. [🔒 Install Tailscale](docs/TAILSCALE.md)
+2. [🌐 Optional: Enable reverse proxy](docs/REVERSE-PROXY.md)
+3. [📱 Configure mobile apps](docs/TAILSCALE.md#mobile-setup)
+
+## 🆘 Need Help?
+
+- **Setup Issues**: [🔧 Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- **Health Checks**: [📊 Diagnostics Guide](docs/DIAGNOSTICS.md)
+- **Environment Config**: [⚙️ Environment Variables](docs/ENVIRONMENT.md)
+
+---
+
+**Ready to get started?** → [📋 **Quick Start Guide**](docs/QUICKSTART.md)
