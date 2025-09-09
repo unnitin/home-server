@@ -23,7 +23,7 @@ Your Device → Tailscale Tunnel → Mac Mini → Local Services
 - **Purpose**: Resolve friendly domain names to Tailscale IPs
 - **DNS Server**: `100.100.100.100` (Tailscale's DNS)
 - **Domain Format**: `device-name.tailnet-id.ts.net`
-- **Example**: `nitins-mac-mini.tailb6b278.ts.net` → `100.121.184.93`
+- **Example**: `your-device.your-tailnet.ts.net` → `100.121.184.93`
 
 ### **3. HTTPS Serving**
 - **Purpose**: Provide valid SSL certificates for web services
@@ -36,9 +36,9 @@ Your Device → Tailscale Tunnel → Mac Mini → Local Services
 ### **Complete Request Journey**:
 
 ```
-1. User types: https://nitins-mac-mini.tailb6b278.ts.net
+1. User types: https://your-device.your-tailnet.ts.net
 2. DNS Query: Device → Tailscale DNS (100.100.100.100)
-3. DNS Response: nitins-mac-mini.tailb6b278.ts.net → 100.121.184.93
+3. DNS Response: your-device.your-tailnet.ts.net → 100.121.184.93
 4. Connection: Device → Tailscale tunnel → Mac Mini (100.121.184.93:443)
 5. HTTPS Termination: Tailscale validates certificate, establishes TLS
 6. Proxy: Tailscale → http://localhost:2283 (Immich)
@@ -102,7 +102,7 @@ Tailscale Users → ✅ Can reach 100.121.184.93
 ### **Windows/Linux**
 - Install Tailscale client
 - Run: `tailscale up --accept-dns`
-- Verify DNS with: `nslookup nitins-mac-mini.tailb6b278.ts.net`
+- Verify DNS with: `nslookup your-device.your-tailnet.ts.net`
 
 ## 🛠️ Service Configuration
 
@@ -112,7 +112,7 @@ Tailscale Users → ✅ Can reach 100.121.184.93
 sudo tailscale serve --bg --https=443 http://localhost:2283
 
 # Accessible at:
-https://nitins-mac-mini.tailb6b278.ts.net
+https://your-device.your-tailnet.ts.net
 ```
 
 ### **Plex (Media)**
@@ -121,7 +121,7 @@ https://nitins-mac-mini.tailb6b278.ts.net
 sudo tailscale serve --bg --https=32400 http://localhost:32400
 
 # Accessible at:
-https://nitins-mac-mini.tailb6b278.ts.net:32400
+https://your-device.your-tailnet.ts.net:32400
 ```
 
 ### **Port Mapping**
@@ -134,7 +134,7 @@ https://nitins-mac-mini.tailb6b278.ts.net:32400
 ### **DNS Resolution Issues**
 ```bash
 # Test DNS resolution
-nslookup nitins-mac-mini.tailb6b278.ts.net
+nslookup your-device.your-tailnet.ts.net
 
 # Expected output:
 Server:         100.100.100.100
@@ -146,7 +146,7 @@ Address: 100.121.184.93
 ### **HTTPS Connection Issues**
 ```bash
 # Test HTTPS connectivity
-curl -I https://nitins-mac-mini.tailb6b278.ts.net
+curl -I https://your-device.your-tailnet.ts.net
 
 # Expected output:
 HTTP/2 404 
@@ -191,7 +191,7 @@ sudo tailscale up --accept-dns=true
 tailscale netcheck
 
 # DNS resolution test
-dig @100.100.100.100 nitins-mac-mini.tailb6b278.ts.net
+dig @100.100.100.100 your-device.your-tailnet.ts.net
 
 # Service availability
 ./diagnostics/network_port_check.sh localhost 2283
