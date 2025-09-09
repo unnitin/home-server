@@ -12,15 +12,15 @@ mkdir -p "$PLIST_DIR"
 make_plist() {
   local label="$1" program="$2"; shift 2
   local plist="$PLIST_DIR/${label}.plist"
-  /usr/libexec/PlistBuddy -c 'Clear dict' "$plist" 2>/dev/null || true
-  /usr/libexec/PlistBuddy -c 'Add :Label string '"$label" "$plist"
-  /usr/libexec/PlistBuddy -c 'Add :ProgramArguments array' "$plist"
-  /usr/libexec/PlistBuddy -c 'Add :ProgramArguments:0 string '"$program" "$plist"
+  /usr/libexec/PlistBuddy -c 'Clear dict' "$plist" >/dev/null 2>&1 || true
+  /usr/libexec/PlistBuddy -c 'Add :Label string '"$label" "$plist" >/dev/null 2>&1
+  /usr/libexec/PlistBuddy -c 'Add :ProgramArguments array' "$plist" >/dev/null 2>&1
+  /usr/libexec/PlistBuddy -c 'Add :ProgramArguments:0 string '"$program" "$plist" >/dev/null 2>&1
   local i=1; for a in "$@"; do
-    /usr/libexec/PlistBuddy -c 'Add :ProgramArguments:'"$i"' string '"$a" "$plist"; i=$((i+1))
+    /usr/libexec/PlistBuddy -c 'Add :ProgramArguments:'"$i"' string '"$a" "$plist" >/dev/null 2>&1; i=$((i+1))
   done
-  /usr/libexec/PlistBuddy -c 'Add :RunAtLoad bool true' "$plist"
-  /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist"
+  /usr/libexec/PlistBuddy -c 'Add :RunAtLoad bool true' "$plist" >/dev/null 2>&1
+  /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist" >/dev/null 2>&1
   echo "$plist"
 }
 
@@ -45,8 +45,8 @@ IMMICH_PLIST="$(make_plist io.homelab.compose.immich /usr/bin/env bash -lc "$ROO
 bootstrap "$IMMICH_PLIST"
 
 # Optional: updater and tailscale
-if [[ -x "$ROOT/scripts/80_update_check.sh" ]]; then
-  UPD_PLIST="$(make_plist io.homelab.updatecheck /usr/bin/env bash -lc "$ROOT/scripts/80_update_check.sh")"
+if [[ -x "$ROOT/scripts/80_check_updates.sh" ]]; then
+  UPD_PLIST="$(make_plist io.homelab.updatecheck /usr/bin/env bash -lc "$ROOT/scripts/80_check_updates.sh")"
   bootstrap "$UPD_PLIST"
 fi
 if command -v tailscale >/dev/null 2>&1; then
