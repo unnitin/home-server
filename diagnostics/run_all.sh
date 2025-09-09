@@ -1,23 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-BASE="$(cd "$(dirname "$0")" && pwd)"
-ret=0
-for s in \
-  check_prereqs.sh \
-  check_homebrew.sh \
-  check_colima_docker.sh \
-  check_storage.sh \
-  check_immich.sh \
-  check_plex_native.sh \
-  check_tailscale.sh \
-  check_reverse_proxy.sh \
-  check_launchd.sh
-do
-  echo -e "\n==================== $s ===================="
-  if ! "$BASE/$s"; then
-    echo ">>> $s reported issues"
-    ret=1
-  fi
-done
-exit $ret
+DIR="$(cd "$(dirname "$0")" && pwd)"
+"$DIR/check_raid_status.sh"
+"$DIR/check_plex_native.sh"
+"$DIR/check_docker_services.sh"
+"$DIR/network_port_check.sh" localhost 2283
+"$DIR/verify_media_paths.sh"

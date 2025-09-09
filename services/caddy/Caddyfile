@@ -1,3 +1,13 @@
+
 :8443 {
- respond 'Landing page'
+  encode zstd gzip
+  root * /usr/local/var/www/hakuna_mateti
+  file_server
+
+  handle_path /photos* {
+    reverse_proxy http://localhost:2283
+  }
+  handle_path /plex* {
+    reverse_proxy http://localhost:32400
+  }
 }

@@ -47,6 +47,21 @@ Pick **one** of these entrypoints in `setup/`:
 
 **2 disks → mirror**, **4 disks → RAID10**. Rebuilds are **destructive** (backup → rebuild → restore). Scripts are **re-runnable** and delete any existing AppleRAID set with the same name.
 
+### Optional pre-clean before RAID (DESTRUCTIVE)
+
+To avoid “disk is already part of a RAID set” on re-runs, you can opt in to a pre-clean step that
+nukes any AppleRAID sets containing your target disks and re-initializes their partition maps.
+
+```bash
+# DESTRUCTIVE – double-check disk IDs with `diskutil list`
+export RAID_I_UNDERSTAND_DATA_LOSS=1
+export CLEAN_BEFORE_RAID=1
+
+# Choose your disks (WHOLE disk IDs, not slices)
+export SSD_DISKS="disk6 disk7"     # or NVME_DISKS / COLD_DISKS
+
+./setup/setup_full.sh
+
 ### Grow path example (2 → 4 SSDs for warmstore)
 1) Back up `/Volumes/Media` to external HDD (or to faststore/coldstore).  
 2) Rebuild with 4 disks.  
@@ -135,3 +150,44 @@ mac-mini-homeserver/
    ├─ network_port_check.sh
    └─ verify_media_paths.sh
 ```
+
+## Tools just added
+
+- Google Takeout → Immich helper: `scripts/70_takeout_to_immich.sh /path/to/Takeout.zip`  
+  Optional env: `IMMICH_SERVER`, `IMMICH_API_KEY` (for `immich-go` CLI).
+
+- Diagnostics (see `diagnostics/`):
+  - `check_raid_status.sh`
+  - `check_plex_native.sh`
+  - `check_docker_services.sh`
+  - `network_port_check.sh <host> <port>`
+  - `collect_logs.sh`
+  - `verify_media_paths.sh`
+
+## New additions
+
+### Google Takeout → Immich helper
+Use `scripts/70_takeout_to_immich.sh` to import your Google Photos Takeout export.
+
+```bash
+scripts/70_takeout_to_immich.sh ~/Downloads/takeout-photos.zip
+```
+
+- Extracts and stages media files for upload.  
+- If you install [`immich-go`](https://github.com/immich-app/immich-go) and set env vars, it will auto-upload:
+  - `IMMICH_SERVER=http://localhost:2283`
+  - `IMMICH_API_KEY=<your-api-key>`
+
+### Diagnostics suite
+See [`diagnostics/README.md`](diagnostics/README.md) for full details.
+
+- RAID, Plex, Docker, ports, logs, and storage checks.  
+- Run them individually as needed.
+
+Example:
+```bash
+diagnostics/check_raid_status.sh
+diagnostics/check_plex_native.sh
+```
+
+
