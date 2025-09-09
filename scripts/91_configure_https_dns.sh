@@ -55,6 +55,11 @@ networksetup -getdnsservers "$NETWORK_INTERFACE" || echo "No DNS servers set"
 echo "Configuring DNS servers..."
 sudo networksetup -setdnsservers "$NETWORK_INTERFACE" 100.100.100.100 1.1.1.1
 
+# Create domain-specific resolver for .ts.net domains (permanent fix for macOS DNS issues)
+echo "Configuring domain-specific DNS resolver for .ts.net..."
+sudo mkdir -p /etc/resolver
+echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/ts.net >/dev/null
+
 # Flush DNS cache
 echo "Flushing DNS cache..."
 sudo dscacheutil -flushcache
@@ -65,8 +70,8 @@ sleep 3
 
 # Test DNS resolution
 echo "Testing DNS resolution..."
-if nslookup "$TAILSCALE_HOSTNAME" | grep -q "100.100.100.100"; then
-    echo "SUCCESS: DNS resolution working via Tailscale DNS"
+if ping -c 1 "$TAILSCALE_HOSTNAME" >/dev/null 2>&1; then
+    echo "SUCCESS: DNS resolution working for Tailscale domains"
 else
     echo "WARNING: DNS may not be fully working yet, continuing..."
 fi

@@ -55,15 +55,20 @@ macOS networking sometimes ignores Tailscale's DNS configuration, causing domain
 # Set Tailscale DNS as primary, Cloudflare as fallback
 sudo networksetup -setdnsservers "Wi-Fi" 100.100.100.100 1.1.1.1
 
+# Create domain-specific resolver for .ts.net domains (permanent fix)
+sudo mkdir -p /etc/resolver
+echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/ts.net
+
 # Flush caches to apply immediately
 sudo dscacheutil -flushcache
 sudo killall -HUP mDNSResponder
 ```
 
 ### **Why This Works**
-- **Primary**: `100.100.100.100` resolves `*.ts.net` domains to Tailscale IPs
+- **Network DNS**: `100.100.100.100` as primary ensures Tailscale domains resolve
+- **Domain Resolver**: `/etc/resolver/ts.net` forces all `.ts.net` queries to Tailscale DNS
 - **Fallback**: `1.1.1.1` handles all other domains (faster than ISP DNS)
-- **System-wide**: All applications use these DNS servers
+- **System-wide**: All applications and browsers use these DNS settings
 
 ## 🔒 Security Model
 
