@@ -7,13 +7,6 @@
 
 set -euo pipefail
 
-mapfile -t PAIRS < <(cat <<'MAP'
-warmstore|Media|/Volumes/Media
-faststore|Photos|/Volumes/Photos
-coldstore|Archive|/Volumes/Archive
-MAP
-)
-
 ensure_dir() { [[ -d "$1" ]] || mkdir -p "$1"; }
 
 # Return BSD device of the RAID set by name (e.g., disk8), or empty if not found.
@@ -51,24 +44,17 @@ format_and_mount() {
 
   if [[ -n "$(is_apfs "$devnode")" ]]; then
     # Already APFS; ensure a volume with our label exists/mounted at mountpoint.
-    # List volumes on this container and try to rename/mount as needed.
     local volDev
     volDev="$(/usr/sbin/diskutil list "$devnode" | /usr/bin/awk '
-      BEGIN{d=""}
-      /^ *APFS Volume Disk .* \(/ { 
-        # e.g., "APFS Volume Disk (Role):   disk8s1 (No specific role)"
-        m=$0
-        sub(/^.*: +/, "", m)
-        print m
+      /^ *APFS Volume Disk .* \(/ {
+        m=$0; sub(/^.*: +/, "", m); print m
       }' | head -n1 | /usr/bin/awk '{print $1}' 2>/dev/null || true)"
 
     if [[ -n "${volDev:-}" ]]; then
-      # Try to set label and mount at mountpoint
       /usr/sbin/diskutil rename "/dev/${volDev}" "${vol_label}" >/dev/null 2>&1 || true
       /usr/sbin/diskutil mount "/dev/${volDev}" >/dev/null 2>&1 || true
-      # Create mountpoint if for some reason default mount differs; re-mount there
-      if [[ ! -d "${mountpoint}" || ! "$(mount | /usr/bin/grep -F "on ${mountpoint} " -c || true)" -gt 0 ]]; then
-        # Explicitly mount to target path
+      # If not mounted where we want, remount at the target point
+      if ! mount | /usr/bin/grep -q "on ${mountpoint} "; then
         /usr/sbin/diskutil umount "/dev/${volDev}" >/dev/null 2>&1 || true
         ensure_dir "${mountpoint}"
         /usr/sbin/diskutil mount -mountPoint "${mountpoint}" "/dev/${volDev}" || true
@@ -85,9 +71,14 @@ format_and_mount() {
   echo "   Done."
 }
 
-for line in "${PAIRS[@]}"; do
-  IFS='|' read -r name label mnt <<<"$line"
+# Process the desired RAID->mount mappings without arrays (Bash 3.2-friendly)
+while IFS='|' read -r name label mnt; do
+  [[ -z "${name}" ]] && continue
   format_and_mount "$name" "$label" "$mnt"
-done
+done <<'MAP'
+warmstore|Media|/Volumes/Media
+faststore|Photos|/Volumes/Photos
+coldstore|Archive|/Volumes/Archive
+MAP
 
 echo "✅ Format & mount complete."
