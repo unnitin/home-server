@@ -39,6 +39,10 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 - [⚙️ **Environment Variables**](docs/ENVIRONMENT.md) - Configuration reference
 - [📖 **Detailed Setup Guide**](docs/SETUP.md) - Step-by-step comprehensive setup
 
+### User Guides
+- [📱 **User Guide**](USER-GUIDE.md) - How to use Plex and Immich on web and mobile
+- [🔧 **Admin Guide**](ADMIN-GUIDE.md) - Server administration and user management
+
 ### Service Guides  
 - [🎬 **Plex Setup & Usage**](docs/PLEX.md) - Native Plex installation and configuration
 - [📸 **Immich Setup & Usage**](docs/IMMICH.md) - Photo management and Google Takeout import
