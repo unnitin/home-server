@@ -86,10 +86,9 @@ if confirm "Configure HTTPS serving with DNS fix?"; then
     scripts/91_configure_https_dns.sh
 fi
 
-banner "Reverse proxy (optional)"
-if confirm "Enable Caddy reverse proxy?"; then
-  scripts/35_install_caddy.sh
-  scripts/36_enable_reverse_proxy.sh
+banner "Simple Landing Page"
+if confirm "Enable simple landing page with direct service access?"; then
+    scripts/37_enable_simple_landing.sh
 fi
 
-echo "Done. Immich http://localhost:2283 | Plex http://localhost:32400/web"
+echo "Done. Access via: https://$(tailscale status --json 2>/dev/null | grep '"DNSName"' | cut -d'"' -f4 | sed 's/\.$//' || echo 'your-device.your-tailnet.ts.net')"
