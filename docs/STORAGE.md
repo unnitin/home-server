@@ -91,7 +91,7 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"    # 4-disk RAID10
 **1. Backup existing data**:
 ```bash
 # Backup warmstore to external drive
-./scripts/14_backup_store.sh warmstore /Volumes/Backup/MediaBackup
+rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
 
 # Verify backup
 ls -la /Volumes/Backup/MediaBackup/
@@ -112,7 +112,8 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"  # Add new disks
 
 **4. Restore data**:
 ```bash
-./scripts/15_restore_store.sh /Volumes/Backup/MediaBackup warmstore
+# Restore from backup using rsync
+rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/Media/
 ```
 
 **5. Verify**:
@@ -143,10 +144,10 @@ export COLD_DISKS="disk8 disk9"
 **External drive backup**:
 ```bash
 # Backup specific array
-./scripts/14_backup_store.sh warmstore /Volumes/MyBackup/MediaBackup
-./scripts/14_backup_store.sh faststore /Volumes/MyBackup/PhotoBackup
+rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+rsync -av --progress /Volumes/Photos/ /Volumes/MyBackup/PhotoBackup/
 
-# Check backup progress
+# Check backup progress (dry run first)
 rsync --dry-run -av /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
 ```
 
@@ -169,11 +170,11 @@ du -sh /Volumes/MyBackup/*
 
 **Restore from backup**:
 ```bash
-# Restore specific array
-./scripts/15_restore_store.sh /Volumes/MyBackup/MediaBackup warmstore
-
-# Dry run first (recommended)
+# Restore specific array (dry run first - recommended)
 rsync --dry-run -av /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
+
+# Actual restore
+rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
 ```
 
 **Selective restore**:
@@ -191,9 +192,9 @@ rsync -av /Volumes/MyBackup/PhotoBackup/2023/ /Volumes/Photos/2023/
 BACKUP_ROOT="/Volumes/Backup"
 DATE=$(date +%Y%m%d)
 
-# Backup each tier
-./scripts/14_backup_store.sh warmstore "$BACKUP_ROOT/Media_$DATE"
-./scripts/14_backup_store.sh faststore "$BACKUP_ROOT/Photos_$DATE"
+# Backup each tier using rsync
+rsync -av --progress /Volumes/Media/ "$BACKUP_ROOT/Media_$DATE/"
+rsync -av --progress /Volumes/Photos/ "$BACKUP_ROOT/Photos_$DATE/"
 
 # Cleanup old backups (keep 4 weeks)
 find "$BACKUP_ROOT" -name "Media_*" -mtime +28 -exec rm -rf {} \;
@@ -347,8 +348,8 @@ df -h /Volumes/*
 ### Monthly Maintenance
 
 ```bash
-# Full backup verification
-./scripts/14_backup_store.sh warmstore /tmp/backup_test --dry-run
+# Full backup verification (dry run)
+rsync --dry-run -av /Volumes/Media/ /tmp/backup_test/
 
 # Disk health check
 diskutil verifyVolume /Volumes/Media
@@ -363,8 +364,8 @@ rm /Volumes/Media/perf_test
 
 ```bash
 # Complete backup refresh
-./scripts/14_backup_store.sh warmstore /Volumes/Backup/MediaBackup_Q$(date +%q)
-./scripts/14_backup_store.sh faststore /Volumes/Backup/PhotoBackup_Q$(date +%q)
+rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup_Q$(date +%q)/
+rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup_Q$(date +%q)/
 
 # Array rebuild test (if spare disks available)
 # Document the process and timing

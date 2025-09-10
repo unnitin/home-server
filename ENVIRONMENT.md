@@ -72,8 +72,9 @@ Routes:
 
 No variables required. Use explicit paths with:
 ```bash
-./scripts/14_backup_store.sh warmstore /Volumes/MyBackupDrive/MediaBackup
-./scripts/15_restore_store.sh /Volumes/MyBackupDrive/MediaBackup warmstore
+# Backup warmstore to external drive
+rsync -av --progress /Volumes/Media/ /Volumes/MyBackupDrive/MediaBackup/
+# Restore: rsync -av /Volumes/MyBackupDrive/MediaBackup/ /Volumes/Media/
 ```
 
 ---

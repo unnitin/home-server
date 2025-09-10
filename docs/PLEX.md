@@ -408,7 +408,7 @@ df -h /Volumes/Media
 **Media backup**:
 ```bash
 # Backup to external drive
-./scripts/14_backup_store.sh warmstore /Volumes/MyBackup/MediaBackup
+rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
 ```
 
 **Metadata backup**:

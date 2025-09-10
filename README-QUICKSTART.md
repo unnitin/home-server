@@ -51,26 +51,30 @@ http://localhost:32400/web
 sudo ./scripts/40_configure_launchd.sh
 ```
 
-## 5) Remote access with Tailscale
+## 5) Remote access with Tailscale + HTTPS
 ```bash
 ./scripts/90_install_tailscale.sh
 sudo tailscale up --accept-dns=true
 
-# Direct HTTPS (best for mobile apps)
-sudo tailscale serve --https=443   http://localhost:2283      # Immich
-sudo tailscale serve --https=32400 http://localhost:32400      # Plex
-# Immich app URL: https://<macmini>.<tailnet>.ts.net
-# Plex app URL:   https://<macmini>.<tailnet>.ts.net:32400
+# Automated HTTPS configuration (NEW!)
+./scripts/91_configure_https_dns.sh
+# This script automatically:
+# - Fixes DNS resolution issues
+# - Configures HTTPS serving for both services
+# - Sets up valid SSL certificates
+
+# Your secure URLs:
+# Immich: https://your-device.your-tailnet.ts.net
+# Plex:   https://your-device.your-tailnet.ts.net:32400
 ```
 
-## 6) Optional: single URL in browsers (reverse proxy)
+## 6) Optional: simple landing page with service links
 ```bash
-./scripts/35_install_caddy.sh
-./scripts/36_enable_reverse_proxy.sh
-# Now inside your tailnet:
-#   https://<macmini>.<tailnet>.ts.net        -> landing page
-#   https://<macmini>.<tailnet>.ts.net/photos -> Immich
-#   https://<macmini>.<tailnet>.ts.net/plex   -> Plex
+./scripts/37_enable_simple_landing.sh
+# Provides a landing page with direct links to services:
+#   https://your-device.your-tailnet.ts.net        -> landing page
+#   https://your-device.your-tailnet.ts.net:2283   -> Direct Immich access
+#   https://your-device.your-tailnet.ts.net:32400  -> Direct Plex access
 ```
 
 ## 7) Updates and diagnostics
@@ -83,6 +87,18 @@ sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 ./diagnostics/check_raid_status.sh
 ./diagnostics/check_plex_native.sh
 ./diagnostics/check_docker_services.sh
+./diagnostics/check_tailscale.sh       # check HTTPS/DNS
+```
+
+## 📚 Documentation
+- **[🌐 Networking Guide](docs/NETWORKING.md)** - How DNS, HTTPS, and remote access work
+- **[⚙️ Environment Setup](docs/ENVIRONMENT.md)** - All configuration variables
+- **[🆘 Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and fixes
+
+## ⚡ Automated setup
+```bash
+# Complete setup with HTTPS (recommended)
+./setup/setup_full.sh
 ```
 
 ## Non-interactive setup (flags)

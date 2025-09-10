@@ -208,14 +208,14 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 export SSD_DISKS="disk4 disk5"
 
 # Backup first!
-./scripts/14_backup_store.sh warmstore /Volumes/Backup/
+rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
 
 # Rebuild
 ./scripts/09_rebuild_storage.sh warmstore
 ./scripts/12_format_and_mount_raids.sh
 
 # Restore
-./scripts/15_restore_store.sh /Volumes/Backup/ warmstore
+rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/Media/
 ```
 
 ### Disk Space Issues
