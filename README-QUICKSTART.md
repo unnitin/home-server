@@ -68,14 +68,13 @@ sudo tailscale up --accept-dns=true
 # Plex:   https://your-device.your-tailnet.ts.net:32400
 ```
 
-## 6) Optional: single URL in browsers (reverse proxy)
+## 6) Optional: simple landing page with service links
 ```bash
-./scripts/35_install_caddy.sh
-./scripts/36_enable_reverse_proxy.sh
-# Provides a single landing page with links:
+./scripts/37_enable_simple_landing.sh
+# Provides a landing page with direct links to services:
 #   https://your-device.your-tailnet.ts.net        -> landing page
-#   https://your-device.your-tailnet.ts.net/photos -> Immich
-#   https://your-device.your-tailnet.ts.net/plex   -> Plex
+#   https://your-device.your-tailnet.ts.net:2283   -> Direct Immich access
+#   https://your-device.your-tailnet.ts.net:32400  -> Direct Plex access
 ```
 
 ## 7) Updates and diagnostics
