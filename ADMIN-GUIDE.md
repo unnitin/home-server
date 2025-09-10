@@ -31,12 +31,12 @@ tailscale status --json | grep '"DNSName"' | cut -d'"' -f4 | sed 's/\.$//'
 tailscale status
 ```
 
-**Example output:** `mac-mini.tail1a2b3c.ts.net`
+**Example output:** `homeserver.tail9x8y7z.ts.net`
 
 **Share with users:**
-- **Dashboard:** `https://mac-mini.tail1a2b3c.ts.net`
-- **Photos (Immich):** `https://mac-mini.tail1a2b3c.ts.net:2283`
-- **Media (Plex):** `https://mac-mini.tail1a2b3c.ts.net:32400`
+- **Dashboard:** `https://homeserver.tail9x8y7z.ts.net`
+- **Photos (Immich):** `https://homeserver.tail9x8y7z.ts.net:2283`
+- **Media (Plex):** `https://homeserver.tail9x8y7z.ts.net:32400`
 
 ---
 
@@ -81,6 +81,327 @@ tailscale status --json | jq '.Peer[] | {Name: .DNSName, User: .UserID, Online: 
 2. **Find User:** Locate user in list
 3. **Remove:** Click "Remove" or disable access
 4. **Confirm:** User will lose access immediately
+
+---
+
+## 💾 Storage Organization & Management
+
+### Understanding Mount Points
+
+After RAID setup, you have three primary storage locations:
+
+| Mount Point | Purpose | RAID Type | Usage |
+|-------------|---------|-----------|--------|
+| `/Volumes/Media` | Plex media library | SSD Mirror/RAID10 | Movies, TV Shows, Music |
+| `/Volumes/Photos` | Immich photo storage | NVMe Mirror/RAID10 | Photos, videos, albums |
+| `/Volumes/Archive` | Long-term storage | HDD Single/Mirror | Backups, archives, old files |
+
+### Ideal Folder Structure
+
+#### 📹 Media Storage (`/Volumes/Media`)
+
+**For Plex to work optimally, organize content like this:**
+
+```bash
+/Volumes/Media/
+├── Movies/
+│   ├── The Matrix (1999)/
+│   │   ├── The Matrix (1999).mkv
+│   │   └── The Matrix (1999)-trailer.mp4
+│   ├── Inception (2010)/
+│   │   ├── Inception (2010).mp4
+│   │   └── poster.jpg
+│   └── Top Gun Maverick (2022)/
+│       ├── Top Gun Maverick (2022).mkv
+│       └── Top Gun Maverick (2022)-behind-the-scenes.mkv
+├── TV Shows/
+│   ├── Breaking Bad/
+│   │   ├── Season 01/
+│   │   │   ├── Breaking Bad - S01E01 - Pilot.mkv
+│   │   │   ├── Breaking Bad - S01E02 - Cat's in the Bag.mkv
+│   │   │   └── ...
+│   │   ├── Season 02/
+│   │   └── Season 03/
+│   ├── The Office (US)/
+│   │   ├── Season 01/
+│   │   ├── Season 02/
+│   │   └── ...
+│   └── Stranger Things/
+│       ├── Season 01/
+│       ├── Season 02/
+│       └── Season 03/
+├── Music/
+│   ├── Artist Name/
+│   │   ├── Album Name (Year)/
+│   │   │   ├── 01 - Track Name.mp3
+│   │   │   ├── 02 - Track Name.mp3
+│   │   │   └── cover.jpg
+│   │   └── Another Album (Year)/
+│   └── Various Artists/
+└── Collections/
+    ├── Marvel Cinematic Universe/
+    ├── James Bond Collection/
+    └── Studio Ghibli/
+```
+
+#### 📸 Photo Storage (`/Volumes/Photos`)
+
+**Immich manages this automatically, but you can also manually organize:**
+
+```bash
+/Volumes/Photos/
+├── library/                 # Immich managed files
+│   ├── upload/
+│   ├── thumbs/
+│   └── encoded-video/
+├── import/                  # Manual import staging
+│   ├── Google Takeout/
+│   ├── Old iPhone Backup/
+│   └── Camera SD Cards/
+└── backup/                  # Manual backups
+    ├── 2023/
+    ├── 2024/
+    └── 2025/
+```
+
+#### 🗄️ Archive Storage (`/Volumes/Archive`)
+
+**Long-term storage and backups:**
+
+```bash
+/Volumes/Archive/
+├── Media Backups/
+│   ├── Old Movie Collection/
+│   ├── TV Show Archive/
+│   └── Music Archive/
+├── Photo Backups/
+│   ├── Pre-Immich Photos/
+│   ├── Family Archives/
+│   └── Raw Photo Backups/
+├── System Backups/
+│   ├── Mac Backups/
+│   ├── Configuration Backups/
+│   └── Database Dumps/
+└── Documents/
+    ├── Important Files/
+    ├── Old Projects/
+    └── Reference Materials/
+```
+
+### Setting Up Media Organization
+
+#### 1. Create Initial Directory Structure
+
+```bash
+# Create Movies structure
+sudo mkdir -p "/Volumes/Media/Movies"
+sudo mkdir -p "/Volumes/Media/TV Shows"
+sudo mkdir -p "/Volumes/Media/Music"
+sudo mkdir -p "/Volumes/Media/Collections"
+
+# Create staging areas
+sudo mkdir -p "/Volumes/Media/New Uploads"
+sudo mkdir -p "/Volumes/Media/To Process"
+
+# Set permissions
+sudo chown -R $(whoami):staff "/Volumes/Media"
+sudo chmod -R 755 "/Volumes/Media"
+```
+
+#### 2. Create Photo Import Structure
+
+```bash
+# Create photo organization folders
+sudo mkdir -p "/Volumes/Photos/import"
+sudo mkdir -p "/Volumes/Photos/backup"
+
+# Set permissions for Immich
+sudo chown -R $(whoami):staff "/Volumes/Photos"
+sudo chmod -R 755 "/Volumes/Photos"
+```
+
+#### 3. Create Archive Structure
+
+```bash
+# Create archive organization
+sudo mkdir -p "/Volumes/Archive/Media Backups"
+sudo mkdir -p "/Volumes/Archive/Photo Backups"
+sudo mkdir -p "/Volumes/Archive/System Backups"
+sudo mkdir -p "/Volumes/Archive/Documents"
+
+# Set permissions
+sudo chown -R $(whoami):staff "/Volumes/Archive"
+sudo chmod -R 755 "/Volumes/Archive"
+```
+
+### Media Management Best Practices
+
+#### File Naming Conventions
+
+**Movies:**
+- `Movie Title (Year).ext`
+- Example: `The Matrix (1999).mkv`
+
+**TV Shows:**
+- `Show Name - S##E## - Episode Title.ext`
+- Example: `Breaking Bad - S01E01 - Pilot.mkv`
+
+**Music:**
+- `## - Track Name.ext`
+- Example: `01 - Bohemian Rhapsody.mp3`
+
+#### Adding New Content
+
+```bash
+# 1. Upload to staging area
+cp new_movie.mkv "/Volumes/Media/New Uploads/"
+
+# 2. Rename properly
+mv "/Volumes/Media/New Uploads/new_movie.mkv" \
+   "/Volumes/Media/Movies/Movie Title (2023)/Movie Title (2023).mkv"
+
+# 3. Fix permissions
+chmod 644 "/Volumes/Media/Movies/Movie Title (2023)/Movie Title (2023).mkv"
+
+# 4. Trigger Plex scan
+# Plex will auto-scan, or force scan in Plex settings
+```
+
+#### Bulk Organization Scripts
+
+**Movie Organization Script:**
+```bash
+#!/bin/bash
+# organize_movies.sh
+MOVIES_DIR="/Volumes/Media/Movies"
+STAGING_DIR="/Volumes/Media/New Uploads"
+
+for file in "$STAGING_DIR"/*.{mkv,mp4,avi}; do
+    if [[ -f "$file" ]]; then
+        basename=$(basename "$file" .${file##*.})
+        # Extract year if present
+        if [[ $basename =~ \(([0-9]{4})\) ]]; then
+            year=${BASH_REMATCH[1]}
+            title=$(echo "$basename" | sed "s/ *($year) *//")
+            mkdir -p "$MOVIES_DIR/$title ($year)"
+            mv "$file" "$MOVIES_DIR/$title ($year)/$title ($year).${file##*.}"
+            echo "Organized: $title ($year)"
+        fi
+    fi
+done
+```
+
+**TV Show Organization Script:**
+```bash
+#!/bin/bash
+# organize_tv.sh
+TV_DIR="/Volumes/Media/TV Shows"
+STAGING_DIR="/Volumes/Media/New Uploads"
+
+for file in "$STAGING_DIR"/*.{mkv,mp4,avi}; do
+    if [[ -f "$file" ]]; then
+        basename=$(basename "$file")
+        # Extract show name, season, episode
+        if [[ $basename =~ (.+)[._-][Ss]([0-9]+)[Ee]([0-9]+) ]]; then
+            show="${BASH_REMATCH[1]//./ }"
+            season="${BASH_REMATCH[2]}"
+            episode="${BASH_REMATCH[3]}"
+            
+            # Clean show name
+            show=$(echo "$show" | sed 's/[._-]/ /g' | xargs)
+            
+            # Create directory structure
+            mkdir -p "$TV_DIR/$show/Season $(printf "%02d" $season)"
+            
+            # Move and rename file
+            mv "$file" "$TV_DIR/$show/Season $(printf "%02d" $season)/"
+            echo "Organized: $show S${season}E${episode}"
+        fi
+    fi
+done
+```
+
+### Storage Monitoring & Maintenance
+
+#### Check Storage Usage
+
+```bash
+# Overall storage usage
+df -h /Volumes/*
+
+# Detailed usage by directory
+du -sh /Volumes/Media/* | sort -hr
+du -sh /Volumes/Photos/* | sort -hr
+du -sh /Volumes/Archive/* | sort -hr
+
+# Find large files
+find /Volumes/Media -size +5G -type f -exec ls -lh {} \;
+```
+
+#### Clean Up and Optimization
+
+```bash
+# Find duplicate files (install fdupes first: brew install fdupes)
+fdupes -r /Volumes/Media/Movies/
+
+# Find empty directories
+find /Volumes/Media -type d -empty
+
+# Check for permission issues
+find /Volumes/Media -type f ! -perm 644
+find /Volumes/Media -type d ! -perm 755
+
+# Fix common permission issues
+sudo chown -R $(whoami):staff /Volumes/Media
+sudo find /Volumes/Media -type f -exec chmod 644 {} \;
+sudo find /Volumes/Media -type d -exec chmod 755 {} \;
+```
+
+### Automated Organization
+
+#### Create LaunchAgent for Auto-Organization
+
+```bash
+# Create organization script
+cat > ~/bin/auto_organize_media.sh << 'EOF'
+#!/bin/bash
+STAGING="/Volumes/Media/New Uploads"
+PROCESSED="/Volumes/Media/To Process"
+
+# Only run if staging directory has content
+if [[ $(ls -A "$STAGING" 2>/dev/null) ]]; then
+    echo "$(date): Starting media organization..."
+    
+    # Run organization scripts
+    ~/bin/organize_movies.sh
+    ~/bin/organize_tv.sh
+    
+    # Move any remaining files to processing
+    mv "$STAGING"/* "$PROCESSED"/ 2>/dev/null || true
+    
+    echo "$(date): Media organization complete"
+fi
+EOF
+
+chmod +x ~/bin/auto_organize_media.sh
+
+# Create LaunchAgent (optional)
+# This would run every hour to organize new uploads
+```
+
+#### Integration with Download Tools
+
+If using download automation tools:
+
+```bash
+# Configure download tools to use staging directory
+DOWNLOAD_DIR="/Volumes/Media/New Uploads"
+
+# Tools like Sonarr/Radarr can be configured to:
+# 1. Download to staging area
+# 2. Trigger organization scripts
+# 3. Update Plex library automatically
+```
 
 ---
 
@@ -219,15 +540,29 @@ cd services/immich && docker-compose pull && docker-compose up -d
 ### Regular Backup Tasks
 
 ```bash
-# Backup media storage
-./scripts/14_backup_store.sh warmstore /Volumes/Backup/MediaBackup
+# Backup media storage (manual rsync)
+rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
 
-# Backup photo storage  
-./scripts/14_backup_store.sh faststore /Volumes/Backup/PhotoBackup
+# Backup photo storage (manual rsync)
+rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup/
 
 # Backup Immich database
 cd services/immich
 docker-compose exec database pg_dump -U postgres immich > /Volumes/Backup/immich_db_$(date +%Y%m%d).sql
+
+# Create backup script for convenience
+cat > ~/bin/backup_media.sh << 'EOF'
+#!/bin/bash
+BACKUP_DIR="/Volumes/Backup"
+DATE=$(date +%Y%m%d)
+
+echo "Starting backup at $(date)"
+rsync -av --progress /Volumes/Media/ "$BACKUP_DIR/MediaBackup_$DATE/"
+rsync -av --progress /Volumes/Photos/ "$BACKUP_DIR/PhotoBackup_$DATE/"
+echo "Backup completed at $(date)"
+EOF
+
+chmod +x ~/bin/backup_media.sh
 ```
 
 ### Storage Management

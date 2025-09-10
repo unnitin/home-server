@@ -172,10 +172,10 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 No environment variables needed - use explicit paths:
 ```bash
 # Backup warmstore to external drive
-./scripts/14_backup_store.sh warmstore /Volumes/MyBackup/MediaBackup
+rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
 
 # Restore from backup  
-./scripts/15_restore_store.sh /Volumes/MyBackup/MediaBackup warmstore
+rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
 ```
 
 ---
@@ -242,7 +242,7 @@ IMMICH_DB_PASSWORD=my_secure_password123
 
 ### RAID Operations
 - **DESTRUCTIVE**: Rebuilds delete existing data
-- **Backup first**: Use `./scripts/14_backup_store.sh`
+- **Backup first**: Use `rsync -av /Volumes/Media/ /Volumes/Backup/`
 - **Safety gate**: `RAID_I_UNDERSTAND_DATA_LOSS=1` required
 - **Re-runnable**: Scripts delete and recreate existing arrays
 

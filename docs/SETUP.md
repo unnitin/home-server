@@ -547,10 +547,10 @@ pgrep -f "Plex Media Server" | xargs ps -p
 ### Backup Procedures
 ```bash
 # Backup media to external drive
-./scripts/14_backup_store.sh warmstore /Volumes/MyBackup/MediaBackup
+rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
 
 # Backup photos
-./scripts/14_backup_store.sh faststore /Volumes/MyBackup/PhotoBackup
+rsync -av --progress /Volumes/Photos/ /Volumes/MyBackup/PhotoBackup/
 ```
 
 ---

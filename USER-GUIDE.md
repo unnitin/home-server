@@ -25,9 +25,9 @@ After setup, you have a complete home media server with:
 - The format will be something like: `device-name.tailnet-id.ts.net`
 
 **Example URLs you'll receive:**
-- Dashboard: `https://mac-mini.tail1a2b3c.ts.net`
-- Photos: `https://mac-mini.tail1a2b3c.ts.net:2283`
-- Media: `https://mac-mini.tail1a2b3c.ts.net:32400`
+- Dashboard: `https://homeserver.tail9x8y7z.ts.net`
+- Photos: `https://homeserver.tail9x8y7z.ts.net:2283`
+- Media: `https://homeserver.tail9x8y7z.ts.net:32400`
 
 > **For Administrators:** See [ADMIN-GUIDE.md](ADMIN-GUIDE.md) for commands to get server hostnames and manage users.
 
