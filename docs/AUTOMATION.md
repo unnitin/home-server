@@ -1,6 +1,102 @@
 # 🤖 Automation & LaunchD Guide
 
-Complete guide for setting up automated services, scheduled tasks, and system maintenance on your Mac mini home server.
+Complete guide for understanding and managing the automated services, scheduled tasks, and system maintenance on your Mac mini home server.
+
+---
+
+## 🎯 **Current Automation Status**
+
+### **✅ What Automation is Already Running**
+
+Your home server has **Enhanced Option C automation** installed and active. This provides secure, graceful automation with intelligent fallback handling.
+
+#### **🔄 Automatic Boot Recovery**
+When your Mac mini reboots, the following happens automatically:
+
+**Immediate (0-30s after login):**
+- 🔧 **Storage service** checks and creates mount points (`/Volumes/Media`, `/Volumes/Photos`, `/Volumes/Archive`)
+- 🌐 **Tailscale service** maintains VPN connectivity  
+- 📊 **Update check service** monitors for system updates
+
+**Infrastructure Startup (30-90s):**
+- 🐳 **Colima service** starts Docker runtime for containers
+- 📸 **Immich service** deploys photo management containers
+- 💾 **Storage verification** ensures all mount points are accessible
+
+**Application Startup (90-150s):**
+- 🎬 **Plex service** starts Media Server with HTTPS re-enablement
+- 🌐 **Landing page service** starts HTTP server and configures Tailscale HTTPS serving
+
+#### **🛡️ Enhanced Option C Features**
+- **Graceful Permission Handling**: Services attempt `sudo` operations but provide manual recovery commands if they fail
+- **Dependency-Aware Timing**: Services start in the correct order with appropriate delays
+- **Self-Healing Scripts**: Each service includes error detection and recovery logic
+- **Comprehensive Logging**: All automation logs to `/tmp/*.{out,err}` for monitoring
+- **Manual Recovery Support**: `post_boot_health_check.sh --auto-recover` for additional recovery
+
+#### **📋 Active LaunchD Services**
+```bash
+# View all homelab automation:
+launchctl list | grep homelab
+
+# Monitor real-time logs:
+tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}
+```
+
+#### **⏰ Automation Timeline**
+```
+SYSTEM BOOT → USER LOGIN → LaunchAgents Start
+    ↓
+  0s: 🌐 Tailscale + 📊 Update Check (immediate)
+    ↓
+ 30s: 🔧 Storage Mounts (ensure_storage_mounts.sh)
+    ↓  
+ 60s: 🐳 Colima Docker (21_start_colima.sh)
+    ↓
+ 90s: 📸 Immich Containers (compose_helper.sh)
+    ↓
+120s: 🎬 Plex Media Server (start_plex_safe.sh)
+    ↓
+150s: 🌐 Landing Page + HTTPS (37_enable_simple_landing.sh)
+    ↓
+🎉 ALL SERVICES OPERATIONAL
+```
+
+#### **🚀 When Automation Triggers**
+- **System Boot**: All services start automatically after login
+- **Service Failures**: LaunchD restarts failed services (when `KeepAlive=true`)
+- **Manual Recovery**: Run health check for immediate assessment/recovery
+- **Scheduled Tasks**: Update checks run weekly (configurable)
+
+#### **🏥 Health Check & Recovery**
+```bash
+# Check system status:
+./scripts/post_boot_health_check.sh
+
+# Automatic recovery for any issues:
+./scripts/post_boot_health_check.sh --auto-recover
+```
+
+#### **👀 What to Expect After Reboot**
+1. **Login to your Mac mini** → LaunchAgents activate automatically
+2. **Wait 2-3 minutes** → All services start in sequence
+3. **Check status**: Run `./scripts/post_boot_health_check.sh`
+4. **Access services**:
+   - 📍 **Landing Page**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net
+   - 📸 **Immich**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
+   - 🎬 **Plex**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
+
+#### **🔧 If Something Doesn't Start**
+The Enhanced Option C system provides graceful fallback:
+- Services that need `sudo` will show manual commands if automation fails
+- Run `./scripts/post_boot_health_check.sh --auto-recover` for automatic fixes
+- Check logs: `tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}`
+
+---
+
+## 📚 **Setup & Configuration Guide**
+
+*The following sections describe how to set up, modify, or troubleshoot the automation system.*
 
 ## 📋 Overview
 
