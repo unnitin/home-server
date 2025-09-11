@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Enable simple landing page with direct service access
-# Enhanced for Option C: Graceful permission handling with fallback guidance
+# Enhanced for graceful permission handling with fallback guidance
 
 set -euo pipefail
 

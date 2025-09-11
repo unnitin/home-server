@@ -8,7 +8,7 @@ Complete guide for understanding and managing the automated services, scheduled 
 
 ### **✅ What Automation is Already Running**
 
-Your home server has **Enhanced Option C automation** installed and active. This provides secure, graceful automation with intelligent fallback handling.
+Your home server has **secure automation** installed and active. The system attempts privileged operations automatically but provides clear manual recovery commands when user intervention is required.
 
 #### **🔄 Automatic Boot Recovery**
 When your Mac mini reboots, the following happens automatically:
@@ -27,7 +27,7 @@ When your Mac mini reboots, the following happens automatically:
 - 🎬 **Plex service** starts Media Server with HTTPS re-enablement
 - 🌐 **Landing page service** starts HTTP server and configures Tailscale HTTPS serving
 
-#### **🛡️ Enhanced Option C Features**
+#### **🛡️ Security-First Automation Features**
 - **Graceful Permission Handling**: Services attempt `sudo` operations but provide manual recovery commands if they fail
 - **Dependency-Aware Timing**: Services start in the correct order with appropriate delays
 - **Self-Healing Scripts**: Each service includes error detection and recovery logic
@@ -87,7 +87,7 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
    - 🎬 **Plex**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
 
 #### **🔧 If Something Doesn't Start**
-The Enhanced Option C system provides graceful fallback:
+The automation system provides graceful fallback handling:
 - Services that need `sudo` will show manual commands if automation fails
 - Run `./scripts/post_boot_health_check.sh --auto-recover` for automatic fixes
 - Check logs: `tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}`

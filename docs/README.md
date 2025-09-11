@@ -76,7 +76,7 @@ Need to configure? → **[ENVIRONMENT.md](ENVIRONMENT.md)**
 | Setup Guides | ✅ Complete | Current |
 | Service Configuration | ✅ Complete | Current |
 | Recovery Procedures | ✅ Complete | Current |
-| Automation | ✅ Enhanced Option C | Current |
+| Automation | ✅ Security-First | Current |
 | Troubleshooting | ✅ Complete | Current |
 | Future Planning | 🔄 Active Development | Current |
 
@@ -92,4 +92,4 @@ Need to configure? → **[ENVIRONMENT.md](ENVIRONMENT.md)**
 
 ---
 
-*This documentation covers the complete Mac Mini HomeServer ecosystem including Plex Media Server, Immich photo management, Tailscale VPN, AppleRAID storage, and Enhanced Option C automation.*
+*This documentation covers the complete Mac Mini HomeServer ecosystem including Plex Media Server, Immich photo management, Tailscale VPN, AppleRAID storage, and security-first automation.*
