@@ -3,6 +3,8 @@
 
 This folder contains the entry points for setting up your Mac mini HomeServer.
 
+**📖 For detailed script documentation**: → [**🛠️ Scripts Reference**](../scripts/README.md)
+
 ## 📋 Available Scripts
 
 ### **setup.sh** - Safe Bootstrap

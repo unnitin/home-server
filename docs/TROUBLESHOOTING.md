@@ -30,7 +30,7 @@ tailscale status
 # Service ports
 lsof -i :2283    # Immich
 lsof -i :32400   # Plex
-lsof -i :8443    # Caddy (if enabled)
+lsof -i :8080    # Landing page HTTP server
 ```
 
 ---
@@ -42,7 +42,7 @@ lsof -i :8443    # Caddy (if enabled)
 **Check LaunchD services**:
 ```bash
 # List homelab services
-sudo launchctl list | grep homelab
+launchctl list | grep homelab
 
 # Check specific service status
 sudo launchctl print system/io.homelab.colima
@@ -464,42 +464,46 @@ nslookup your-macmini.your-tailnet.ts.net
 
 ---
 
-## 🌐 Reverse Proxy Issues
+## 🌐 Landing Page Issues
 
-### Caddy Not Starting
+### HTTP Server Not Starting
 
-**Check service**:
+**Check landing page server**:
 ```bash
-brew services list | grep caddy
-brew services restart caddy
+# Check if server is running
+ps aux | grep "python3 -m http.server 8080"
+
+# Check port availability
+lsof -i :8080
+
+# Restart landing page
+./scripts/37_enable_simple_landing.sh
 ```
 
-**Check configuration**:
-```bash
-# Test Caddyfile syntax
-caddy validate --config services/caddy/Caddyfile
-
-# Check logs
-tail -f /opt/homebrew/var/log/caddy.log
-```
-
-### Proxy Routes Not Working
+### HTTPS Access Not Working
 
 **Test individual services**:
 ```bash
 # Test backend services
 curl -f http://localhost:2283      # Immich
 curl -f http://localhost:32400     # Plex
+curl -f http://localhost:8080      # Landing page
 
-# Test proxy
-curl -f http://localhost:8443/photos
-curl -f http://localhost:8443/plex
+# Test HTTPS access
+curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net
+curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
+curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
 ```
 
 **Check Tailscale serving**:
 ```bash
-# Should serve Caddy, not direct services
-sudo tailscale serve --https=443 http://localhost:8443
+# Check current serving configuration
+sudo tailscale serve status
+
+# Reconfigure if needed
+sudo tailscale serve --bg --https=443 http://localhost:8080
+sudo tailscale serve --bg --https=2283 http://localhost:2283
+sudo tailscale serve --bg --https=32400 http://localhost:32400
 ```
 
 ---
@@ -512,7 +516,7 @@ sudo tailscale serve --https=443 http://localhost:8443
 ```bash
 lsof -i :2283   # Immich
 lsof -i :32400  # Plex
-lsof -i :8443   # Caddy
+lsof -i :8080   # Landing page HTTP server
 
 # Kill conflicting process
 sudo kill -9 <PID>
@@ -639,8 +643,8 @@ tailscale debug daemon-logs > /tmp/tailscale_logs.txt
 # Plex logs
 cp ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Server.log /tmp/
 
-# Caddy logs
-cp /opt/homebrew/var/log/caddy.log /tmp/
+# Landing page server logs
+cp /tmp/landing-server.out /tmp/ 2>/dev/null || true
 ```
 
 ---

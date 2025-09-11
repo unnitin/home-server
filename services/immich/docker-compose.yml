@@ -18,7 +18,7 @@ services:
     volumes:
       - /Volumes/Photos:/photos
     ports:
-      - "2283:2283"
+      - "127.0.0.1:2283:2283"
     restart: unless-stopped
 
   immich-machine-learning:

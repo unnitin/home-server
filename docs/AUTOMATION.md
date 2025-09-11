@@ -21,22 +21,27 @@ Automation includes:
 sudo ./scripts/40_configure_launchd.sh
 ```
 
-### Service Hierarchy
+### Enhanced Service Hierarchy
 
 ```mermaid
 graph TD
-    A[System Boot] --> B[Colima Docker]
-    B --> C[Immich Containers]
-    A --> D[Tailscale VPN]
-    A --> E[Update Scheduler]
+    A[System Boot] --> B[Storage Mounts]
+    B --> C[Colima Docker] 
+    C --> D[Immich Containers]
+    B --> E[Plex Media Server]
+    D --> F[Landing Page HTTP]
+    E --> F
+    F --> G[Tailscale HTTPS Proxy]
+    A --> H[Update Scheduler]
 ```
 
-**Boot sequence**:
-1. **System startup** triggers LaunchDaemons
-2. **Colima** starts Docker runtime
-3. **Immich** containers start after Docker ready
-4. **Tailscale** connects VPN (if configured)
-5. **Update checker** schedules weekly maintenance
+**Enhanced Boot Sequence** (with timing):
+1. **0s - Boot**: System startup triggers LaunchDaemons
+2. **30s - Storage**: Create mount points and symlinks (`ensure_storage_mounts.sh`)
+3. **60s - Colima**: Start Docker runtime (`21_start_colima.sh`)
+4. **90s - Immich**: Start photo service containers (`compose_helper.sh`)
+5. **120s - Plex**: Start native media server with conflict handling (`start_plex_safe.sh`)
+6. **150s - Landing + Tailscale**: Start HTTP server and configure HTTPS proxies (`37_enable_simple_landing.sh`)
 
 ---
 
@@ -151,6 +156,87 @@ sudo tailscale down
 
 ---
 
+## 🚀 Enhanced Recovery Services
+
+### **io.homelab.storage.plist** - Storage Mount Management
+
+**Purpose**: Ensures proper mount point structure for interim configuration
+
+**What it does**:
+- Waits for `/Volumes/warmstore` to be available
+- Creates `/Volumes/Media/Movies` → `/Volumes/warmstore/Movies` symlink
+- Creates `/Volumes/Media/TV` → `/Volumes/warmstore/TV Shows` symlink  
+- Creates `/Volumes/Photos` → `/Volumes/warmstore/Photos` symlink
+- Creates `/Volumes/Archive` placeholder directory
+
+**Management**:
+```bash
+# Manual execution
+./scripts/ensure_storage_mounts.sh
+
+# Check mount status
+ls -la /Volumes/Media/ /Volumes/Photos /Volumes/Archive
+```
+
+### **io.homelab.plex.plist** - Native Plex Service
+
+**Purpose**: Auto-starts Plex Media Server with Tailscale conflict handling
+
+**Features**:
+- Checks if Plex already running
+- Temporarily disables Tailscale port 32400 proxy during startup
+- Waits for Plex to bind to port 32400
+- Handles startup conflicts gracefully
+
+**Management**:
+```bash
+# Manual safe startup
+./scripts/start_plex_safe.sh
+
+# Check Plex status
+curl -I http://localhost:32400
+```
+
+### **io.homelab.landing.plist** - Landing Page HTTP Server
+
+**Purpose**: Serves the simple landing page via Python HTTP server
+
+**Features**:
+- Starts Python HTTP server on `localhost:8080`
+- Serves `web/index.html` with service links
+- Kills any existing HTTP server on port 8080
+- Runs in background with proper logging
+
+**Management**:
+```bash
+# Manual startup
+./scripts/37_enable_simple_landing.sh
+
+# Check server status
+curl -I http://localhost:8080
+```
+
+### **io.homelab.tailscale.serve.plist** - HTTPS Proxy Configuration
+
+**Purpose**: Configures Tailscale HTTPS proxies for all services
+
+**Features**:
+- Waits for all services (Immich, Plex, Landing Page) to be ready
+- Configures `https://hostname/` → `http://localhost:8080` (Landing Page)
+- Configures `https://hostname:2283` → `http://localhost:2283` (Immich)
+- Configures `https://hostname:32400` → `http://localhost:32400` (Plex)
+
+**Management**:
+```bash
+# Manual configuration
+./scripts/37_enable_simple_landing.sh
+
+# Check serving status
+sudo tailscale serve status
+```
+
+---
+
 ## 🔧 Service Management
 
 ### Health Monitoring
@@ -158,11 +244,11 @@ sudo tailscale down
 **Check all services**:
 ```bash
 # List homelab services
-sudo launchctl list | grep homelab
+launchctl list | grep homelab
 
-# Detailed status
-sudo launchctl print system/io.homelab.colima
-sudo launchctl print system/io.homelab.compose.immich
+# Detailed status for specific services
+launchctl print gui/$(id -u)/io.homelab.colima
+launchctl print gui/$(id -u)/io.homelab.compose.immich
 ```
 
 **Service logs**:
@@ -235,11 +321,13 @@ cat /tmp/update-check.log
 1. **Create script** (`scripts/custom_maintenance.sh`):
 ```bash
 #!/bin/bash
-# Custom maintenance script
+# Custom maintenance script  
 echo "$(date): Running custom maintenance" >> /tmp/custom_maintenance.log
 
-# Your maintenance tasks here
+# Example maintenance tasks (customize as needed)
+./scripts/80_check_updates.sh >> /tmp/custom_maintenance.log
 ./diagnostics/check_raid_status.sh >> /tmp/custom_maintenance.log
+./diagnostics/check_docker_services.sh >> /tmp/custom_maintenance.log
 ```
 
 2. **Create LaunchD plist** (`launchd/io.homelab.custom.plist`):
@@ -252,7 +340,7 @@ echo "$(date): Running custom maintenance" >> /tmp/custom_maintenance.log
     <string>io.homelab.custom</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/path/to/scripts/custom_maintenance.sh</string>
+        <string>__HOME__/Documents/home-server/scripts/custom_maintenance.sh</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>

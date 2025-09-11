@@ -6,11 +6,36 @@ Comprehensive guide for managing storage arrays, expansion, backups, and optimiz
 
 ### Three-Tier Storage Design
 
-| Tier | Purpose | Technology | Mount Point | Array Name |
-|------|---------|------------|-------------|------------|
-| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/Photos` | `faststore` |
-| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/Media` | `warmstore` |
-| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/Archive` | `coldstore` |
+| Tier | Purpose | Technology | Mount Point | Array Name | Status |
+|------|---------|------------|-------------|------------|---------|
+| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/Photos` | `faststore` | 🟡 *Interim: symlink to warmstore* |
+| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/Media` | `warmstore` | ✅ **Active** |
+| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/Archive` | `coldstore` | 🟡 *Placeholder directory* |
+
+### Current Interim Configuration
+
+**Mount Structure** (until NVMe drives available):
+```bash
+/Volumes/warmstore/          # Real SSD RAID array (2.0TB)
+├── Movies/                  # 10 folders, ~320GB (Plex Movies)
+├── TV Shows/               # 25 folders, ~554GB (Plex TV Shows)  
+└── Photos/                 # Ready for Immich (Future: 0-500GB)
+
+# Service Access Points:
+/Volumes/Media/Movies/       → /Volumes/warmstore/Movies/     (Plex)
+/Volumes/Media/TV/           → /Volumes/warmstore/TV Shows/   (Plex)
+/Volumes/Photos/             → /Volumes/warmstore/Photos/     (Immich)
+/Volumes/Archive/            → (placeholder directory)
+```
+
+**Automation Requirements**: The interim setup requires mount point recreation after reboot:
+```bash
+mkdir -p /Volumes/Media
+ln -sf /Volumes/warmstore/Movies /Volumes/Media/Movies
+ln -sf "/Volumes/warmstore/TV Shows" /Volumes/Media/TV  
+ln -sf /Volumes/warmstore/Photos /Volumes/Photos
+mkdir -p /Volumes/Archive
+```
 
 ### RAID Configurations
 - **2 disks**: Mirror (RAID1) - 50% capacity, 1-disk fault tolerance

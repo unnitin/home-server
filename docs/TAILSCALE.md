@@ -92,8 +92,7 @@ sudo tailscale serve --https=32400 http://localhost:32400
 
 **Enable reverse proxy first**:
 ```bash
-./scripts/35_install_caddy.sh
-./scripts/36_enable_reverse_proxy.sh
+./scripts/37_enable_simple_landing.sh
 ```
 
 **Then serve Caddy instead**:

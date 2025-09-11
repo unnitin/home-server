@@ -4,11 +4,18 @@
   <key>Label</key><string>io.homelab.compose.immich</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/bin/sh</string>
-    <string>-c</string>
-    <string>__REPO__/scripts/compose_helper.sh services/immich up -d</string>
+    <string>/usr/bin/env</string>
+    <string>bash</string>
+    <string>-lc</string>
+    <string>sleep 60 && /Users/nitinsrivastava/Documents/home-server/scripts/compose_helper.sh /Users/nitinsrivastava/Documents/home-server/services/immich up -d</string>
   </array>
   <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
   <key>StandardOutPath</key><string>/tmp/immich.out</string>
   <key>StandardErrorPath</key><string>/tmp/immich.err</string>
 </dict></plist>
