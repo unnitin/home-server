@@ -40,6 +40,21 @@ Auto-starts Tailscale VPN connection if Tailscale is installed.
 
 ---
 
+### **io.homelab.powermgmt.plist** - Power Management
+Monitors and maintains Mac mini power settings for 24/7 server operation.
+
+**Service**: Power management monitoring  
+**Trigger**: System startup + hourly checks  
+**Purpose**: Ensures consistent power settings for headless server operation
+
+**Features**:
+- Runs `ensure_power_settings.sh` every hour
+- Automatically restores server-optimized power settings
+- Prevents sleep settings from reverting after system updates
+- Logs power management activities to `/tmp/powermgmt.out`
+
+---
+
 ## 🔧 Management Commands
 
 ### Check Service Status

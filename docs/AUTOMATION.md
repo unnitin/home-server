@@ -17,6 +17,7 @@ When your Mac mini reboots, the following happens automatically:
 - 🔧 **Storage service** checks and creates mount points (`/Volumes/Media`, `/Volumes/Photos`, `/Volumes/Archive`)
 - 🌐 **Tailscale service** maintains VPN connectivity  
 - 📊 **Update check service** monitors for system updates
+- ⚡ **Power management service** monitors and maintains server power settings
 
 **Infrastructure Startup (30-90s):**
 - 🐳 **Colima service** starts Docker runtime for containers
@@ -40,14 +41,14 @@ When your Mac mini reboots, the following happens automatically:
 launchctl list | grep homelab
 
 # Monitor real-time logs:
-tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}
+tail -f /tmp/{storage,colima,immich,plex,landing,powermgmt}.{out,err}
 ```
 
 #### **⏰ Automation Timeline**
 ```
 SYSTEM BOOT → USER LOGIN → LaunchAgents Start
     ↓
-  0s: 🌐 Tailscale + 📊 Update Check (immediate)
+  0s: 🌐 Tailscale + 📊 Update Check + ⚡ Power Management (immediate)
     ↓
  30s: 🔧 Storage Mounts (ensure_storage_mounts.sh)
     ↓  
@@ -329,6 +330,35 @@ curl -I http://localhost:8080
 
 # Check serving status
 sudo tailscale serve status
+```
+
+### **io.homelab.powermgmt.plist** - Power Management Service
+
+**Purpose**: Monitors and maintains Mac mini power settings for 24/7 headless server operation
+
+**Features**:
+- Runs `ensure_power_settings.sh` every hour to verify power settings
+- Automatically restores server-optimized settings if they change
+- Prevents sleep settings from reverting after system updates or manual changes
+- Logs all power management activities for monitoring
+
+**What it maintains**:
+- System sleep: disabled (sleep=0) for 24/7 service availability
+- Display sleep: 1 minute (displaysleep=1) for headless optimization
+- Disk sleep: disabled (disksleep=0) for immediate media access
+- Network wake: enabled for remote management capabilities
+- SSD optimizations: motion sensor disabled, power-saving features tuned
+
+**Management**:
+```bash
+# Manual power configuration
+./scripts/92_configure_power.sh
+
+# Check current power settings
+pmset -g | grep -E "(sleep|displaysleep|disksleep)"
+
+# View power management logs
+tail -f /tmp/powermgmt.out
 ```
 
 ---

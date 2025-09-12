@@ -26,8 +26,10 @@
 | [`80_check_updates.sh`](#80_check_updatessh) | Maintenance | System update checker | LaunchD io.homelab.updatecheck |
 | [`90_install_tailscale.sh`](#90_install_tailscalesh) | Network | Install VPN service | setup_full.sh, setup_flags.sh |
 | [`91_configure_https_dns.sh`](#91_configure_https_dnssh) | Network | Configure HTTPS serving | setup_full.sh, setup_flags.sh |
+| [`92_configure_power.sh`](#92_configure_powersh) | Network | Configure power management | setup_full.sh, setup_flags.sh, Manual |
 | [`cleanup_disks.sh`](#cleanup_diskssh) | Storage | Erase disk for RAID | 09_preclean_disks_for_raid.sh |
 | [`compose_helper.sh`](#compose_helpersh) | Helper | Docker Compose wrapper | 30_deploy_services.sh, _compose.sh, 09_rebuild_storage.sh, LaunchD io.homelab.compose.immich |
+| [`ensure_power_settings.sh`](#ensure_power_settingssh) | Utility | Monitor power settings | LaunchD io.homelab.powermgmt |
 | [`ensure_storage_mounts.sh`](#ensure_storage_mountssh) | Storage | Recovery mount points | LaunchD io.homelab.storage |
 | [`make_executable.sh`](#make_executablesh) | Utility | Fix script permissions | Manual |
 | [`post_boot_health_check.sh`](#post_boot_health_checksh) | Diagnostics | System health check | Manual |
@@ -292,6 +294,27 @@
 
 ---
 
+#### `92_configure_power.sh`
+**Purpose**: Configure Mac mini for 24/7 headless server operation  
+**Usage**: Run during setup or manually to optimize power management  
+**Features**:
+- Prevents system sleep while maintaining service availability
+- Optimizes display and disk sleep for headless operation
+- Enables network wake capabilities for remote management
+- Disables power-saving features that interfere with server operation
+
+**Process**:
+1. Disables system sleep (sleep=0) for 24/7 availability
+2. Sets minimal display sleep (displaysleep=1) for headless optimization
+3. Prevents disk sleep (disksleep=0) for immediate access
+4. Enables wake-on-network for remote management
+5. Optimizes settings for SSD/NVMe storage
+
+**Dependencies**: `sudo` access for `pmset` commands  
+**Used By**: `setup_full.sh`, `setup_flags.sh`, manual server optimization
+
+---
+
 ### **Automation and Maintenance Scripts** 🤖
 
 #### `40_configure_launchd.sh`
@@ -366,6 +389,26 @@
 
 **Dependencies**: System services  
 **Used By**: Manual troubleshooting
+
+---
+
+#### `ensure_power_settings.sh`
+**Purpose**: Monitor and maintain Mac mini power management settings  
+**Usage**: Called automatically by LaunchD `io.homelab.powermgmt` service  
+**Features**:
+- Monitors power settings every hour to detect changes
+- Automatically restores server-optimized settings if modified
+- Logs power setting verification and restoration activities
+- Provides manual recovery commands if automatic restoration fails
+
+**Process**:
+1. Checks current power settings against expected values
+2. Detects changes from external sources (system updates, manual changes)
+3. Calls `92_configure_power.sh` to restore settings if needed
+4. Logs all activities for monitoring and troubleshooting
+
+**Dependencies**: `92_configure_power.sh`, `pmset` command  
+**Used By**: LaunchD automation (powermgmt service)
 
 ---
 
