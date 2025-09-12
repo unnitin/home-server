@@ -3,8 +3,19 @@
 <plist version="1.0"><dict>
   <key>Label</key><string>io.homelab.colima</string>
   <key>ProgramArguments</key>
-  <array><string>/opt/homebrew/bin/colima</string><string>start</string></array>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>bash</string>
+    <string>-lc</string>
+    <string>sleep 30 && /Users/nitinsrivastava/Documents/home-server/scripts/21_start_colima.sh</string>
+  </array>
   <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
   <key>StandardOutPath</key><string>/tmp/colima.out</string>
   <key>StandardErrorPath</key><string>/tmp/colima.err</string>
 </dict></plist>

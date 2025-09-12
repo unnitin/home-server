@@ -105,8 +105,7 @@ sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 For single-URL access in browsers:
 
 ```bash
-./scripts/35_install_caddy.sh
-./scripts/36_enable_reverse_proxy.sh
+./scripts/37_enable_simple_landing.sh
 ```
 
 ## ✅ Verify Your Setup

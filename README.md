@@ -6,7 +6,8 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 
 **New to this setup?** → [**📋 Quick Start Guide**](docs/QUICKSTART.md)  
 **Need environment variables?** → [**⚙️ Environment Setup**](docs/ENVIRONMENT.md)  
-**Want detailed setup?** → [**📖 Detailed Setup Guide**](docs/SETUP.md)
+**Want detailed setup?** → [**📖 Detailed Setup Guide**](docs/SETUP.md)  
+**Developing scripts?** → [**🛠️ Scripts Reference**](scripts/README.md)
 
 ## 🔧 Recent Updates
 

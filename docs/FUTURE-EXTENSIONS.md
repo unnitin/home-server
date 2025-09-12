@@ -95,7 +95,7 @@ echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/yourdomai
 
 #### Updated Scripts
 - `scripts/91_configure_https_dns.sh`: Add custom domain resolver support
-- `scripts/36_enable_reverse_proxy.sh`: Support custom domain Caddyfile
+- `scripts/37_enable_simple_landing.sh`: Support custom domain configuration
 - `docs/NETWORKING.md`: Document custom domain architecture
 
 ### Security Considerations

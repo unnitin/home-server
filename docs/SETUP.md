@@ -343,7 +343,7 @@ sudo ./scripts/40_configure_launchd.sh
 ### Verification
 ```bash
 # Check LaunchD status
-sudo launchctl list | grep homelab
+launchctl list | grep homelab
 
 # Check specific service
 sudo launchctl print system/io.homelab.colima
@@ -432,32 +432,27 @@ curl -k https://$(tailscale hostname).$(tailscale domain)
 
 ---
 
-## 🌐 Phase 8: Reverse Proxy Setup (Optional, 5 minutes)
+## 🌐 Phase 8: Landing Page Setup (5 minutes)
 
 ### What This Does
-Sets up Caddy reverse proxy to provide single-URL access to all services via clean paths.
+Sets up simple landing page with direct HTTPS access to all services.
 
 ### Steps
 
-**Install Caddy**:
+**Enable simple landing page**:
 ```bash
-./scripts/35_install_caddy.sh
-```
-
-**Enable reverse proxy**:
-```bash
-./scripts/36_enable_reverse_proxy.sh
+./scripts/37_enable_simple_landing.sh
 ```
 
 ### What Gets Configured
-- **Caddy Server**: Lightweight web server and proxy
-- **Landing Page**: Service dashboard with health indicators
-- **Path Routing**: Clean URLs for each service
+- **Python HTTP Server**: Serves static landing page on port 8080
+- **Landing Page**: Service dashboard with direct service links
+- **Tailscale HTTPS**: Direct proxies to each service
 
 ### URL Structure
 - **Homepage**: `https://your-macmini.your-tailnet.ts.net`
-- **Immich**: `https://your-macmini.your-tailnet.ts.net/photos`
-- **Plex**: `https://your-macmini.your-tailnet.ts.net/plex`
+- **Immich**: `https://your-macmini.your-tailnet.ts.net:2283`
+- **Plex**: `https://your-macmini.your-tailnet.ts.net:32400`
 
 ### Landing Page Features
 - **Service Status**: Green/red indicators for each service
@@ -466,17 +461,17 @@ Sets up Caddy reverse proxy to provide single-URL access to all services via cle
 
 ### Verification
 ```bash
-# Check Caddy status
-brew services list | grep caddy
+# Check HTTP server
+ps aux | grep "python3 -m http.server 8080"
 
-# Test proxy paths
-curl -f http://localhost:8443/photos
-curl -f http://localhost:8443/plex
+# Test direct service access  
+curl -f http://localhost:8080                      # Landing page
+curl -f https://your-macmini.your-tailnet.ts.net   # HTTPS landing page
 ```
 
 ### Troubleshooting
-- **Port conflicts**: Ensure port 8443 is available
-- **Proxy errors**: Check service availability and Caddyfile syntax
+- **Port conflicts**: Ensure port 8080 is available
+- **Service errors**: Check individual service availability
 - **HTTPS issues**: Verify Tailscale serve configuration
 
 ---

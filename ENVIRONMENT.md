@@ -45,7 +45,7 @@ Export them in your shell or create a `.env.local` and `source` it before runnin
 **Serve (optional):**
 - `sudo tailscale serve --https=443   http://localhost:2283` → Immich over HTTPS on your tailnet name.  
 - `sudo tailscale serve --https=32400 http://localhost:32400` → Plex over HTTPS.  
-If you enable **reverse proxy**, `./scripts/36_enable_reverse_proxy.sh` maps `:443` to **Caddy** instead.
+If you enable **landing page**, `./scripts/37_enable_simple_landing.sh` maps `:443` to the **landing page** instead.
 
 ---
 
@@ -53,7 +53,7 @@ If you enable **reverse proxy**, `./scripts/36_enable_reverse_proxy.sh` maps `:4
 
 | Variable | Default | Used by | Meaning |
 |---------|---------|--------|--------|
-| *(none required)* | | `35_install_caddy.sh` | Installs Caddy and places `services/caddy/Caddyfile` + `site/`. |
+| *(none required)* | | `37_enable_simple_landing.sh` | Enables landing page and configures Tailscale HTTPS serving. |
 
 Routes:
 - `/photos` → Immich (`localhost:2283`)
