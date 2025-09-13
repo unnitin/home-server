@@ -66,7 +66,8 @@ esac
 
 banner "Storage Mount Points"
 echo "Setting up storage mount points for services..."
-scripts/ensure_storage_mounts.sh
+echo "Note: This step requires sudo permissions to create symlinks in /Volumes/"
+sudo scripts/ensure_storage_mounts.sh
 
 banner "Immich"
 if [[ ! -f services/immich/.env ]]; then

@@ -77,7 +77,7 @@ done
 
 if (( DO_BOOTSTRAP )); then log "Bootstrap"; run setup/setup.sh; fi
 if (( DO_COLIMA )); then log "Colima"; run scripts/20_install_colima_docker.sh; run scripts/21_start_colima.sh; fi
-if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run scripts/ensure_storage_mounts.sh; fi
+if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run sudo scripts/ensure_storage_mounts.sh; fi
 if (( DO_IMMICH )); then
   log "Immich"
   [[ -f services/immich/.env ]] || run bash -lc 'cd services/immich && cp -n .env.example .env || true'
