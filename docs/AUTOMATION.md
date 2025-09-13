@@ -361,8 +361,6 @@ pmset -g | grep -E "(sleep|displaysleep|disksleep)"
 tail -f /tmp/powermgmt.out
 ```
 
----
-
 ## 🔧 Service Management
 
 ### Health Monitoring

@@ -30,6 +30,8 @@
 | [`cleanup_disks.sh`](#cleanup_diskssh) | Storage | Erase disk for RAID | 09_preclean_disks_for_raid.sh |
 | [`compose_helper.sh`](#compose_helpersh) | Helper | Docker Compose wrapper | 30_deploy_services.sh, _compose.sh, 09_rebuild_storage.sh, LaunchD io.homelab.compose.immich |
 | [`ensure_power_settings.sh`](#ensure_power_settingssh) | Utility | Monitor power settings | LaunchD io.homelab.powermgmt |
+| [`cleanup_disks.sh`](#cleanup_diskssh) | Storage | Erase disk for RAID | 09_preclean_disks_for_raid.sh |
+| [`compose_helper.sh`](#compose_helpersh) | Helper | Docker Compose wrapper | 30_deploy_services.sh, _compose.sh, 09_rebuild_storage.sh, LaunchD io.homelab.compose.immich |
 | [`ensure_storage_mounts.sh`](#ensure_storage_mountssh) | Storage | Recovery mount points | LaunchD io.homelab.storage |
 | [`make_executable.sh`](#make_executablesh) | Utility | Fix script permissions | Manual |
 | [`post_boot_health_check.sh`](#post_boot_health_checksh) | Diagnostics | System health check | Manual |
@@ -411,6 +413,7 @@
 **Used By**: LaunchD automation (powermgmt service)
 
 ---
+
 
 ## 🚨 **Before Adding New Scripts**
 
