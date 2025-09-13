@@ -66,6 +66,7 @@ run_diagnostic "check_reverse_proxy.sh" "Reverse Proxy (Caddy)"
 # System Integration
 section "System Integration"
 run_diagnostic "check_launchd.sh" "LaunchD Services"
+run_diagnostic "check_power_settings.sh" "Power Management Settings"
 
 # Network Connectivity Tests
 section "Network Connectivity"

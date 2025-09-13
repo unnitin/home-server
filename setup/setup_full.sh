@@ -86,6 +86,11 @@ if confirm "Configure HTTPS serving with DNS fix?"; then
     scripts/91_configure_https_dns.sh
 fi
 
+banner "Power Management"
+if confirm "Configure Mac mini for 24/7 server operation (prevent sleep)?"; then
+    scripts/92_configure_power.sh
+fi
+
 banner "Simple Landing Page"
 if confirm "Enable simple landing page with direct service access?"; then
     scripts/37_enable_simple_landing.sh

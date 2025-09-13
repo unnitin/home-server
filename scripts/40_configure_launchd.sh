@@ -68,6 +68,7 @@ echo ""
 # Define services in dependency order (storage first, then infrastructure, then applications)
 SERVICES=(
   "storage"       # Mount points and storage configuration
+  "powermgmt"     # Power management for 24/7 server operation
   "colima"        # Docker runtime for Immich
   "compose.immich" # Immich containers
   "plex"          # Plex Media Server

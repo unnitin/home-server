@@ -13,7 +13,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 DO_BOOTSTRAP=0; DO_COLIMA=0; DO_IMMICH=0; DO_PLEX=0; DO_LAUNCHD=0
-DO_TS_INSTALL=0; DO_TS_UP=0; DO_TS_SERVE_DIRECT=0; DO_PROXY=0
+DO_TS_INSTALL=0; DO_TS_UP=0; DO_TS_CONFIGURE_HTTPS=0; DO_CONFIGURE_POWER=0; DO_TS_SERVE_DIRECT=0; DO_PROXY=0; DO_LANDING=0
 DO_REBUILD_TARGETS=""; DO_FORMAT_MOUNT=0; DRY_RUN=0
 
 log(){ printf "[%s] %s\n" "$(date '+%F %T')" "$*"; }
@@ -26,7 +26,7 @@ USAGE
   setup/setup_flags.sh [OPTIONS]
 
 OPTIONS
-  --all                     bootstrap + colima + immich + plex + launchd + tailscale-install + tailscale-serve-direct
+  --all                     bootstrap + colima + immich + plex + launchd + tailscale-install + tailscale-up + tailscale-https + configure-power + landing
   --bootstrap               run setup/setup.sh
   --colima                  install/start Colima
   --immich                  deploy Immich (docker compose)
@@ -34,7 +34,10 @@ OPTIONS
   --launchd                 configure launchd jobs
   --tailscale-install       install tailscale
   --tailscale-up            run 'sudo tailscale up --accept-dns=true'
-  --tailscale-serve-direct  map HTTPS :443->Immich and :32400->Plex
+  --tailscale-https         configure HTTPS serving with DNS fix
+  --configure-power         configure Mac mini for 24/7 server operation (prevent sleep)
+  --tailscale-serve-direct  map HTTPS :443->Immich and :32400->Plex (alternative to --landing)
+  --landing                 enable simple landing page with direct service access
   --enable-proxy            install Caddy and enable reverse proxy on :443
   --rebuild=<targets>       destructive rebuild of arrays (comma list: faststore,warmstore,coldstore)
   --format-mount            run scripts/12_format_and_mount_raids.sh after rebuild
@@ -49,7 +52,7 @@ EOF
 
 for a in "$@"; do
   case "$a" in
-    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_IMMICH=1; DO_PLEX=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_SERVE_DIRECT=1 ;;
+    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_IMMICH=1; DO_PLEX=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_UP=1; DO_TS_CONFIGURE_HTTPS=1; DO_CONFIGURE_POWER=1; DO_LANDING=1 ;;
     --bootstrap) DO_BOOTSTRAP=1 ;;
     --colima) DO_COLIMA=1 ;;
     --immich) DO_IMMICH=1 ;;
@@ -57,7 +60,10 @@ for a in "$@"; do
     --launchd) DO_LAUNCHD=1 ;;
     --tailscale-install) DO_TS_INSTALL=1 ;;
     --tailscale-up) DO_TS_UP=1 ;;
+    --tailscale-https) DO_TS_CONFIGURE_HTTPS=1 ;;
+    --configure-power) DO_CONFIGURE_POWER=1 ;;
     --tailscale-serve-direct) DO_TS_SERVE_DIRECT=1 ;;
+    --landing) DO_LANDING=1 ;;
     --enable-proxy) DO_PROXY=1 ;;
     --rebuild=*) DO_REBUILD_TARGETS="${a#*=}" ;;
     --format-mount) DO_FORMAT_MOUNT=1 ;;
@@ -92,11 +98,14 @@ if [[ -n "$DO_REBUILD_TARGETS" ]]; then
   if (( DO_FORMAT_MOUNT )); then log "Format/mount"; run scripts/12_format_and_mount_raids.sh; fi
 fi
 
-if (( DO_LAUNCHD )); then log "launchd"; run sudo scripts/40_configure_launchd.sh; fi
+if (( DO_LAUNCHD )); then log "launchd"; run scripts/40_configure_launchd.sh; fi
 if (( DO_TS_INSTALL )); then log "tailscale"; run scripts/90_install_tailscale.sh; fi
 if (( DO_TS_UP )); then log "tailscale up"; run sudo tailscale up --accept-dns=true; fi
+if (( DO_TS_CONFIGURE_HTTPS )); then log "configure HTTPS/DNS"; run scripts/91_configure_https_dns.sh; fi
+if (( DO_CONFIGURE_POWER )); then log "configure power"; run scripts/92_configure_power.sh; fi
+if (( DO_LANDING )); then log "landing page"; run scripts/37_enable_simple_landing.sh; fi
 if (( DO_TS_SERVE_DIRECT )); then
-  log "tailscale serve"
+  log "tailscale serve direct"
   run sudo tailscale serve --https=443   http://localhost:2283
   run sudo tailscale serve --https=32400 http://localhost:32400
 fi

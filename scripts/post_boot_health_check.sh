@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Enhanced Option C: Post-boot health check with automated recovery
+# Post-boot health check with automated recovery
 # This script provides comprehensive system assessment and guided recovery
 
 # Support automatic recovery mode
@@ -11,8 +11,8 @@ if [[ "${1:-}" == "--auto-recover" ]]; then
     shift
 fi
 
-echo "🏥 Enhanced Option C: System Health Check & Recovery"
-echo "=================================================="
+echo "🏥 System Health Check & Recovery"
+echo "================================"
 if $AUTO_RECOVER; then
     echo "🚀 Auto-recovery mode enabled"
 else
@@ -103,7 +103,7 @@ if ! $COLIMA_OK || ! $DOCKER_OK; then
         fi
         if docker ps >/dev/null 2>&1; then
             echo "  🔄 Deploying Docker services..."
-            if cd "$(dirname "$0")" && ./30_deploy_services.sh >/dev/null 2>&1; then
+            if "$(dirname "$0")/30_deploy_services.sh" >/dev/null 2>&1; then
                 echo "  ✅ Docker services deployed"
             else
                 echo "  ❌ Service deployment failed (manual required): ./scripts/30_deploy_services.sh"
@@ -139,7 +139,7 @@ if ! $LANDING_OK; then
     if $AUTO_RECOVER; then
         echo "🌐 EXECUTING LANDING PAGE RECOVERY:"
         echo "  🔄 Starting landing page and HTTPS..."
-        if cd "$(dirname "$0")" && ./37_enable_simple_landing.sh >/dev/null 2>&1; then
+        if "$(dirname "$0")/37_enable_simple_landing.sh" >/dev/null 2>&1; then
             echo "  ✅ Landing page recovery completed"
         else
             echo "  ❌ Landing page failed (manual required): ./scripts/37_enable_simple_landing.sh"

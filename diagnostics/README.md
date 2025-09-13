@@ -85,6 +85,20 @@ Tests whether services are reachable on expected ports.
 
 ---
 
+### **check_power_settings.sh** - Power Management
+Validates Mac mini power settings for 24/7 headless server operation.
+
+```bash
+./diagnostics/check_power_settings.sh
+```
+
+**Checks**:
+- System sleep disabled (24/7 availability)
+- Display sleep optimized for headless operation
+- Disk sleep disabled for immediate access
+- Network wake capabilities
+- SSD optimizations and power-saving features
+
 ### **collect_logs.sh** - Log Collection
 Collects system and service logs into a timestamped archive for troubleshooting.
 
