@@ -54,7 +54,7 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
     ↓  
  60s: 🐳 Colima Docker (21_start_colima.sh)
     ↓
- 90s: 📸 Immich Containers (compose_helper.sh)
+ 90s: 📸 Immich Containers (wait_for_storage.sh + compose_helper.sh)
     ↓
 120s: 🎬 Plex Media Server (start_plex_safe.sh)
     ↓

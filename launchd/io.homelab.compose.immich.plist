@@ -7,7 +7,7 @@
     <string>/usr/bin/env</string>
     <string>bash</string>
     <string>-lc</string>
-    <string>sleep 60 && /Users/nitinsrivastava/Documents/home-server/scripts/compose_helper.sh /Users/nitinsrivastava/Documents/home-server/services/immich up -d</string>
+    <string>sleep 90 && __HOME__/Documents/home-server/scripts/wait_for_storage.sh && /Users/nitinsrivastava/Documents/home-server/scripts/compose_helper.sh /Users/nitinsrivastava/Documents/home-server/services/immich up -d</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

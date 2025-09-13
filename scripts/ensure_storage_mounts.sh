@@ -20,9 +20,23 @@ if [[ ! -d "$WARMSTORE" ]]; then
     exit 1
 fi
 
+# CRITICAL: Remove any existing circular symlinks inside warmstore directories
+echo "Checking for and removing any circular symlinks..."
+[[ -L "$WARMSTORE/Movies/Movies" ]] && rm "$WARMSTORE/Movies/Movies" 2>/dev/null && echo "  🧹 Removed circular Movies symlink"
+[[ -L "$WARMSTORE/TV Shows/TV Shows" ]] && rm "$WARMSTORE/TV Shows/TV Shows" 2>/dev/null && echo "  🧹 Removed circular TV Shows symlink"
+[[ -L "$WARMSTORE/Photos/Photos" ]] && rm "$WARMSTORE/Photos/Photos" 2>/dev/null && echo "  🧹 Removed circular Photos symlink"
+
 # Create Media mount structure (Plex)
 echo "Setting up Media mount points..."
 if mkdir -p /Volumes/Media 2>/dev/null; then
+    # Ensure source directories exist first
+    mkdir -p "$WARMSTORE/Movies" "$WARMSTORE/TV Shows" 2>/dev/null
+    
+    # Remove any existing symlinks to prevent circular references
+    [[ -L "/Volumes/Media/Movies" ]] && rm "/Volumes/Media/Movies" 2>/dev/null
+    [[ -L "/Volumes/Media/TV" ]] && rm "/Volumes/Media/TV" 2>/dev/null
+    
+    # Create proper symlinks
     ln -sf "$WARMSTORE/Movies" /Volumes/Media/Movies 2>/dev/null && echo "  ✅ Movies symlink created" || echo "  ⚠️  Movies symlink failed"
     ln -sf "$WARMSTORE/TV Shows" /Volumes/Media/TV 2>/dev/null && echo "  ✅ TV symlink created" || echo "  ⚠️  TV symlink failed"
 else

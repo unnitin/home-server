@@ -36,6 +36,7 @@
 | [`make_executable.sh`](#make_executablesh) | Utility | Fix script permissions | Manual |
 | [`post_boot_health_check.sh`](#post_boot_health_checksh) | Diagnostics | System health check | Manual |
 | [`start_plex_safe.sh`](#start_plex_safesh) | Services | Safe Plex startup | LaunchD io.homelab.plex |
+| [`wait_for_storage.sh`](#wait_for_storagesh) | Utility | Storage dependency check | LaunchD io.homelab.compose.immich |
 
 ---
 
@@ -411,6 +412,24 @@
 
 **Dependencies**: `92_configure_power.sh`, `pmset` command  
 **Used By**: LaunchD automation (powermgmt service)
+
+#### `wait_for_storage.sh`
+**Purpose**: Ensure storage prerequisites are ready before starting dependent services  
+**Usage**: Called automatically by LaunchD `io.homelab.compose.immich` service  
+**Features**:
+- Waits up to 5 minutes for warmstore RAID availability
+- Verifies `/Volumes/Photos` symlink exists and is accessible  
+- Prevents timing race conditions in service startup
+- Comprehensive logging of storage readiness checks
+
+**Process**:
+1. Waits for `/Volumes/warmstore` RAID array to be mounted
+2. Waits for `/Volumes/Photos` symlink to be created by storage service
+3. Verifies symlink target directory is accessible
+4. Logs complete storage architecture status on success
+
+**Dependencies**: `ensure_storage_mounts.sh`, AppleRAID, warmstore RAID  
+**Used By**: LaunchD automation (Immich service dependency)
 
 ---
 
