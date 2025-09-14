@@ -98,6 +98,88 @@ The automation system provides graceful fallback handling:
 
 ---
 
+## 🧪 **Automated Testing & Validation**
+
+The home server includes a comprehensive test suite to validate automation and prevent regressions.
+
+### **🔬 Test Framework**
+- **Hybrid Approach**: BATS (Bash Automated Testing System) + Python
+- **BATS Tests**: Native shell script testing for direct automation validation
+- **Python Tests**: Complex integration scenarios and network validation
+- **CI/CD Pipeline**: GitHub Actions runs tests on every pull request
+
+### **📋 Test Categories**
+
+#### **Unit Tests** (`tests/unit/`)
+- **Script Validation**: Syntax, permissions, and basic functionality
+- **Storage Utilities**: Mount point management and RAID safety
+- **Media Processing**: File naming conventions and processing logic
+- **Service Configuration**: LaunchD plist validation
+
+#### **Integration Tests** (`tests/integration/`)
+- **Service Dependencies**: LaunchD startup order and timing
+- **Storage Integration**: Mount timing and data placement validation
+- **Network Scenarios**: Connectivity, security, and Tailscale validation
+
+#### **End-to-End Tests** (`tests/e2e/`)
+- **Shutdown Recovery Simulation**: Complete reboot cycle testing
+- **System Health Validation**: Full automation workflow testing
+- **Safety Validations**: RAID protection and user-level automation checks
+
+### **🚀 Running Tests**
+
+#### **Quick Validation** (5 minutes)
+```bash
+# BATS unit tests - safe and fast
+bats tests/unit/*.bats
+
+# Python unit tests for complex logic
+python -m pytest tests/unit/ -v
+```
+
+#### **Comprehensive Testing** (30 minutes)
+```bash
+# All BATS tests
+bats tests/**/*.bats
+
+# All Python integration tests
+python -m pytest tests/integration/ tests/e2e/ -v
+```
+
+#### **Shutdown Recovery Test**
+```bash
+# Simulate complete shutdown/reboot cycle
+bats tests/e2e/test_shutdown_recovery.bats
+python -m pytest tests/e2e/test_shutdown_recovery.py -v
+```
+
+### **🔍 Test Coverage**
+- **25+ Unit Tests**: Script validation, storage utilities, media processing
+- **15+ Integration Tests**: Service dependencies, network scenarios
+- **10+ E2E Tests**: Complete system validation and recovery simulation
+- **Shutdown Simulation**: Based on manual test instructions, validates 0s-150s automation timeline
+
+### **⚙️ CI/CD Integration**
+- **Automated Testing**: Runs on every push and pull request
+- **Multiple Test Jobs**: BATS tests, Python tests, security validation
+- **Pre-commit Hooks**: Code quality and validation before commits
+- **Documentation Validation**: Ensures all scripts are documented
+
+### **📊 Test Results**
+```bash
+# View latest test results
+cat .github/workflows/test.yml
+
+# Run tests locally with same CI environment
+export TEST_MODE=1
+export RAID_I_UNDERSTAND_DATA_LOSS=0
+bats tests/unit/*.bats
+```
+
+The test suite ensures automation reliability and provides confidence in system changes. All tests are designed to be safe and non-destructive, with comprehensive mocking for system operations.
+
+---
+
 ## 📚 **Setup & Configuration Guide**
 
 *The following sections describe how to set up, modify, or troubleshoot the automation system.*

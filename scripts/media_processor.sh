@@ -19,9 +19,8 @@ MOVIES_TARGET="$WARMSTORE/Movies"
 TV_TARGET="$WARMSTORE/TV Shows"
 COLLECTIONS_TARGET="$WARMSTORE/Collections"
 
-# Logging setup
+# Logging setup (directory created later if needed)
 LOG_FILE="$LOGS_DIR/media_processor_$(date +%Y%m%d_%H%M%S).log"
-mkdir -p "$LOGS_DIR"
 
 # Logging functions
 log() {
@@ -265,6 +264,9 @@ cleanup_staging() {
 
 # Main execution
 main() {
+    # Create logs directory if needed
+    mkdir -p "$LOGS_DIR"
+    
     log_info "=== Media Processor Started ==="
     log_info "Staging directory: $STAGING_DIR"
     log_info "Log file: $LOG_FILE"
@@ -316,7 +318,27 @@ case "${1:-}" in
         echo ""
         echo "Default: Process all media types (movies, TV shows, collections)"
         ;;
-    *)
+    "")
+        # No arguments provided - show usage
+        echo "Usage: $0 [OPTIONS]"
+        echo ""
+        echo "OPTIONS:"
+        echo "  --movies-only      Process only movies from Staging"
+        echo "  --tv-only          Process only TV shows from Staging"
+        echo "  --collections-only Process only Collections from Staging"
+        echo "  --cleanup-only     Only cleanup empty directories and old logs"
+        echo "  --help             Show this help message"
+        echo ""
+        echo "Default: Process all media types (movies, TV shows, collections)"
+        echo ""
+        echo "To run processing, use: $0 --all"
+        ;;
+    --all)
         main
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Use --help for usage information"
+        exit 1
         ;;
 esac
