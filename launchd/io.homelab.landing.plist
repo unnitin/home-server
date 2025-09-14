@@ -9,7 +9,7 @@
 		<string>/usr/bin/env</string>
 		<string>bash</string>
 		<string>-lc</string>
-		<string>sleep 150 && echo "$(date): Starting landing page service..." && __HOME__/Documents/home-server/scripts/37_enable_simple_landing.sh</string>
+               <string>sleep 150 &amp;&amp; echo "$(date): Starting landing page service..." &amp;&amp; __HOME__/Documents/home-server/scripts/37_enable_simple_landing.sh</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>
