@@ -63,7 +63,7 @@ teardown() {
             # Should have safety checks nearby
             local file_with_pattern=$(echo "$output" | cut -d: -f1 | head -1)
             run grep -B5 -A5 "$pattern" "$file_with_pattern"
-            [[ "$output" =~ "RAID_I_UNDERSTAND_DATA_LOSS\|confirm\|read.*-p" ]] || \
+            [[ "$output" =~ RAID_I_UNDERSTAND_DATA_LOSS|confirm|read.*-p ]] || \
                 fail "Dangerous command '$pattern' in $file_with_pattern lacks safety validation"
         fi
     done
