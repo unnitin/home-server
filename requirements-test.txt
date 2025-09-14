@@ -1,0 +1,23 @@
+# Python testing dependencies (minimal - most tests use BATS)
+# Only needed for complex integration tests and data validation
+
+# Core testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+
+# System interaction for integration tests
+psutil>=5.9.5
+requests>=2.31.0
+
+# Configuration and data handling
+PyYAML>=6.0.1
+python-dotenv>=1.0.0
+
+# macOS system integration
+pyobjc-core>=9.2
+pyobjc-framework-SystemConfiguration>=9.2
+
+# Code quality (optional)
+black>=23.7.0
+flake8>=6.0.0

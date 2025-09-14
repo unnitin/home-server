@@ -1,0 +1,239 @@
+name: Comprehensive Test Suite
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  bats-tests:
+    name: BATS Unit Tests
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install BATS
+      run: |
+        brew install bats-core
+        
+    - name: Set up test environment
+      run: |
+        export TEST_MODE=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        
+    - name: Run BATS unit tests
+      run: |
+        export TEST_MODE=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        bats tests/unit/*.bats
+        
+    - name: Run BATS integration tests (safe)
+      run: |
+        export TEST_MODE=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        # Only run safe integration tests
+        bats tests/integration/test_service_dependencies.bats
+
+  python-tests:
+    name: Python Integration Tests
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements-test.txt
+        
+    - name: Run Python unit tests
+      run: |
+        export TEST_MODE=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        python -m pytest tests/unit/ -v --tb=short
+        
+    - name: Run Python integration tests (mocked)
+      run: |
+        export TEST_MODE=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        # Run integration tests without actual system interaction
+        python -m pytest tests/integration/test_network_scenarios.py -v --tb=short
+
+  script-validation:
+    name: Script Syntax Validation
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate shell script syntax
+      run: |
+        # Check all shell scripts for syntax errors
+        find . -name "*.sh" -type f -exec bash -n {} \;
+        
+    - name: Check for common issues
+      run: |
+        # Check for hardcoded paths (except /Volumes which is macOS specific)
+        echo "Checking for hardcoded user paths..."
+        if grep -r "/Users/" scripts/ setup/ --include="*.sh" | grep -v "/Volumes"; then
+          echo "❌ Found hardcoded user paths"
+          exit 1
+        fi
+        
+        # Check for proper shebang lines
+        echo "Checking shebang lines..."
+        find scripts/ setup/ -name "*.sh" -type f | while read script; do
+          if ! head -n 1 "$script" | grep -q "^#!/.*bash"; then
+            echo "❌ Missing or incorrect shebang in $script"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Script validation passed"
+
+  documentation-check:
+    name: Documentation Validation
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check documentation completeness
+      run: |
+        # Check that all scripts are documented in README
+        echo "Checking script documentation..."
+        
+        # Get list of all scripts
+        scripts=$(find scripts/ -name "*.sh" -type f | sort)
+        
+        # Check each script is mentioned in scripts/README.md
+        missing_docs=()
+        for script in $scripts; do
+          script_name=$(basename "$script")
+          if ! grep -q "$script_name" scripts/README.md; then
+            missing_docs+=("$script_name")
+          fi
+        done
+        
+        if [ ${#missing_docs[@]} -gt 0 ]; then
+          echo "❌ Scripts missing from documentation:"
+          printf '%s\n' "${missing_docs[@]}"
+          exit 1
+        fi
+        
+        echo "✅ Documentation check passed"
+        
+    - name: Validate markdown syntax
+      run: |
+        # Basic markdown validation
+        find . -name "*.md" -type f | while read md_file; do
+          # Check for basic markdown issues
+          if grep -q "]()" "$md_file"; then
+            echo "❌ Empty links found in $md_file"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Markdown validation passed"
+
+  security-check:
+    name: Security Validation
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check for sensitive data
+      run: |
+        # Check for potential secrets or sensitive data
+        echo "Checking for sensitive data..."
+        
+        # Patterns that might indicate secrets
+        sensitive_patterns=(
+          "password="
+          "token="
+          "secret="
+          "key="
+          "auth="
+        )
+        
+        for pattern in "${sensitive_patterns[@]}"; do
+          # Allow environment variable references like ${TOKEN}
+          if grep -r "$pattern" scripts/ setup/ --include="*.sh" | grep -v "\${" | grep -v "# "; then
+            echo "❌ Potential sensitive data found: $pattern"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Security check passed"
+        
+    - name: Check file permissions
+      run: |
+        # Check that scripts have appropriate permissions
+        echo "Checking file permissions..."
+        
+        # Scripts should be executable
+        find scripts/ setup/ -name "*.sh" -type f | while read script; do
+          if [ ! -x "$script" ]; then
+            echo "❌ Script not executable: $script"
+            exit 1
+          fi
+        done
+        
+        # Config files should not be executable
+        find . -name "*.yml" -o -name "*.yaml" -o -name "*.json" -o -name "*.plist" | while read config; do
+          if [ -x "$config" ]; then
+            echo "❌ Config file should not be executable: $config"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Permission check passed"
+
+  # Integration test job that runs on schedule (not on every PR)
+  full-integration:
+    name: Full Integration Tests
+    runs-on: macos-latest
+    # Only run on main branch or manually
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install BATS
+      run: brew install bats-core
+      
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements-test.txt
+        
+    - name: Run full integration tests
+      run: |
+        export TEST_MODE=1
+        export TEST_INTEGRATION=1
+        export RAID_I_UNDERSTAND_DATA_LOSS=0
+        
+        # Run all BATS tests
+        bats tests/**/*.bats
+        
+        # Run Python integration tests with actual system interaction
+        python -m pytest tests/integration/ -v --tb=short
+        
+    - name: Generate test report
+      if: always()
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "Integration tests completed." >> $GITHUB_STEP_SUMMARY
+        echo "Check logs above for detailed results." >> $GITHUB_STEP_SUMMARY
