@@ -75,7 +75,7 @@ process_with_delay() {
             fi
             
             # Run media processor
-            if "$SCRIPT_DIR/media_processor.sh"; then
+            if "$SCRIPT_DIR/processor.sh"; then
                 log_info "Media processing completed successfully"
             else
                 log_error "Media processing failed"
@@ -172,7 +172,7 @@ start_polling() {
             # Acquire lock to prevent concurrent processing
             if acquire_lock; then
                 # Run media processor
-                if "$SCRIPT_DIR/media_processor.sh"; then
+                if "$SCRIPT_DIR/processor.sh"; then
                     log_info "Media processing completed successfully"
                 else
                     log_error "Media processing failed"

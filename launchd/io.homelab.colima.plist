@@ -7,7 +7,7 @@
     <string>/usr/bin/env</string>
     <string>bash</string>
     <string>-lc</string>
-    <string>sleep 60 &amp;&amp; /Users/nitinsrivastava/Documents/home-server/scripts/21_start_colima.sh</string>
+    <string>sleep 60 &amp;&amp; /Users/nitinsrivastava/Documents/home-server/scripts/infrastructure/start_docker.sh</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/92_configure_power.sh
+# scripts/infrastructure/configure_power.sh
 # Configure Mac mini for 24/7 headless server operation
 
 set -euo pipefail
@@ -13,7 +13,7 @@ main() {
     # Verify we're running with appropriate permissions
     if ! sudo -n true 2>/dev/null; then
         echo "⚠️  This script requires sudo access to modify power management settings"
-        echo "💡 Run: sudo ./scripts/92_configure_power.sh"
+        echo "💡 Run: sudo ./scripts/infrastructure/configure_power.sh"
         return 1
     fi
     

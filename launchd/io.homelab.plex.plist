@@ -9,7 +9,7 @@
         <string>/usr/bin/env</string>
         <string>bash</string>
         <string>-lc</string>
-        <string>sleep 120 &amp;&amp; echo "$(date): Starting Plex Media Server service..." &amp;&amp; __HOME__/Documents/home-server/scripts/start_plex_safe.sh</string>
+        <string>sleep 120 &amp;&amp; echo "$(date): Starting Plex Media Server service..." &amp;&amp; __HOME__/Documents/home-server/scripts/services/start_plex_safe.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

@@ -15,15 +15,15 @@ teardown() {
 
 @test "ensure_storage_mounts.sh creates required directories" {
     # Test that the script exists and is executable
-    assert_script_exists "scripts/ensure_storage_mounts.sh"
-    assert_valid_bash_syntax "scripts/ensure_storage_mounts.sh"
+    assert_script_exists "scripts/storage/ensure_mounts.sh"
+    assert_valid_bash_syntax "scripts/storage/ensure_mounts.sh"
     
     # Test basic functionality without actually running it (since it requires sudo)
     # Just verify the script structure and key functions
-    run grep -q "mkdir -p" scripts/ensure_storage_mounts.sh
+    run grep -q "mkdir -p" scripts/storage/ensure_mounts.sh
     [ "$status" -eq 0 ]
     
-    run grep -q "ln -sf" scripts/ensure_storage_mounts.sh
+    run grep -q "ln -sf" scripts/storage/ensure_mounts.sh
     [ "$status" -eq 0 ]
 }
 
@@ -56,7 +56,7 @@ teardown() {
 
 @test "wait_for_storage.sh validates required mounts" {
     # Test the wait_for_storage.sh logic
-    assert_script_exists "scripts/wait_for_storage.sh"
+    assert_script_exists "scripts/storage/wait_for_storage.sh"
     
     # Create fake mount points
     mkdir -p "$TEST_TEMP_DIR/Volumes/warmstore"

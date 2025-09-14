@@ -49,9 +49,9 @@ teardown() {
 
 @test "LaunchD services reference correct script paths" {
     local services=(
-        "io.homelab.colima.plist:21_start_colima.sh"
-        "io.homelab.compose.immich.plist:compose_helper.sh"
-        "io.homelab.media.watcher.plist:media_watcher.sh"
+        "io.homelab.colima.plist:start_docker.sh"
+        "io.homelab.compose.immich.plist:compose_wrapper.sh"
+        "io.homelab.media.watcher.plist:watcher.sh"
         "io.homelab.powermgmt.plist:ensure_power_settings.sh"
     )
     
@@ -91,7 +91,7 @@ teardown() {
     [ "$status" -eq 0 ] || fail "Immich service should wait for storage"
     
     # Verify the wait_for_storage.sh script exists
-    assert_script_exists "scripts/wait_for_storage.sh"
+    assert_script_exists "scripts/storage/wait_for_storage.sh"
 }
 
 @test "services use centralized logging paths" {
@@ -127,14 +127,14 @@ teardown() {
     )
     
     for service in "${expected_services[@]}"; do
-        run grep "$service" scripts/40_configure_launchd.sh
+        run grep "$service" scripts/automation/configure_launchd.sh
         [ "$status" -eq 0 ] || fail "configure_launchd.sh should reference service: $service"
     done
 }
 
 @test "service dependencies are correctly ordered in configure_launchd.sh" {
     # Test that services are listed in dependency order
-    run grep -n "SERVICES=(" scripts/40_configure_launchd.sh -A 20
+    run grep -n "SERVICES=(" scripts/automation/configure_launchd.sh -A 20
     [ "$status" -eq 0 ]
     
     # Storage should come first
@@ -171,8 +171,8 @@ teardown() {
     [[ -f "$media_plist" ]] || fail "Media watcher plist not found"
     
     # Check it references the correct script
-    run grep "media_watcher.sh" "$media_plist"
-    [ "$status" -eq 0 ] || fail "Media watcher plist should reference media_watcher.sh"
+    run grep "watcher.sh" "$media_plist"
+    [ "$status" -eq 0 ] || fail "Media watcher plist should reference watcher.sh"
     
     # Check it has RunAtLoad set to true
     run grep -A 1 "RunAtLoad" "$media_plist"

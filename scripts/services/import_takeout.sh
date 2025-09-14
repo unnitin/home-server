@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Usage: ./scripts/70_takeout_to_immich.sh /path/to/Takeout.zip
+# Usage: ./scripts/services/import_takeout.sh /path/to/Takeout.zip
 # Optional env: IMMICH_SERVER (e.g., http://localhost:2283), IMMICH_API_KEY
 
 ZIP="${1:-}"

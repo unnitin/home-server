@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(pwd)/scripts/_raid_common.sh"
+source "$(dirname "$0")/lib/raid_common.sh"
 require_guard
 parse_disks NVME_DISKS
 

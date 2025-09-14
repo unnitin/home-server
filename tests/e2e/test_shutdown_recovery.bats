@@ -41,15 +41,15 @@ EOF
     
     cat > "$recovery_file" << 'EOF'
 POST-BOOT RECOVERY COMMANDS:
-1. Health check: ./scripts/post_boot_health_check.sh
-2. Auto-recovery: ./scripts/post_boot_health_check.sh --auto-recover
+1. Health check: ./scripts/core/health_check.sh
+2. Auto-recovery: ./scripts/core/health_check.sh --auto-recover
 3. Monitor logs: tail -f /Volumes/warmstore/logs/{service}/{service}.{out,err}
 EOF
     
     # Verify recovery reference
     [[ -f "$recovery_file" ]]
     grep -q "POST-BOOT RECOVERY COMMANDS" "$recovery_file"
-    grep -q "post_boot_health_check.sh" "$recovery_file"
+    grep -q "health_check.sh" "$recovery_file"
     grep -q "auto-recover" "$recovery_file"
 }
 
@@ -77,12 +77,12 @@ EOF
 @test "service startup scripts exist for automation timeline" {
     # Verify scripts exist for each service in automation timeline
     local service_scripts=(
-        "scripts/ensure_storage_mounts.sh:storage"
-        "scripts/90_install_tailscale.sh:tailscale"
-        "scripts/21_start_colima.sh:colima"
-        "scripts/30_deploy_services.sh:immich"
-        "scripts/31_install_native_plex.sh:plex"
-        "scripts/37_enable_simple_landing.sh:landing"
+        "scripts/storage/ensure_mounts.sh:storage"
+        "scripts/infrastructure/install_tailscale.sh:tailscale"
+        "scripts/infrastructure/start_docker.sh:colima"
+        "scripts/services/deploy_containers.sh:immich"
+        "scripts/services/install_plex.sh:plex"
+        "scripts/services/enable_landing.sh:landing"
     )
     
     for script_spec in "${service_scripts[@]}"; do
@@ -158,10 +158,10 @@ EOF
 
 @test "auto-recovery command structure is valid" {
     # Test auto-recovery command from instructions
-    local auto_recovery_cmd="./scripts/post_boot_health_check.sh --auto-recovery"
+    local auto_recovery_cmd="./scripts/core/health_check.sh --auto-recovery"
     
     # Verify script exists
-    assert_script_exists "scripts/post_boot_health_check.sh"
+    assert_script_exists "scripts/core/health_check.sh"
     
     # Test command structure
     [[ "$auto_recovery_cmd" =~ --auto-recovery ]] || fail "Auto-recovery should use --auto-recovery flag"
@@ -248,10 +248,10 @@ EOF
                 # Verify no RAID modification commands in LaunchD automation scripts
                 # (Setup scripts are allowed to have RAID commands, but not automation)
                 local automation_scripts=(
-                    "scripts/ensure_storage_mounts.sh"
-                    "scripts/wait_for_storage.sh"
-                    "scripts/media_watcher.sh"
-                    "scripts/media_processor.sh"
+                    "scripts/storage/ensure_mounts.sh"
+                    "scripts/storage/wait_for_storage.sh"
+                    "scripts/media/watcher.sh"
+                    "scripts/media/processor.sh"
                 )
                 
                 local found_raid_in_automation=false
@@ -270,7 +270,7 @@ EOF
                 ;;
             "automation_can_be_disabled")
                 # Verify configure_launchd.sh exists for management
-                assert_script_exists "scripts/40_configure_launchd.sh"
+                assert_script_exists "scripts/automation/configure_launchd.sh"
                 ;;
             "actions_are_logged")
                 # Verify logging is configured
