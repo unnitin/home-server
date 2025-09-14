@@ -91,8 +91,13 @@ teardown() {
 @test "media_processor.sh shows usage when called without arguments" {
     mock_system_commands
     run bash scripts/media_processor.sh
-    # Script might exit with 0 and show usage, or exit with error
-    # Either is acceptable as long as it shows usage information
+    
+    # Debug output for CI troubleshooting
+    echo "Exit status: $status"
+    echo "Output: $output"
+    
+    # Script should exit successfully and show usage
+    [ "$status" -eq 0 ]
     [[ "$output" =~ "Usage:" ]] || [[ "$output" =~ "USAGE:" ]] || [[ "$output" =~ "usage:" ]]
 }
 

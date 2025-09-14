@@ -19,9 +19,8 @@ MOVIES_TARGET="$WARMSTORE/Movies"
 TV_TARGET="$WARMSTORE/TV Shows"
 COLLECTIONS_TARGET="$WARMSTORE/Collections"
 
-# Logging setup
+# Logging setup (directory created later if needed)
 LOG_FILE="$LOGS_DIR/media_processor_$(date +%Y%m%d_%H%M%S).log"
-mkdir -p "$LOGS_DIR"
 
 # Logging functions
 log() {
@@ -265,6 +264,9 @@ cleanup_staging() {
 
 # Main execution
 main() {
+    # Create logs directory if needed
+    mkdir -p "$LOGS_DIR"
+    
     log_info "=== Media Processor Started ==="
     log_info "Staging directory: $STAGING_DIR"
     log_info "Log file: $LOG_FILE"
