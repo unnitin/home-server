@@ -73,6 +73,7 @@ SERVICES=(
   "compose.immich" # Immich containers
   "plex"          # Plex Media Server
   "landing"       # Landing page + Tailscale serving
+  "media.watcher" # Media processing automation
   "tailscale"     # Tailscale VPN connection
   "updatecheck"   # System update monitoring
 )

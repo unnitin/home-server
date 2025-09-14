@@ -22,7 +22,7 @@ setup/setup.sh
 ---
 
 ### **setup_full.sh** - Interactive Setup  
-Interactive full setup with confirmations. Installs Docker/Colima, Immich, Plex, launchd jobs, Tailscale, and optional reverse proxy.
+Interactive full setup with confirmations. Installs Docker/Colima, Immich, Plex, media processing automation, launchd jobs, Tailscale, and optional reverse proxy.
 
 ```bash
 setup/setup_full.sh
@@ -44,10 +44,11 @@ setup/setup_flags.sh --all
 ```
 
 **Common flags**:
-- `--all` → Complete setup (bootstrap + services + automation)
+- `--all` → Complete setup (bootstrap + services + automation + media processing)
 - `--bootstrap` → Safe environment setup only
 - `--rebuild=<targets>` → Rebuild storage arrays (⚠️ destructive)
 - `--format-mount` → Format and mount arrays after rebuild
+- `--media-processing` → Setup automated media processing for Plex
 - `--enable-proxy` → Install & enable Caddy reverse proxy
 - `--tailscale-up` → Connect to Tailscale network
 
@@ -91,9 +92,9 @@ setup/setup_flags.sh --all
   setup/setup_flags.sh --all
   ```
 
-- **Safe bootstrap + Docker + Immich only:**
+- **Safe bootstrap + Docker + Immich + Media Processing:**
   ```bash
-  setup/setup_flags.sh --bootstrap --colima --immich
+  setup/setup_flags.sh --bootstrap --colima --immich --media-processing
   ```
 
 - **Rebuild warmstore as a 2‑disk mirror (⚠️ destructive):**

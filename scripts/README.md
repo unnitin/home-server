@@ -36,6 +36,13 @@
 | [`make_executable.sh`](#make_executablesh) | Utility | Fix script permissions | Manual |
 | [`post_boot_health_check.sh`](#post_boot_health_checksh) | Diagnostics | System health check | Manual |
 | [`start_plex_safe.sh`](#start_plex_safesh) | Services | Safe Plex startup | LaunchD io.homelab.plex |
+| [`wait_for_storage.sh`](#wait_for_storagesh) | Utility | Storage dependency check | LaunchD io.homelab.compose.immich |
+| [`95_setup_media_processing.sh`](#95_setup_media_processingsh) | Media | Setup media processing system | setup_full.sh, setup_flags.sh |
+| [`media_processor.sh`](#media_processorsh) | Media | Process media files for Plex | media_watcher.sh, Manual |
+| [`media_watcher.sh`](#media_watchersh) | Media | Monitor Staging directories | LaunchD io.homelab.media.watcher |
+| [`process_movie.sh`](#process_moviesh) | Media | Process individual movie files | media_processor.sh |
+| [`process_tv_show.sh`](#process_tv_showsh) | Media | Process individual TV show files | media_processor.sh |
+| [`process_collection.sh`](#process_collectionsh) | Media | Process individual collection files | media_processor.sh |
 
 ---
 
@@ -412,8 +419,110 @@
 **Dependencies**: `92_configure_power.sh`, `pmset` command  
 **Used By**: LaunchD automation (powermgmt service)
 
+#### `wait_for_storage.sh`
+**Purpose**: Ensure storage prerequisites are ready before starting dependent services  
+**Usage**: Called automatically by LaunchD `io.homelab.compose.immich` service  
+**Features**:
+- Waits up to 5 minutes for warmstore RAID availability
+- Verifies `/Volumes/Photos` symlink exists and is accessible  
+- Prevents timing race conditions in service startup
+- Comprehensive logging of storage readiness checks
+
+**Process**:
+1. Waits for `/Volumes/warmstore` RAID array to be mounted
+2. Waits for `/Volumes/Photos` symlink to be created by storage service
+3. Verifies symlink target directory is accessible
+4. Logs complete storage architecture status on success
+
+**Dependencies**: `ensure_storage_mounts.sh`, AppleRAID, warmstore RAID  
+**Used By**: LaunchD automation (Immich service dependency)
+
 ---
 
+### **Media Processing Scripts** 📁
+
+#### `95_setup_media_processing.sh`
+**Purpose**: Sets up the complete media processing system for automated Plex organization  
+**Usage**: `./scripts/95_setup_media_processing.sh`  
+**Features**:
+- Creates Staging directory structure (`/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}`)
+- Sets up centralized logging directories (`/Volumes/warmstore/logs/{service}/`)
+- Checks for required dependencies (`fswatch`, `ffprobe`/`mediainfo`)
+- Configures proper permissions for media processing
+- Provides usage instructions and system overview
+
+**Dependencies**: `fswatch` (optional, for real-time monitoring), `ffprobe` or `mediainfo` (optional, for metadata)  
+**Used By**: `setup_full.sh`, `setup_flags.sh`
+
+#### `media_processor.sh`
+**Purpose**: Main orchestrator for processing media files according to Plex naming conventions  
+**Usage**: `./scripts/media_processor.sh [--movies-only|--tv-only|--collections-only|--cleanup-only]`  
+**Features**:
+- Processes Movies: `Movie Name (Year)/Movie Name (Year).ext`
+- Processes TV Shows: `Show Name (Year)/Season XX/Show Name - sXXeYY.ext`
+- Processes Collections: Preserves exact folder structure and naming
+- Handles associated files (subtitles, metadata) alongside media files
+- Comprehensive error handling with failed files moved to staging/failed/
+- Automatic cleanup of empty directories and system files
+- Detailed logging of all processing activities
+
+**Supported Formats**: `.mkv`, `.mp4`, `.avi`, `.mov`, `.m4v`, `.wmv`, `.flv`, `.webm`  
+**Dependencies**: `process_movie.sh`, `process_tv_show.sh`, `process_collection.sh`  
+**Used By**: `media_watcher.sh`, Manual execution
+
+#### `media_watcher.sh`
+**Purpose**: Monitors Staging directories for new files and triggers automatic processing  
+**Usage**: `./scripts/media_watcher.sh {start|stop|status|restart}`  
+**Features**:
+- Real-time monitoring using `fswatch` (falls back to polling if unavailable)
+- Monitors `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Implements delay to allow complete file transfers before processing
+- Uses lock files to prevent concurrent processing
+- Automatic restart on failure with comprehensive logging
+- Background daemon operation with PID management
+
+**Dependencies**: `media_processor.sh`, `fswatch` (optional)  
+**Used By**: LaunchD `io.homelab.media.watcher`
+
+#### `process_movie.sh`
+**Purpose**: Processes individual movie files according to Plex naming standards  
+**Usage**: `./scripts/process_movie.sh <source_file> <target_dir> <log_file> [rel_path]`  
+**Features**:
+- Extracts movie name and year from filename using regex patterns
+- Creates Plex-compliant directory structure
+- Moves main file and associated files (subtitles, metadata)
+- Handles various naming patterns and edge cases
+- Preserves relative path structure when specified
+
+**Dependencies**: None (standalone)  
+**Used By**: `media_processor.sh`
+
+#### `process_tv_show.sh`
+**Purpose**: Processes individual TV show files according to Plex naming standards  
+**Usage**: `./scripts/process_tv_show.sh <source_file> <target_dir> <log_file> [rel_path]`  
+**Features**:
+- Extracts show name, season, and episode from filename
+- Creates Plex-compliant directory structure (`Show Name/Season XX/`)
+- Handles various TV show naming patterns (sXXeYY, SxxExx, etc.)
+- Moves main file and associated files
+- Preserves relative path structure when specified
+
+**Dependencies**: None (standalone)  
+**Used By**: `media_processor.sh`
+
+#### `process_collection.sh`
+**Purpose**: Processes individual collection files while preserving exact folder structure  
+**Usage**: `./scripts/process_collection.sh <source_file> <target_dir> <log_file> [rel_path]`  
+**Features**:
+- Preserves exact folder structure from Staging to target
+- Maintains original file naming (no Plex renaming applied)
+- Moves main file and associated files
+- Ideal for adult content, documentaries, or custom collections
+
+**Dependencies**: None (standalone)  
+**Used By**: `media_processor.sh`
+
+---
 
 ## 🚨 **Before Adding New Scripts**
 

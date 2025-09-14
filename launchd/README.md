@@ -51,7 +51,40 @@ Monitors and maintains Mac mini power settings for 24/7 server operation.
 - Runs `ensure_power_settings.sh` every hour
 - Automatically restores server-optimized power settings
 - Prevents sleep settings from reverting after system updates
-- Logs power management activities to `/tmp/powermgmt.out`
+- Logs power management activities to `/Volumes/warmstore/logs/powermgmt/powermgmt.out`
+
+---
+
+### **io.homelab.media.watcher.plist** - Media Processing Automation
+Monitors Staging directories for new media files and automatically processes them according to Plex naming conventions.
+
+**Service**: Media processing watcher  
+**Trigger**: System startup (RunAtLoad)  
+**Purpose**: Automated media file organization for Plex Media Server
+
+**Features**:
+- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Automatic file processing using Plex naming standards
+- Preserves folder structure for Collections
+- Graceful error handling with failed files moved to staging/failed/
+- Comprehensive logging to `/Volumes/warmstore/logs/media-watcher/`
+- Uses `fswatch` for real-time monitoring (falls back to polling)
+- Background daemon operation with automatic restart on failure
+
+**Supported Formats**: `.mkv`, `.mp4`, `.avi`, `.mov`, `.m4v`, `.wmv`, `.flv`, `.webm`
+
+**Management**:
+```bash
+# Check watcher status
+./scripts/media_watcher.sh status
+
+# Start/stop watcher manually
+./scripts/media_watcher.sh start
+./scripts/media_watcher.sh stop
+
+# View processing logs
+tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
+```
 
 ---
 

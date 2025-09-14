@@ -64,6 +64,11 @@ read -r -p "Proceed to (re)build arrays now? [y/N] " a; case "$a" in
     ;;
 esac
 
+banner "Storage Mount Points"
+echo "Setting up storage mount points for services..."
+echo "Note: This step requires sudo permissions to create symlinks in /Volumes/"
+sudo scripts/ensure_storage_mounts.sh
+
 banner "Immich"
 if [[ ! -f services/immich/.env ]]; then
   ( cd services/immich && cp -n .env.example .env )

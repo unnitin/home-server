@@ -51,3 +51,18 @@ brew*.lock
 
 # OS backup files
 *.~*
+venv/
+
+# Testing artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache/
+*.cover
+.hypothesis/
+
+# Test temporary files
+test_temp_*
+*_test_temp
+

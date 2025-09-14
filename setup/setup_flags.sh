@@ -14,7 +14,7 @@ cd "$REPO_ROOT"
 
 DO_BOOTSTRAP=0; DO_COLIMA=0; DO_IMMICH=0; DO_PLEX=0; DO_LAUNCHD=0
 DO_TS_INSTALL=0; DO_TS_UP=0; DO_TS_CONFIGURE_HTTPS=0; DO_CONFIGURE_POWER=0; DO_TS_SERVE_DIRECT=0; DO_PROXY=0; DO_LANDING=0
-DO_REBUILD_TARGETS=""; DO_FORMAT_MOUNT=0; DRY_RUN=0
+DO_STORAGE_MOUNTS=0; DO_REBUILD_TARGETS=""; DO_FORMAT_MOUNT=0; DRY_RUN=0
 
 log(){ printf "[%s] %s\n" "$(date '+%F %T')" "$*"; }
 run(){ if (( DRY_RUN )); then echo "DRY: $*"; else eval "$@"; fi; }
@@ -26,9 +26,10 @@ USAGE
   setup/setup_flags.sh [OPTIONS]
 
 OPTIONS
-  --all                     bootstrap + colima + immich + plex + launchd + tailscale-install + tailscale-up + tailscale-https + configure-power + landing
+  --all                     bootstrap + colima + storage-mounts + immich + plex + launchd + tailscale-install + tailscale-up + tailscale-https + configure-power + landing
   --bootstrap               run setup/setup.sh
   --colima                  install/start Colima
+  --storage-mounts          create storage mount points for services
   --immich                  deploy Immich (docker compose)
   --plex                    install native Plex
   --launchd                 configure launchd jobs
@@ -52,9 +53,10 @@ EOF
 
 for a in "$@"; do
   case "$a" in
-    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_IMMICH=1; DO_PLEX=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_UP=1; DO_TS_CONFIGURE_HTTPS=1; DO_CONFIGURE_POWER=1; DO_LANDING=1 ;;
+    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_STORAGE_MOUNTS=1; DO_IMMICH=1; DO_PLEX=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_UP=1; DO_TS_CONFIGURE_HTTPS=1; DO_CONFIGURE_POWER=1; DO_LANDING=1 ;;
     --bootstrap) DO_BOOTSTRAP=1 ;;
     --colima) DO_COLIMA=1 ;;
+    --storage-mounts) DO_STORAGE_MOUNTS=1 ;;
     --immich) DO_IMMICH=1 ;;
     --plex) DO_PLEX=1 ;;
     --launchd) DO_LAUNCHD=1 ;;
@@ -75,6 +77,7 @@ done
 
 if (( DO_BOOTSTRAP )); then log "Bootstrap"; run setup/setup.sh; fi
 if (( DO_COLIMA )); then log "Colima"; run scripts/20_install_colima_docker.sh; run scripts/21_start_colima.sh; fi
+if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run sudo scripts/ensure_storage_mounts.sh; fi
 if (( DO_IMMICH )); then
   log "Immich"
   [[ -f services/immich/.env ]] || run bash -lc 'cd services/immich && cp -n .env.example .env || true'

@@ -24,9 +24,9 @@
 		<key>USER</key>
 		<string>__USER__</string>
 	</dict>
-	<key>StandardOutPath</key>
-	<string>/tmp/landing.out</string>
-	<key>StandardErrorPath</key>
-	<string>/tmp/landing.err</string>
+       <key>StandardOutPath</key>
+       <string>/Volumes/warmstore/logs/landing/landing.out</string>
+       <key>StandardErrorPath</key>
+       <string>/Volumes/warmstore/logs/landing/landing.err</string>
 </dict>
 </plist>

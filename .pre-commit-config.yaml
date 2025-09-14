@@ -1,0 +1,101 @@
+# Pre-commit hooks for Mac Mini HomeServer
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Shell script validation
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning]
+        files: \.(sh|bash)$
+        exclude: ^tests/
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # Basic file checks
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      
+      # Text file formatting
+      - id: trailing-whitespace
+        exclude: \.(md|rst)$
+      - id: end-of-file-fixer
+        exclude: \.(md|rst)$
+      
+      # YAML/JSON validation
+      - id: check-yaml
+        files: \.(yml|yaml)$
+      - id: check-json
+        files: \.json$
+      
+      # Security checks
+      - id: detect-private-key
+      - id: detect-aws-credentials
+
+  # Python code quality (for test files)
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        files: \.py$
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        files: \.py$
+        args: [--max-line-length=88, --ignore=E203,W503]
+
+  # Custom hooks for our specific needs
+  - repo: local
+    hooks:
+      # Check for hardcoded paths
+      - id: check-hardcoded-paths
+        name: Check for hardcoded user paths
+        entry: bash -c 'if grep -r "/Users/" scripts/ setup/ --include="*.sh" | grep -v "/Volumes" | grep -v "# Example:"; then echo "Found hardcoded user paths"; exit 1; fi'
+        language: system
+        files: \.(sh|bash)$
+        pass_filenames: false
+      
+      # Validate script documentation
+      - id: check-script-docs
+        name: Check script documentation
+        entry: bash -c 'scripts=$(find scripts/ -name "*.sh" -type f | wc -l); docs=$(grep -c "\.sh" scripts/README.md || echo 0); if [ $scripts -gt $docs ]; then echo "Some scripts may be missing from documentation"; exit 1; fi'
+        language: system
+        pass_filenames: false
+      
+      # Check LaunchD plist syntax
+      - id: validate-plists
+        name: Validate LaunchD plist files
+        entry: bash -c 'find launchd/ -name "*.plist" -type f -exec plutil -lint {} \;'
+        language: system
+        files: \.plist$
+        pass_filenames: false
+      
+      # Run quick BATS tests
+      - id: bats-unit-tests
+        name: Run BATS unit tests
+        entry: bash -c 'export TEST_MODE=1 RAID_I_UNDERSTAND_DATA_LOSS=0; bats tests/unit/test_script_validation.bats'
+        language: system
+        pass_filenames: false
+        stages: [manual]  # Only run when explicitly requested
+
+# Configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
