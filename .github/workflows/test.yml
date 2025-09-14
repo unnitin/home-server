@@ -113,15 +113,16 @@ jobs:
         # Check that all scripts are documented in README
         echo "Checking script documentation..."
         
-        # Get list of all scripts
-        scripts=$(find scripts/ -name "*.sh" -type f | sort)
+        # Get list of all scripts (relative to scripts/ directory)
+        scripts=$(find scripts/ -name "*.sh" -type f | sed 's|scripts/||' | sort)
         
-        # Check each script is mentioned in scripts/README.md
+        # Check each script is mentioned in scripts/README.md (with full path or basename)
         missing_docs=()
         for script in $scripts; do
           script_name=$(basename "$script")
-          if ! grep -q "$script_name" scripts/README.md; then
-            missing_docs+=("$script_name")
+          # Check for either full path or just filename in documentation
+          if ! grep -q "$script" scripts/README.md && ! grep -q "$script_name" scripts/README.md; then
+            missing_docs+=("$script")
           fi
         done
         
