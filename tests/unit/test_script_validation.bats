@@ -88,17 +88,12 @@ teardown() {
     [ "$status" -eq 0 ]  # Should still show help, but validate env vars
 }
 
-@test "media_processor.sh contains help functionality" {
-    # Test that the script exists and has help functionality without executing it
-    assert_script_exists "scripts/media_processor.sh"
-    assert_valid_bash_syntax "scripts/media_processor.sh"
-    
-    # Check that the script contains help functionality
-    run grep -q "\-\-help)" scripts/media_processor.sh
-    [ "$status" -eq 0 ]
-    
-    run grep -q "Usage:" scripts/media_processor.sh
-    [ "$status" -eq 0 ]
+@test "media_processor.sh shows usage when called without arguments" {
+    mock_system_commands
+    run bash scripts/media_processor.sh
+    # Script might exit with 0 and show usage, or exit with error
+    # Either is acceptable as long as it shows usage information
+    [[ "$output" =~ "Usage:" ]] || [[ "$output" =~ "USAGE:" ]] || [[ "$output" =~ "usage:" ]]
 }
 
 @test "media_watcher.sh accepts valid commands" {

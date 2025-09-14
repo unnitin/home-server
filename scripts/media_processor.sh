@@ -316,7 +316,27 @@ case "${1:-}" in
         echo ""
         echo "Default: Process all media types (movies, TV shows, collections)"
         ;;
-    *)
+    "")
+        # No arguments provided - show usage
+        echo "Usage: $0 [OPTIONS]"
+        echo ""
+        echo "OPTIONS:"
+        echo "  --movies-only      Process only movies from Staging"
+        echo "  --tv-only          Process only TV shows from Staging"
+        echo "  --collections-only Process only Collections from Staging"
+        echo "  --cleanup-only     Only cleanup empty directories and old logs"
+        echo "  --help             Show this help message"
+        echo ""
+        echo "Default: Process all media types (movies, TV shows, collections)"
+        echo ""
+        echo "To run processing, use: $0 --all"
+        ;;
+    --all)
         main
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Use --help for usage information"
+        exit 1
         ;;
 esac
