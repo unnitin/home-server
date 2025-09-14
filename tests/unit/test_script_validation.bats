@@ -88,11 +88,10 @@ teardown() {
     [ "$status" -eq 0 ]  # Should still show help, but validate env vars
 }
 
-@test "media_processor.sh shows usage when called without arguments" {
+@test "media_processor.sh shows usage when called with --help" {
     mock_system_commands
-    run bash scripts/media_processor.sh
-    # Script might exit with 0 and show usage, or exit with error
-    # Either is acceptable as long as it shows usage information
+    run bash scripts/media_processor.sh --help
+    [ "$status" -eq 0 ]
     [[ "$output" =~ "Usage:" ]] || [[ "$output" =~ "USAGE:" ]] || [[ "$output" =~ "usage:" ]]
 }
 
