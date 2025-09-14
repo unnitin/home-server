@@ -23,9 +23,9 @@
         <string>__USER__</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>/tmp/storage.out</string>
+    <string>/Volumes/warmstore/logs/storage/storage.out</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/storage.err</string>
+    <string>/Volumes/warmstore/logs/storage/storage.err</string>
 </dict>
 </plist>
 

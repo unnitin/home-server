@@ -27,12 +27,13 @@ When your Mac mini reboots, the following happens automatically:
 **Application Startup (90-150s):**
 - 🎬 **Plex service** starts Media Server with HTTPS re-enablement
 - 🌐 **Landing page service** starts HTTP server and configures Tailscale HTTPS serving
+- 📁 **Media processing service** monitors Staging directories for automatic file organization
 
 #### **🛡️ Security-First Automation Features**
 - **Graceful Permission Handling**: Services attempt `sudo` operations but provide manual recovery commands if they fail
 - **Dependency-Aware Timing**: Services start in the correct order with appropriate delays
 - **Self-Healing Scripts**: Each service includes error detection and recovery logic
-- **Comprehensive Logging**: All automation logs to `/tmp/*.{out,err}` for monitoring
+- **Centralized Logging**: All automation logs to `/Volumes/warmstore/logs/{service}/` for monitoring
 - **Manual Recovery Support**: `post_boot_health_check.sh --auto-recover` for additional recovery
 
 #### **📋 Active LaunchD Services**
@@ -41,7 +42,7 @@ When your Mac mini reboots, the following happens automatically:
 launchctl list | grep homelab
 
 # Monitor real-time logs:
-tail -f /tmp/{storage,colima,immich,plex,landing,powermgmt}.{out,err}
+tail -f /Volumes/warmstore/logs/{storage,colima,immich,plex,landing,powermgmt}/*.{out,err}
 ```
 
 #### **⏰ Automation Timeline**
@@ -59,6 +60,8 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 120s: 🎬 Plex Media Server (start_plex_safe.sh)
     ↓
 150s: 🌐 Landing Page + HTTPS (37_enable_simple_landing.sh)
+    ↓
+160s: 📁 Media Processing Watcher (media_watcher.sh start)
     ↓
 🎉 ALL SERVICES OPERATIONAL
 ```
@@ -91,7 +94,7 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 The automation system provides graceful fallback handling:
 - Services that need `sudo` will show manual commands if automation fails
 - Run `./scripts/post_boot_health_check.sh --auto-recover` for automatic fixes
-- Check logs: `tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}`
+- Check logs: `tail -f /Volumes/warmstore/logs/{storage,colima,immich,plex,landing}/*.{out,err}`
 
 ---
 
@@ -358,8 +361,53 @@ sudo tailscale serve status
 pmset -g | grep -E "(sleep|displaysleep|disksleep)"
 
 # View power management logs
-tail -f /tmp/powermgmt.out
+tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 ```
+
+### **io.homelab.media.watcher.plist** - Media Processing Automation
+
+**Purpose**: Monitors Staging directories for new media files and automatically processes them according to Plex naming conventions
+
+**Features**:
+- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Automatic file organization using Plex naming standards
+- Preserves folder structure for Collections
+- Graceful error handling with failed files moved to staging/failed/
+- Comprehensive logging of all processing activities
+
+**What it processes**:
+- **Movies**: Organized as `Movie Name (Year)/Movie Name (Year).ext`
+- **TV Shows**: Organized as `Show Name (Year)/Season XX/Show Name - sXXeYY.ext`
+- **Collections**: Preserves exact folder structure and naming
+
+**Supported formats**: `.mkv`, `.mp4`, `.avi`, `.mov`, `.m4v`, `.wmv`, `.flv`, `.webm`
+
+**Management**:
+```bash
+# Check media watcher status
+./scripts/media_watcher.sh status
+
+# Start/stop media watcher
+./scripts/media_watcher.sh start
+./scripts/media_watcher.sh stop
+
+# Manual processing
+./scripts/media_processor.sh
+./scripts/media_processor.sh --movies-only
+./scripts/media_processor.sh --collections-only
+
+# View processing logs
+tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
+
+# Check failed files
+ls -la /Volumes/warmstore/Staging/failed/
+```
+
+**Automatic cleanup**:
+- Removes empty subdirectories after processing
+- Cleans up system files (.DS_Store, Thumbs.db, etc.)
+- Archives old logs (30+ days) and failed files (7+ days)
+- Preserves main Staging directory structure for continued use
 
 ## 🔧 Service Management
 

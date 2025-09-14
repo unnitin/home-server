@@ -22,6 +22,7 @@
 | **[PLEX.md](PLEX.md)** | Plex Media Server configuration | Setting up media library, troubleshooting Plex |
 | **[IMMICH.md](IMMICH.md)** | Photo management service | Setting up photo backup, Google Takeout import |
 | **[TAILSCALE.md](TAILSCALE.md)** | VPN and remote access | Remote access setup, HTTPS configuration |
+| **Media Processing** | Automated file organization for Plex | See [AUTOMATION.md](AUTOMATION.md#media-processing) for details |
 
 ### Infrastructure
 | Document | Purpose | When to Use |
