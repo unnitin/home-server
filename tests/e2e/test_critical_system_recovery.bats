@@ -133,7 +133,7 @@ teardown() {
     # Should provide specific commands for common issues
     if [[ "$output" =~ "RECOVERY COMMANDS" ]]; then
         # Should include service-specific recovery
-        [[ "$output" =~ "colima start\|docker\|launchctl" ]] || fail "Should provide Docker/Colima recovery commands"
+        [[ "$output" =~ colima\ start|docker|launchctl ]] || fail "Should provide Docker/Colima recovery commands"
     fi
 }
 
