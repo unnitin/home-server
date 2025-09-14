@@ -4,6 +4,19 @@ set -euo pipefail
 # Post-boot health check with automated recovery
 # This script provides comprehensive system assessment and guided recovery
 
+# Common logging functions for use by other modules
+log_info() {
+    echo "ℹ️  $*"
+}
+
+log_warn() {
+    echo "⚠️  $*" >&2
+}
+
+log_error() {
+    echo "❌ $*" >&2
+}
+
 # Support automatic recovery mode
 AUTO_RECOVER=false
 if [[ "${1:-}" == "--auto-recover" ]]; then
@@ -160,6 +173,21 @@ if ! $NEED_RECOVERY; then
     echo "  Immich:  https://$hostname:2283" 
     echo "  Plex:    https://$hostname:32400"
 else
+    echo "🚨 RECOVERY COMMANDS SUMMARY:"
+    echo "================================"
+    echo ""
+    echo "🐳 Docker/Colima Issues:"
+    echo "  colima start --cpu 4 --memory 8"
+    echo "  docker compose -f services/immich/docker-compose.yml up -d"
+    echo ""
+    echo "🔧 LaunchD Service Issues:"
+    echo "  launchctl load ~/Library/LaunchAgents/io.homelab.*.plist"
+    echo "  launchctl start io.homelab.colima"
+    echo ""
+    echo "💾 Storage Issues:"
+    echo "  sudo ./scripts/storage/ensure_mounts.sh"
+    echo "  ./scripts/storage/wait_for_storage.sh"
+    echo ""
     echo "⚠️  RECOVERY NEEDED - Run the commands above to fix issues"
 fi
 
