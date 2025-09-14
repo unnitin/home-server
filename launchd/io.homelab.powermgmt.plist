@@ -7,7 +7,7 @@
     
     <key>ProgramArguments</key>
     <array>
-        <string>__HOME__/Documents/home-server/scripts/ensure_power_settings.sh</string>
+        <string>__HOME__/Documents/home-server/scripts/core/ensure_power_settings.sh</string>
     </array>
     
     <key>RunAtLoad</key>

@@ -28,10 +28,10 @@ def test_setup_scripts_exist():
     scripts_dir = repo_root / "scripts"
     
     key_scripts = [
-        "media_processor.sh",
-        "media_watcher.sh",
-        "ensure_storage_mounts.sh",
-        "wait_for_storage.sh"
+        "media/processor.sh",
+        "media/watcher.sh",
+        "storage/ensure_mounts.sh",
+        "storage/wait_for_storage.sh"
     ]
     
     for script in key_scripts:

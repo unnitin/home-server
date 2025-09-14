@@ -237,13 +237,13 @@ teardown() {
 
 @test "media watcher service management commands work" {
     # Test media_watcher.sh command validation
-    assert_script_exists "scripts/media_watcher.sh"
+    assert_script_exists "scripts/media/watcher.sh"
     
     local valid_commands=("start" "stop" "status" "restart")
     
     for cmd in "${valid_commands[@]}"; do
         # Test that the script accepts the command (syntax check only)
-        run bash -n scripts/media_watcher.sh
-        [ "$status" -eq 0 ] || fail "Syntax error in media_watcher.sh"
+        run bash -n scripts/media/watcher.sh
+        [ "$status" -eq 0 ] || fail "Syntax error in media/watcher.sh"
     done
 }

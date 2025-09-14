@@ -9,7 +9,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>__HOME__/Documents/home-server/scripts/media_watcher.sh start</string>
+        <string>__HOME__/Documents/home-server/scripts/media/watcher.sh start</string>
     </array>
     
     <key>RunAtLoad</key>

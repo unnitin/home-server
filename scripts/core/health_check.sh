@@ -106,13 +106,13 @@ if ! $COLIMA_OK || ! $DOCKER_OK; then
             if "$(dirname "$0")/30_deploy_services.sh" >/dev/null 2>&1; then
                 echo "  ✅ Docker services deployed"
             else
-                echo "  ❌ Service deployment failed (manual required): ./scripts/30_deploy_services.sh"
+                echo "  ❌ Service deployment failed (manual required): ./scripts/services/deploy_containers.sh"
             fi
         fi
     else
         echo "🐳 DOCKER RECOVERY COMMANDS:"
         echo "  colima start"
-        echo "  cd ~/Documents/home-server && ./scripts/30_deploy_services.sh"
+        echo "  cd ~/Documents/home-server && ./scripts/services/deploy_containers.sh"
     fi
     echo ""
 fi
@@ -142,11 +142,11 @@ if ! $LANDING_OK; then
         if "$(dirname "$0")/37_enable_simple_landing.sh" >/dev/null 2>&1; then
             echo "  ✅ Landing page recovery completed"
         else
-            echo "  ❌ Landing page failed (manual required): ./scripts/37_enable_simple_landing.sh"
+            echo "  ❌ Landing page failed (manual required): ./scripts/services/enable_landing.sh"
         fi
     else
         echo "🌐 LANDING PAGE RECOVERY COMMANDS:"
-        echo "  cd ~/Documents/home-server && ./scripts/37_enable_simple_landing.sh"
+        echo "  cd ~/Documents/home-server && ./scripts/services/enable_landing.sh"
     fi
     echo ""
 fi

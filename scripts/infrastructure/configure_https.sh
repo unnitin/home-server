@@ -10,7 +10,7 @@ banner "Configuring Tailscale HTTPS with DNS Fix"
 
 # Check if Tailscale is installed and running
 if ! command -v tailscale >/dev/null 2>&1; then
-    echo "ERROR: Tailscale not found. Please run scripts/90_install_tailscale.sh first"
+    echo "ERROR: Tailscale not found. Please run scripts/infrastructure/install_tailscale.sh first"
     exit 1
 fi
 

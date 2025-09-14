@@ -76,14 +76,14 @@ for a in "$@"; do
 done
 
 if (( DO_BOOTSTRAP )); then log "Bootstrap"; run setup/setup.sh; fi
-if (( DO_COLIMA )); then log "Colima"; run scripts/20_install_colima_docker.sh; run scripts/21_start_colima.sh; fi
-if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run sudo scripts/ensure_storage_mounts.sh; fi
+if (( DO_COLIMA )); then log "Colima"; run scripts/infrastructure/install_docker.sh; run scripts/infrastructure/start_docker.sh; fi
+if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run sudo scripts/storage/ensure_mounts.sh; fi
 if (( DO_IMMICH )); then
   log "Immich"
   [[ -f services/immich/.env ]] || run bash -lc 'cd services/immich && cp -n .env.example .env || true'
-  run scripts/30_deploy_services.sh
+  run scripts/services/deploy_containers.sh
 fi
-if (( DO_PLEX )); then log "Plex"; run scripts/31_install_native_plex.sh; fi
+if (( DO_PLEX )); then log "Plex"; run scripts/services/install_plex.sh; fi
 
 if [[ -n "$DO_REBUILD_TARGETS" ]]; then
   [[ "${RAID_I_UNDERSTAND_DATA_LOSS:-0}" == "1" ]] || { echo "Set RAID_I_UNDERSTAND_DATA_LOSS=1"; exit 2; }
@@ -97,16 +97,16 @@ if [[ -n "$DO_REBUILD_TARGETS" ]]; then
     esac
   done
   log "Rebuild: ${DO_REBUILD_TARGETS}"
-  run scripts/09_rebuild_storage.sh "${targets[@]}"
-  if (( DO_FORMAT_MOUNT )); then log "Format/mount"; run scripts/12_format_and_mount_raids.sh; fi
+  run scripts/storage/rebuild_storage.sh "${targets[@]}"
+  if (( DO_FORMAT_MOUNT )); then log "Format/mount"; run scripts/storage/format_and_mount.sh; fi
 fi
 
-if (( DO_LAUNCHD )); then log "launchd"; run scripts/40_configure_launchd.sh; fi
-if (( DO_TS_INSTALL )); then log "tailscale"; run scripts/90_install_tailscale.sh; fi
+if (( DO_LAUNCHD )); then log "launchd"; run scripts/automation/configure_launchd.sh; fi
+if (( DO_TS_INSTALL )); then log "tailscale"; run scripts/infrastructure/install_tailscale.sh; fi
 if (( DO_TS_UP )); then log "tailscale up"; run sudo tailscale up --accept-dns=true; fi
-if (( DO_TS_CONFIGURE_HTTPS )); then log "configure HTTPS/DNS"; run scripts/91_configure_https_dns.sh; fi
-if (( DO_CONFIGURE_POWER )); then log "configure power"; run scripts/92_configure_power.sh; fi
-if (( DO_LANDING )); then log "landing page"; run scripts/37_enable_simple_landing.sh; fi
+if (( DO_TS_CONFIGURE_HTTPS )); then log "configure HTTPS/DNS"; run scripts/infrastructure/configure_https.sh; fi
+if (( DO_CONFIGURE_POWER )); then log "configure power"; run scripts/infrastructure/configure_power.sh; fi
+if (( DO_LANDING )); then log "landing page"; run scripts/services/enable_landing.sh; fi
 if (( DO_TS_SERVE_DIRECT )); then
   log "tailscale serve direct"
   run sudo tailscale serve --https=443   http://localhost:2283

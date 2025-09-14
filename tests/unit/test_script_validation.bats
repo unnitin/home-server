@@ -26,13 +26,13 @@ teardown() {
 
 @test "all main scripts exist and are executable" {
     local main_scripts=(
-        "scripts/20_install_colima_docker.sh"
-        "scripts/21_start_colima.sh"
-        "scripts/30_deploy_services.sh"
-        "scripts/31_install_native_plex.sh"
-        "scripts/40_configure_launchd.sh"
-        "scripts/92_configure_power.sh"
-        "scripts/95_setup_media_processing.sh"
+        "scripts/infrastructure/install_docker.sh"
+        "scripts/infrastructure/start_docker.sh"
+        "scripts/services/deploy_containers.sh"
+        "scripts/services/install_plex.sh"
+        "scripts/automation/configure_launchd.sh"
+        "scripts/infrastructure/configure_power.sh"
+        "scripts/automation/setup_media_processing.sh"
     )
     
     for script in "${main_scripts[@]}"; do
@@ -43,11 +43,11 @@ teardown() {
 
 @test "media processing scripts exist and are executable" {
     local media_scripts=(
-        "scripts/media_processor.sh"
-        "scripts/media_watcher.sh"
-        "scripts/process_movie.sh"
-        "scripts/process_tv_show.sh"
-        "scripts/process_collection.sh"
+        "scripts/media/processor.sh"
+        "scripts/media/watcher.sh"
+        "scripts/media/process_movie.sh"
+        "scripts/media/process_tv_show.sh"
+        "scripts/media/process_collection.sh"
     )
     
     for script in "${media_scripts[@]}"; do
@@ -90,7 +90,7 @@ teardown() {
 
 @test "media_processor.sh shows usage when called without arguments" {
     mock_system_commands
-    run bash scripts/media_processor.sh
+    run bash scripts/media/processor.sh
     
     # Debug output for CI troubleshooting
     echo "Exit status: $status"
@@ -108,15 +108,15 @@ teardown() {
     local valid_commands=("start" "stop" "status" "restart")
     
     for cmd in "${valid_commands[@]}"; do
-        run bash -n scripts/media_watcher.sh  # Just syntax check
+        run bash -n scripts/media/watcher.sh  # Just syntax check
         [ "$status" -eq 0 ]
     done
 }
 
 @test "scripts contain proper shebang lines" {
     local scripts=(
-        "scripts/media_processor.sh"
-        "scripts/media_watcher.sh" 
+        "scripts/media/processor.sh"
+        "scripts/media/watcher.sh" 
         "setup/setup_full.sh"
         "setup/setup_flags.sh"
     )

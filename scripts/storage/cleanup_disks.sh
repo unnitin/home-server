@@ -75,4 +75,4 @@ echo
 echo "Next steps (example for 2-disk SSD mirror):"
 echo "  export RAID_I_UNDERSTAND_DATA_LOSS=1"
 echo "  export SSD_DISKS=\"${1:-diskX} ${2:-diskY}\""
-echo "  scripts/10_create_raid10_ssd.sh && scripts/12_format_and_mount_raids.sh"
+echo "  scripts/storage/create_ssd_raid.sh && scripts/storage/format_and_mount.sh"
