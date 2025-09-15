@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Format and mount AppleRAID sets to expected mountpoints.
-# - SSD array name:   warmstore  -> /Volumes/Media
-# - NVMe array name:  faststore  -> /Volumes/Photos
-# - HDD/cold array:   coldstore  -> /Volumes/Archive
+# - SSD array name:   warmstore  -> /Volumes/warmstore
+# - NVMe array name:  faststore  -> /Volumes/faststore
+# - HDD/cold array:   coldstore  -> /Volumes/coldstore
 # Idempotent: if already APFS and mounted at the right place, it skips.
 
 set -euo pipefail
@@ -124,9 +124,9 @@ while IFS='|' read -r name label mnt; do
   [[ -z "${name}" ]] && continue
   format_and_mount "$name" "$label" "$mnt"
 done <<'MAP'
-warmstore|Media|/Volumes/Media
-faststore|Photos|/Volumes/Photos
-coldstore|Archive|/Volumes/Archive
+warmstore|warmstore|/Volumes/warmstore
+faststore|faststore|/Volumes/faststore
+coldstore|coldstore|/Volumes/coldstore
 MAP
 
 # Validate all mount operations completed successfully
@@ -136,7 +136,7 @@ validate_mount_setup() {
   echo
   echo "=== Validating Mount Setup ==="
   
-  for mount_info in "Media:/Volumes/Media:warmstore" "Photos:/Volumes/Photos:faststore" "Archive:/Volumes/Archive:coldstore"; do
+  for mount_info in "warmstore:/Volumes/warmstore:warmstore" "faststore:/Volumes/faststore:faststore" "coldstore:/Volumes/coldstore:coldstore"; do
     IFS=':' read -r purpose mountpoint expected_tier <<< "$mount_info"
     
     if [[ -n "$(bsd_for_raid_name "$expected_tier" || true)" ]]; then

@@ -6,7 +6,7 @@
 
 ## 🏗️ **Modular Architecture Overview**
 
-The scripts are organized into 6 functional modules with layered dependencies:
+The scripts are organized into 7 functional modules with layered dependencies:
 
 ```
 scripts/
@@ -14,11 +14,12 @@ scripts/
 ├── storage/        # 💾 RAID & storage management (10 scripts + lib)
 ├── infrastructure/ # 🏗️ Docker, networking, VPN (7 scripts + lib)
 ├── services/       # 🚀 Application deployment (5 scripts)
+├── migration/      # 🔄 Storage & service data migration (6 scripts + lib)
 ├── automation/     # 🤖 LaunchD & maintenance (3 scripts)
 └── media/         # 📁 Media processing (5 scripts)
 ```
 
-**Dependency Flow**: `core` → `storage` → `infrastructure` → `services` → `automation`/`media`
+**Dependency Flow**: `core` → `storage` → `infrastructure` → `services` → `migration` → `automation`/`media`
 
 ---
 
@@ -109,6 +110,7 @@ Each module has its own detailed README:
 - [💾 Storage Module](storage/README.md)  
 - [🏗️ Infrastructure Module](infrastructure/README.md)
 - [🚀 Services Module](services/README.md)
+- [🔄 Migration Module](migration/README.md)
 - [🤖 Automation Module](automation/README.md)
 - [📁 Media Module](media/README.md)
 

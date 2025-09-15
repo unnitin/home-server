@@ -8,33 +8,38 @@ Comprehensive guide for managing storage arrays, expansion, backups, and optimiz
 
 | Tier | Purpose | Technology | Mount Point | Array Name | Status |
 |------|---------|------------|-------------|------------|---------|
-| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/Photos` | `faststore` | 🟡 *Interim: symlink to warmstore* |
-| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/Media` | `warmstore` | ✅ **Active** |
-| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/Archive` | `coldstore` | 🟡 *Placeholder directory* |
+| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/faststore` | `faststore` | ✅ **Active** |
+| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/warmstore` | `warmstore` | ✅ **Active** |
+| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/coldstore` | `coldstore` | 🟡 *Placeholder directory* |
 
-### Current Interim Configuration
+### Current Configuration
 
-**Mount Structure** (until NVMe drives available):
+**Mount Structure**:
 ```bash
-/Volumes/warmstore/          # Real SSD RAID array (2.0TB)
-├── Movies/                  # 10 folders, ~320GB (Plex Movies)
-├── TV Shows/               # 25 folders, ~554GB (Plex TV Shows)  
-└── Photos/                 # Ready for Immich (Future: 0-500GB)
+/Volumes/faststore/          # NVMe RAID array (1.9TB)
+├── photos/                  # Immich photos (877MB)
+├── metadata/                # Plex metadata (742MB)
+├── databases/               # Database storage
+└── processing/              # Processing directories
+
+/Volumes/warmstore/          # SSD RAID array (1.9TB)
+├── Movies/                  # Plex Movies (219GB)
+├── TV Shows/               # Plex TV Shows (246GB)
+└── Collections/            # Media collections (109GB)
 
 # Service Access Points:
-/Volumes/Media/Movies/       → /Volumes/warmstore/Movies/     (Plex)
-/Volumes/Media/TV/           → /Volumes/warmstore/TV Shows/   (Plex)
-/Volumes/Photos/             → /Volumes/warmstore/Photos/     (Immich)
-/Volumes/Archive/            → (placeholder directory)
+/Volumes/Photos/             → /Volumes/faststore/photos/     (Immich)
+/Volumes/Media/              → /Volumes/warmstore/            (Plex)
+/Volumes/Archive/            → /Volumes/coldstore/            (Future)
 ```
 
-**Automation Requirements**: The interim setup requires mount point recreation after reboot:
+**Setup Scripts**: Use the provided scripts for proper setup:
 ```bash
-mkdir -p /Volumes/Media
-ln -sf /Volumes/warmstore/Movies /Volumes/Media/Movies
-ln -sf "/Volumes/warmstore/TV Shows" /Volumes/Media/TV  
-ln -sf /Volumes/warmstore/Photos /Volumes/Photos
-mkdir -p /Volumes/Archive
+# Mount RAID arrays at correct locations
+./scripts/storage/format_and_mount.sh
+
+# Create service access symlinks
+./scripts/storage/setup_service_symlinks.sh
 ```
 
 ### RAID Configurations
