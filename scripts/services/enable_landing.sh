@@ -4,7 +4,8 @@
 
 set -euo pipefail
 
-source "$(dirname "$0")/_compose.sh"
+# Simple banner function
+banner() { echo; echo "=== $* ==="; }
 
 # Support setup mode (skip service waiting) vs automation mode
 SETUP_MODE=false
@@ -26,7 +27,7 @@ pkill -f "python3 -m http.server 8080" 2>/dev/null || true
 
 # Start simple HTTP server for landing page (always works)
 echo "Starting HTTP server for landing page..."
-cd "$(dirname "$0")/../web"
+cd "$(dirname "$0")/../../web"
 nohup python3 -m http.server 8080 --bind 127.0.0.1 > /dev/null 2>&1 &
 PYTHON_PID=$!
 echo "✅ Started HTTP server (PID: $PYTHON_PID)"

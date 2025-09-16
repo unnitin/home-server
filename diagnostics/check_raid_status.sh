@@ -53,7 +53,7 @@ fi
 
 # Check individual disk health for known arrays
 echo -e "\n${YELLOW}Checking storage mount points...${NC}"
-for mount_point in "/Volumes/Media" "/Volumes/Photos" "/Volumes/Archive"; do
+for mount_point in "/Volumes/warmstore" "/Volumes/faststore" "/Volumes/Archive"; do
     if [[ -d "$mount_point" ]]; then
         ok "Mount point exists: $mount_point"
         

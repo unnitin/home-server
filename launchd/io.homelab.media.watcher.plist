@@ -24,10 +24,10 @@
     </dict>
     
     <key>StandardOutPath</key>
-    <string>/Volumes/warmstore/logs/media-watcher/media-watcher.out</string>
+    <string>/Volumes/warmstore/logs/media-processing/media-watcher.out</string>
     
     <key>StandardErrorPath</key>
-    <string>/Volumes/warmstore/logs/media-watcher/media-watcher.err</string>
+    <string>/Volumes/warmstore/logs/media-processing/media-watcher.err</string>
     
     <key>EnvironmentVariables</key>
     <dict>

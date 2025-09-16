@@ -14,7 +14,7 @@ Your home server has **secure automation** installed and active. The system atte
 When your Mac mini reboots, the following happens automatically:
 
 **Immediate (0-30s after login):**
-- 🔧 **Storage service** checks and creates mount points (`/Volumes/Media`, `/Volumes/Photos`, `/Volumes/Archive`)
+- 🔧 **Storage service** checks and creates mount points (`/Volumes/warmstore`, `/Volumes/faststore`, `/Volumes/Archive`)
 - 🌐 **Tailscale service** maintains VPN connectivity  
 - 📊 **Update check service** monitors for system updates
 - ⚡ **Power management service** monitors and maintains server power settings
@@ -200,7 +200,7 @@ Automation includes:
 
 **Install all automation**:
 ```bash
-sudo ./scripts/40_configure_launchd.sh
+scripts/automation/configure_launchd.sh
 ```
 
 ### Enhanced Service Hierarchy

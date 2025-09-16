@@ -64,10 +64,10 @@ read -r -p "Proceed to (re)build arrays now? [y/N] " a; case "$a" in
     ;;
 esac
 
-banner "Storage Mount Points"
-echo "Setting up storage mount points for services..."
-echo "Note: This step requires sudo permissions to create symlinks in /Volumes/"
-sudo scripts/storage/ensure_mounts.sh
+banner "Storage Directory Structure"
+echo "Setting up direct mount directory structure for services..."
+echo "Note: This step requires sudo permissions to create directories in /Volumes/"
+sudo scripts/storage/setup_direct_mounts.sh
 
 banner "Immich"
 if [[ ! -f services/immich/.env ]]; then

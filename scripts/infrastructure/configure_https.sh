@@ -4,7 +4,8 @@
 
 set -euo pipefail
 
-source "$(dirname "$0")/_compose.sh"
+# Simple banner function
+banner() { echo; echo "=== $* ==="; }
 
 banner "Configuring Tailscale HTTPS with DNS Fix"
 

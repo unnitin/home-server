@@ -2,8 +2,8 @@
 set -euo pipefail
 source "$(dirname "$0")/diag_lib.sh"
 
-MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/Media}"
-PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/Photos}"
+MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/warmstore}"
+PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/faststore}"
 ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-/Volumes/Archive}"
 
 section "Mount points"

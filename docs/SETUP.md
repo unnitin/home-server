@@ -128,8 +128,8 @@ export COLD_DISKS="disk6"               # 1 HDD for archive (coldstore)
 
 | Array Name | Disks | Type | Mount Point | Purpose |
 |------------|-------|------|-------------|---------|
-| `faststore` | NVMe | 2=mirror, 4=RAID10 | `/Volumes/Photos` | Immich photos (fast) |
-| `warmstore` | SSD | 2=mirror, 4=RAID10 | `/Volumes/Media` | Plex media (good speed) |  
+| `faststore` | NVMe | 2=mirror, 4=RAID10 | `/Volumes/faststore` | Immich photos & Plex metadata (fast) |
+| `warmstore` | SSD | 2=mirror, 4=RAID10 | `/Volumes/warmstore` | Plex media & system logs (good speed) |  
 | `coldstore` | HDD | 2=mirror, 4=RAID10 | `/Volumes/Archive` | Archive (capacity) |
 
 ### Verification
@@ -237,8 +237,8 @@ IMMICH_DB_PASSWORD=your_secure_password_here
 | Redis | `immich-redis` | - | Cache and session storage |
 
 ### Storage Integration
-- **Photos**: Stored in `/Volumes/Photos` (faststore array)
-- **Database**: Docker volume `immich-db`
+- **Photos**: Stored in `/Volumes/faststore/immich` (faststore array)
+- **Database**: `/Volumes/faststore/immich/database` (service-embedded)
 - **Cache**: In-memory Redis
 
 ### Verification
@@ -286,17 +286,17 @@ Installs Plex Media Server natively (not in Docker) for optimal performance and 
 - **Hardware Transcoding**: Access to QuickSync/VideoToolbox
 
 ### Storage Integration
-- **Media Libraries**: Point to `/Volumes/Media` (warmstore array)
-- **Metadata**: Stored in `~/Library/Application Support/Plex Media Server`
-- **Transcoding**: Temporary files in system temp directory
+- **Media Libraries**: Point to `/Volumes/warmstore` (warmstore array)
+- **Metadata**: Stored in `/Volumes/faststore/plex/metadata` (faststore array)
+- **Transcoding**: Temporary files in `/Volumes/faststore/plex/transcoding`
 
 ### Initial Configuration
 1. Open http://localhost:32400/web
 2. Sign in with Plex account
 3. **Add Libraries**:
-   - **Movies**: `/Volumes/Media/Movies`
-   - **TV Shows**: `/Volumes/Media/TV`
-   - **Music**: `/Volumes/Media/Music`
+   - **Movies**: `/Volumes/warmstore/movies`
+   - **TV Shows**: `/Volumes/warmstore/tv-shows`
+   - **Music**: `/Volumes/warmstore/music`
 4. **Enable Hardware Transcoding**:
    - Settings → Transcoder
    - Check "Use hardware acceleration when available"
@@ -328,17 +328,22 @@ Configures LaunchD (macOS service manager) to automatically start services on bo
 
 **Install LaunchD jobs**:
 ```bash
-sudo ./scripts/40_configure_launchd.sh
+scripts/automation/configure_launchd.sh
 ```
 
 ### What Gets Configured
 
 | Service | File | Purpose |
 |---------|------|---------|
+| Storage | `io.homelab.storage.plist` | Mount points and storage configuration |
+| Power Management | `io.homelab.powermgmt.plist` | 24/7 server power settings |
 | Colima | `io.homelab.colima.plist` | Auto-start Docker runtime |
 | Immich | `io.homelab.compose.immich.plist` | Auto-start Immich containers |
+| Plex | `io.homelab.plex.plist` | Auto-start Plex Media Server |
+| Landing Page | `io.homelab.landing.plist` | HTTP server and HTTPS serving |
+| Media Watcher | `io.homelab.media.watcher.plist` | Automated media processing |
+| Tailscale | `io.homelab.tailscale.plist` | Auto-start VPN connection |
 | Updates | `io.homelab.updatecheck.plist` | Weekly update checks |
-| Tailscale | `io.homelab.tailscale.plist` | Auto-start VPN *(if installed)* |
 
 ### Verification
 ```bash

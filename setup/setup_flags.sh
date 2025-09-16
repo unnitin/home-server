@@ -1,6 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ⚠️  DEPRECATED: This script is currently BROKEN and needs overhaul
+# 
+# ISSUES:
+# - References non-existent scripts (scripts/12_format_and_mount_raids.sh, scripts/35_install_caddy.sh, scripts/36_enable_reverse_proxy.sh)
+# - Not updated after script refactoring and modularization
+# - Flag combinations not tested since refactor
+# - Missing integration with new direct mount architecture
+#
+# RECOMMENDED: Use setup_full.sh instead (fully working and tested)
+#
+# TODO: Complete overhaul needed (estimated 60-90 minutes work):
+# - Fix broken script references
+# - Update to use new modular script structure
+# - Remove/replace deprecated proxy functionality
+# - Test all flag combinations
+# - Update documentation
+#
+echo "⚠️  WARNING: setup_flags.sh is DEPRECATED and may not work correctly!"
+echo "📖 RECOMMENDED: Use setup/setup_full.sh instead"
+echo "🔧 This script needs complete overhaul (see comments at top of file)"
+echo ""
+read -p "Continue anyway? [y/N] " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Exiting. Use setup/setup_full.sh instead."
+    exit 1
+fi
+
 # --- Self-heal executable bits (safe to run even if already set) ---
 _THIS_DIR="$(cd "$(dirname "$0")" && pwd)"
 _REPO_ROOT="$(cd "$_THIS_DIR/.." && pwd)"
@@ -77,7 +105,7 @@ done
 
 if (( DO_BOOTSTRAP )); then log "Bootstrap"; run setup/setup.sh; fi
 if (( DO_COLIMA )); then log "Colima"; run scripts/infrastructure/install_docker.sh; run scripts/infrastructure/start_docker.sh; fi
-if (( DO_STORAGE_MOUNTS )); then log "Storage mount points"; run sudo scripts/storage/ensure_mounts.sh; fi
+if (( DO_STORAGE_MOUNTS )); then log "Storage directory structure"; run sudo scripts/storage/setup_direct_mounts.sh; fi
 if (( DO_IMMICH )); then
   log "Immich"
   [[ -f services/immich/.env ]] || run bash -lc 'cd services/immich && cp -n .env.example .env || true'

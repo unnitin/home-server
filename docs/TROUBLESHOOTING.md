@@ -4,6 +4,22 @@ Comprehensive troubleshooting guide for your Mac mini home server setup, coverin
 
 ## 🔍 Quick Diagnostics
 
+### Known Issues & Workarounds
+
+#### Immich Storage Display Bug
+**Issue**: Immich web interface shows incorrect storage space (e.g., 476.9 TiB instead of actual 1.9 TiB)
+
+**Root Cause**: This is a [known bug in Immich](https://github.com/immich-app/immich/issues/9514) affecting certain storage configurations
+
+**Solution**: Set a user storage quota in Immich:
+1. Go to Immich web interface → Settings (gear icon)
+2. Navigate to "User Management"
+3. Edit your user account
+4. Set a storage quota (e.g., 500GB)
+5. Save - this fixes the display issue
+
+**Note**: This is a display bug only - actual storage usage is correct
+
 ### Run All Health Checks
 ```bash
 # Comprehensive health check

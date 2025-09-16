@@ -16,6 +16,6 @@
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
-  <key>StandardOutPath</key><string>/Volumes/warmstore/logs/colima/colima.out</string>
-  <key>StandardErrorPath</key><string>/Volumes/warmstore/logs/colima/colima.err</string>
+  <key>StandardOutPath</key><string>/Volumes/warmstore/logs/system/colima.out</string>
+  <key>StandardErrorPath</key><string>/Volumes/warmstore/logs/system/colima.err</string>
 </dict></plist>

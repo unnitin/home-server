@@ -25,9 +25,9 @@
         <string>__USER__</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>/Volumes/warmstore/logs/plex/plex.out</string>
-    <key>StandardErrorPath</key>
-    <string>/Volumes/warmstore/logs/plex/plex.err</string>
+    <string>/Volumes/faststore/plex/logs/plex.out</string>
+  <key>StandardErrorPath</key>
+    <string>/Volumes/faststore/plex/logs/plex.err</string>
 </dict>
 </plist>
 

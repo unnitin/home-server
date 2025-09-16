@@ -42,7 +42,7 @@ scripts/
 | [`storage/cleanup_disks.sh`](storage/README.md#cleanup_diskssh) | Prepare disks for RAID | storage/preclean_disks.sh |
 | [`storage/preclean_disks.sh`](storage/README.md#preclean_diskssh) | Pre-RAID cleanup | setup_full.sh, setup_flags.sh |
 | [`storage/rebuild_storage.sh`](storage/README.md#rebuild_storagesh) | Manual RAID rebuild | Manual use only |
-| [`storage/ensure_mounts.sh`](storage/README.md#ensure_mountssh) | Mount point management | LaunchD io.homelab.storage |
+| [`storage/setup_direct_mounts.sh`](storage/README.md#setup_direct_mountssh) | Direct mount directory structure | LaunchD io.homelab.storage |
 | [`storage/wait_for_storage.sh`](storage/README.md#wait_for_storagesh) | Storage dependency check | LaunchD io.homelab.compose.immich |
 
 ### **🏗️ Infrastructure Module**

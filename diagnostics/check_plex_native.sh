@@ -47,7 +47,7 @@ else
 fi
 
 # Check for media directories
-for media_dir in "/Volumes/Media" "/Volumes/Photos"; do
+for media_dir in "/Volumes/warmstore" "/Volumes/faststore"; do
     if [[ -d "$media_dir" ]]; then
         ok "Media directory available: $media_dir"
     else

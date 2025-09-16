@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Format and mount AppleRAID sets to expected mountpoints.
-# - SSD array name:   warmstore  -> /Volumes/Media
-# - NVMe array name:  faststore  -> /Volumes/Photos
+# - SSD array name:   warmstore  -> /Volumes/warmstore
+# - NVMe array name:  faststore  -> /Volumes/faststore
 # - HDD/cold array:   coldstore  -> /Volumes/Archive
 # Idempotent: if already APFS and mounted at the right place, it skips.
 
@@ -124,8 +124,8 @@ while IFS='|' read -r name label mnt; do
   [[ -z "${name}" ]] && continue
   format_and_mount "$name" "$label" "$mnt"
 done <<'MAP'
-warmstore|Media|/Volumes/Media
-faststore|Photos|/Volumes/Photos
+warmstore|warmstore|/Volumes/warmstore
+faststore|faststore|/Volumes/faststore
 coldstore|Archive|/Volumes/Archive
 MAP
 
@@ -136,7 +136,7 @@ validate_mount_setup() {
   echo
   echo "=== Validating Mount Setup ==="
   
-  for mount_info in "Media:/Volumes/Media:warmstore" "Photos:/Volumes/Photos:faststore" "Archive:/Volumes/Archive:coldstore"; do
+  for mount_info in "warmstore:/Volumes/warmstore:warmstore" "faststore:/Volumes/faststore:faststore" "Archive:/Volumes/Archive:coldstore"; do
     IFS=':' read -r purpose mountpoint expected_tier <<< "$mount_info"
     
     if [[ -n "$(bsd_for_raid_name "$expected_tier" || true)" ]]; then
@@ -174,3 +174,7 @@ validate_mount_setup() {
 
 echo "✅ Format & mount complete."
 validate_mount_setup
+
+echo ""
+echo "Setting up directory structure..."
+./scripts/storage/setup_direct_mounts.sh
