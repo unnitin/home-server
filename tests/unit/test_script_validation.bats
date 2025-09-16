@@ -73,19 +73,16 @@ teardown() {
     done
 }
 
-@test "setup_flags.sh shows help when called with --help" {
-    run bash setup/setup_flags.sh --help
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ "OPTIONS" ]]
-    [[ "$output" =~ "--all" ]]
-    [[ "$output" =~ "--bootstrap" ]]
+@test "setup_flags.sh shows deprecation warning" {
+    # Since setup_flags.sh is deprecated, test that it shows deprecation warning
+    run bash -c 'echo "N" | bash setup/setup_flags.sh --help'
+    [[ "$output" =~ "DEPRECATED" ]]
+    [[ "$output" =~ "setup_full.sh" ]]
 }
 
 @test "setup_flags.sh validates environment variables" {
-    # Test with invalid RAID setting
-    export RAID_I_UNDERSTAND_DATA_LOSS="invalid"
-    run bash setup/setup_flags.sh --help
-    [ "$status" -eq 0 ]  # Should still show help, but validate env vars
+    # Since setup_flags.sh is deprecated, skip this test
+    skip "setup_flags.sh is deprecated - environment validation moved to setup_full.sh"
 }
 
 @test "media_processor.sh shows usage when called without arguments" {

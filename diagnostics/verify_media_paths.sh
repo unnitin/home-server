@@ -3,8 +3,8 @@ set -euo pipefail
 source "$(dirname "$0")/diag_lib.sh"
 
 # Get mount points from environment or use defaults
-MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/Media}"
-PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/Photos}"
+MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/warmstore}"
+PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/faststore}"
 ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-/Volumes/Archive}"
 
 section "Storage Mount Points"

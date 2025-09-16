@@ -12,7 +12,7 @@ else
 fi
 
 echo -e "\n--- Storage mountpoints ---"
-for d in /Volumes/Media /Volumes/Photos /Volumes/Archive; do
+for d in /Volumes/warmstore /Volumes/faststore /Volumes/Archive; do
   echo "Checking $d"
   df -h "$d" 2>/dev/null || echo "❌ Not mounted"
 done

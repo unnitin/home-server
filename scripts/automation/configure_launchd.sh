@@ -7,7 +7,7 @@ if [[ ${EUID:-0} -eq 0 ]]; then
 fi
 
 PLIST_DIR="$HOME/Library/LaunchAgents"
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 TEMPLATE_DIR="$ROOT/launchd"
 
 mkdir -p "$PLIST_DIR"

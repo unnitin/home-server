@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Ensure we’re in repo root no matter where called from
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Ensure we're in repo root no matter where called from
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 # Make sure compose helper exists
-if [[ ! -x "$ROOT/scripts/compose_helper.sh" ]]; then
-  echo "❌ scripts/compose_helper.sh not found or not executable."
+if [[ ! -x "$ROOT/scripts/infrastructure/compose_wrapper.sh" ]]; then
+  echo "❌ scripts/infrastructure/compose_wrapper.sh not found or not executable."
   exit 1
 fi
 
@@ -20,6 +20,6 @@ fi
 docker context use colima >/dev/null 2>&1 || true
 
 # Pull & start Immich via the unified wrapper
-"$ROOT/scripts/compose_helper.sh" "$ROOT/services/immich" pull
-"$ROOT/scripts/compose_helper.sh" "$ROOT/services/immich" up -d
-"$ROOT/scripts/compose_helper.sh" "$ROOT/services/immich" ps
+"$ROOT/scripts/infrastructure/compose_wrapper.sh" "$ROOT/services/immich" pull
+"$ROOT/scripts/infrastructure/compose_wrapper.sh" "$ROOT/services/immich" up -d
+"$ROOT/scripts/infrastructure/compose_wrapper.sh" "$ROOT/services/immich" ps

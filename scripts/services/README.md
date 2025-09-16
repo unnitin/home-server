@@ -23,6 +23,11 @@ Application layer managing Plex, Immich, web services, and data import/export.
 **Usage**: Called by LaunchD `io.homelab.plex` service  
 **Features**: Detects and resolves port 32400 conflicts
 
+#### **configure_plex_direct.sh**
+**Purpose**: Configure Plex to use direct mount paths (no symlinks)  
+**Usage**: Run during setup to set metadata and transcoding paths  
+**Dependencies**: Plex Media Server installed
+
 ### **Web Services**
 
 #### **enable_landing.sh**
@@ -49,6 +54,7 @@ scripts/services/
 ├── deploy_containers.sh    # Container service deployment
 ├── install_plex.sh         # Plex Media Server setup
 ├── start_plex_safe.sh      # Safe Plex startup
+├── configure_plex_direct.sh # Plex direct path configuration
 ├── enable_landing.sh       # Landing page service
 ├── import_takeout.sh       # Google Takeout import
 └── README.md              # This documentation

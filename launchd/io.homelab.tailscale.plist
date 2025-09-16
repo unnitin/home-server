@@ -5,6 +5,6 @@
   <key>ProgramArguments</key><array><string>/opt/homebrew/sbin/tailscaled</string></array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardOutPath</key><string>/Volumes/warmstore/logs/tailscale/tailscale.out</string>
-  <key>StandardErrorPath</key><string>/Volumes/warmstore/logs/tailscale/tailscale.err</string>
+  <key>StandardOutPath</key><string>/Volumes/warmstore/logs/system/tailscale.out</string>
+  <key>StandardErrorPath</key><string>/Volumes/warmstore/logs/system/tailscale.err</string>
 </dict></plist>

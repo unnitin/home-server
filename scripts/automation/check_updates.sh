@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source "$(dirname "$0")/_compose.sh"
+source "$(dirname "$0")/../infrastructure/compose_wrapper.sh"
 
 APPLY=0
 [[ "${1:-}" == "--apply" ]] && APPLY=1

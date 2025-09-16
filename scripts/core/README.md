@@ -22,6 +22,12 @@ Foundation layer providing system bootstrap, environment setup, and health check
 **Dependencies**: System services  
 **Used By**: Manual troubleshooting, automated recovery
 
+### **check_storage_usage.sh**
+**Purpose**: Monitor storage usage on faststore and warmstore with color-coded status  
+**Usage**: `./scripts/core/check_storage_usage.sh`  
+**Dependencies**: `df` command  
+**Used By**: Manual monitoring, storage management
+
 ## 🔗 Module Dependencies
 
 **Depends on**: None (foundation layer)  
@@ -34,6 +40,7 @@ scripts/core/
 ├── fix_permissions.sh      # Script permission management
 ├── ensure_power_settings.sh # Power management monitoring  
 ├── health_check.sh         # System health validation
+├── check_storage_usage.sh  # Storage usage monitoring
 └── README.md              # This documentation
 ```
 

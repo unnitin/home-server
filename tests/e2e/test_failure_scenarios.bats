@@ -143,7 +143,7 @@ EOF
     
     local critical_scripts=(
         "scripts/core/health_check.sh"
-        "scripts/storage/ensure_mounts.sh"
+        "scripts/storage/setup_direct_mounts.sh"
         "scripts/infrastructure/start_docker.sh"
         "scripts/services/deploy_containers.sh"
     )

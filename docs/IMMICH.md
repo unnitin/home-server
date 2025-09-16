@@ -327,6 +327,63 @@ df -h /Volumes/Photos
 - **Delete empty albums**: Housekeeping
 - **Repair jobs**: Fix database inconsistencies
 
+### User Quota Management
+
+**Current Status (2024)**:
+Immich does not currently support per-user storage quotas in the standard configuration. However, there are several approaches to manage storage usage.
+
+**Option 1: Display Quota Setting (Recommended)**
+This fixes the storage display bug and provides visual feedback:
+
+1. **Go to Administration** → **User Management**
+2. **Edit each user account**
+3. **Set storage quota** (e.g., 500GB)
+4. **Save changes**
+
+**Benefits**:
+- ✅ Fixes storage display bug (shows correct size)
+- ✅ Provides visual feedback to users
+- ✅ Easy to configure per user
+
+**Limitations**:
+- ⚠️ Not a hard enforcement limit
+- ⚠️ Must be set manually for each user
+
+**Option 2: System-Level Monitoring**
+Monitor total storage usage and set up alerts:
+
+```bash
+# Check storage usage
+df -h /Volumes/faststore
+
+# Check Immich directory size
+du -sh /Volumes/faststore/immich
+
+# Use the storage monitoring script
+./scripts/core/check_storage_usage.sh
+```
+
+**Recommended Quota Distribution**:
+```
+User 1: 500GB
+User 2: 500GB  
+User 3: 500GB
+System/Admin: 400GB
+Total: 1.9TB (faststore capacity)
+```
+
+**Storage Monitoring Script**:
+A monitoring script is available at `scripts/core/check_storage_usage.sh` that:
+- Checks faststore and warmstore usage
+- Provides color-coded status (OK/Warning/Critical)
+- Shows detailed storage breakdown
+- Can be run manually or scheduled
+
+**Future Considerations**:
+- Per-user quotas may be added in future Immich versions
+- Monitor Immich GitHub for quota-related features
+- Consider upgrading when quota management is available
+
 ### Jobs & Maintenance
 
 **Background jobs**:

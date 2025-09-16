@@ -94,22 +94,35 @@ teardown() {
     assert_script_exists "scripts/storage/wait_for_storage.sh"
 }
 
-@test "services use centralized logging paths" {
-    local services=(
+@test "services use proper logging architecture" {
+    # Test that services use the correct logging structure:
+    # - Service-specific logs: /Volumes/faststore/{service}/logs/
+    # - System logs: /Volumes/warmstore/logs/system/
+    # - Application logs: /Volumes/warmstore/logs/{category}/
+    
+    # Service-specific logs (faststore)
+    run grep "/Volumes/faststore/immich/logs/" "launchd/io.homelab.compose.immich.plist"
+    [ "$status" -eq 0 ] || fail "Immich should use service-specific logging"
+    
+    run grep "/Volumes/faststore/plex/logs/" "launchd/io.homelab.plex.plist"
+    [ "$status" -eq 0 ] || fail "Plex should use service-specific logging"
+    
+    # System logs (warmstore/logs/system/)
+    local system_services=(
         "io.homelab.colima.plist"
-        "io.homelab.compose.immich.plist"
-        "io.homelab.plex.plist"
-        "io.homelab.media.watcher.plist"
         "io.homelab.powermgmt.plist"
         "io.homelab.tailscale.plist"
         "io.homelab.updatecheck.plist"
     )
     
-    for service in "${services[@]}"; do
-        # Check for centralized logging path
-        run grep "/Volumes/warmstore/logs/" "launchd/$service"
-        [ "$status" -eq 0 ] || fail "Service $service should use centralized logging"
+    for service in "${system_services[@]}"; do
+        run grep "/Volumes/warmstore/logs/system/" "launchd/$service"
+        [ "$status" -eq 0 ] || fail "Service $service should use system logging"
     done
+    
+    # Application category logs (warmstore/logs/{category}/)
+    run grep "/Volumes/warmstore/logs/media-processing/" "launchd/io.homelab.media.watcher.plist"
+    [ "$status" -eq 0 ] || fail "Media watcher should use media-processing category logging"
 }
 
 @test "configure_launchd.sh installs all required services" {

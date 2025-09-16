@@ -5,7 +5,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/_compose.sh" 2>/dev/null || true
 
 main() {
     echo "🔧 Configuring Mac mini power management for headless server operation..."

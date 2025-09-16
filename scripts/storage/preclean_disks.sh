@@ -8,8 +8,8 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-CLEANER="$ROOT_DIR/scripts/cleanup_disks.sh"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CLEANER="$SCRIPT_DIR/cleanup_disks.sh"
 
 if [[ "${CLEAN_BEFORE_RAID:-0}" != "1" ]]; then
   echo "[preclean] Skipping (CLEAN_BEFORE_RAID is not 1)."

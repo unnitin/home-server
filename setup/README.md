@@ -36,25 +36,25 @@ setup/setup_full.sh
 
 ---
 
-### **setup_flags.sh** - Automated Setup
-Non-interactive, flag-driven setup. Choose exactly which steps to run with command-line flags.
+### **setup_flags.sh** - ⚠️ DEPRECATED / BROKEN
+**STATUS**: This script is currently **DEPRECATED** and needs complete overhaul.
 
-```bash
-setup/setup_flags.sh --all
-```
+⚠️ **DO NOT USE** - Contains broken references and untested functionality.
 
-**Common flags**:
-- `--all` → Complete setup (bootstrap + services + automation + media processing)
-- `--bootstrap` → Safe environment setup only
-- `--rebuild=<targets>` → Rebuild storage arrays (⚠️ destructive)
-- `--format-mount` → Format and mount arrays after rebuild
-- `--media-processing` → Setup automated media processing for Plex
-- `--enable-proxy` → Install & enable Caddy reverse proxy
-- `--tailscale-up` → Connect to Tailscale network
+**ISSUES**:
+- References non-existent scripts after modularization refactor
+- Flag combinations not tested since script reorganization
+- Missing integration with new direct mount architecture
+- Old proxy approach no longer supported
 
-**Use `--help` for complete flag reference.**
+**WORKAROUND**: Use `setup_full.sh` instead (fully working and tested)
 
-**Recommended for**: Automated deployments, advanced users
+**TODO for future restoration** (estimated 60-90 minutes):
+- Fix broken script references (3 missing scripts)
+- Update to use new modular script structure  
+- Remove/replace deprecated proxy functionality
+- Test all flag combinations
+- Update documentation
 
 ---
 
@@ -67,12 +67,12 @@ setup/setup_flags.sh --all
 
 ### For Advanced Users
 1. **📖 [Detailed Setup Guide](../docs/SETUP.md)** - Comprehensive walkthrough
-2. **setup_flags.sh --all** → Automated complete setup
+2. **setup_full.sh** → Use interactive setup (non-interactive option deprecated)
 3. **⚙️ [Environment Variables](../docs/ENVIRONMENT.md)** - Configuration reference
 
 ### For Specific Tasks
 - **Storage only**: See **💾 [Storage Guide](../docs/STORAGE.md)**
-- **Services only**: Use **setup_flags.sh** with specific flags
+- **Services only**: Use `setup_full.sh` and skip unwanted sections
 - **Remote access**: See **🔒 [Tailscale Guide](../docs/TAILSCALE.md)**
 
 ---
@@ -85,36 +85,32 @@ setup/setup_flags.sh --all
 - **🔧 [Troubleshooting](../docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 
-## Examples for `setup_flags.sh`
+## ⚠️ setup_flags.sh Examples (DEPRECATED)
+
+**The following examples are for reference only** - `setup_flags.sh` is currently broken.
+
+**Instead, use `setup_full.sh` for all setup operations.**
+
+<details>
+<summary>Historical setup_flags.sh examples (for reference)</summary>
 
 - **Full typical install (no storage rebuilds):**
   ```bash
-  setup/setup_flags.sh --all
+  setup/setup_flags.sh --all  # ❌ BROKEN
   ```
 
 - **Safe bootstrap + Docker + Immich + Media Processing:**
   ```bash
-  setup/setup_flags.sh --bootstrap --colima --immich --media-processing
+  setup/setup_flags.sh --bootstrap --colima --immich --media-processing  # ❌ BROKEN
   ```
 
 - **Rebuild warmstore as a 2‑disk mirror (⚠️ destructive):**
   ```bash
   export SSD_DISKS="disk4 disk5"
   export RAID_I_UNDERSTAND_DATA_LOSS=1
-  setup/setup_flags.sh --rebuild=warmstore --format-mount
+  setup/setup_flags.sh --rebuild=warmstore --format-mount  # ❌ BROKEN
   ```
 
-- **Install Tailscale, bring it up, and serve Plex + Immich over HTTPS:**
-  ```bash
-  setup/setup_flags.sh --tailscale-install --tailscale-up --tailscale-serve-direct
-  ```
+</details>
 
-- **Enable the reverse proxy (Caddy) for single-origin browser access:**
-  ```bash
-  setup/setup_flags.sh --enable-proxy
-  ```
-
-For the full list of flags, run:
-```bash
-setup/setup_flags.sh --help
-```
+**Current working alternative**: Use `setup_full.sh` for interactive setup with all features.

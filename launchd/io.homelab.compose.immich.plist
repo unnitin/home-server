@@ -16,6 +16,6 @@
     <key>PATH</key>
     <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   </dict>
-  <key>StandardOutPath</key><string>/Volumes/warmstore/logs/immich/immich.out</string>
-  <key>StandardErrorPath</key><string>/Volumes/warmstore/logs/immich/immich.err</string>
+  <key>StandardOutPath</key><string>/Volumes/faststore/immich/logs/immich.out</string>
+  <key>StandardErrorPath</key><string>/Volumes/faststore/immich/logs/immich.err</string>
 </dict></plist>

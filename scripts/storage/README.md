@@ -48,10 +48,10 @@ Storage layer managing RAID creation, disk preparation, mounting, and storage de
 
 ### **Mount & Dependency Management**
 
-#### **ensure_mounts.sh**
-**Purpose**: Automated storage mount point recovery for boot automation  
-**Usage**: Called by LaunchD `io.homelab.storage` service  
-**Features**: Graceful permission handling, detailed logging
+#### **setup_direct_mounts.sh**
+**Purpose**: Create direct mount directory structure without symlinks for clean service integration  
+**Usage**: Called by setup scripts and LaunchD `io.homelab.storage` service  
+**Features**: Service-specific directories, permission handling, data-aware operations
 
 #### **wait_for_storage.sh**
 **Purpose**: Ensure storage prerequisites are ready before starting dependent services  
@@ -83,7 +83,7 @@ scripts/storage/
 ├── rebuild_storage.sh      # Storage rebuild utility
 ├── cleanup_disks.sh        # Disk preparation
 ├── preclean_disks.sh       # Pre-RAID cleanup
-├── ensure_mounts.sh        # Mount point management
+├── setup_direct_mounts.sh  # Direct mount directory structure
 ├── wait_for_storage.sh     # Storage dependency check
 └── README.md              # This documentation
 ```
