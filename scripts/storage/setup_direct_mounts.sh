@@ -21,7 +21,8 @@ create_structure() {
             echo "  ✅ Created: $base_path/$dir"
         done
     else
-        echo "⚠️  $base_path not found, skipping $description structure"
+        echo "❌ ERROR: $base_path not found, cannot create $description structure"
+        echo "💡 Try: Check if RAID arrays are mounted with 'diskutil list'"
         return 1
     fi
 }
@@ -42,7 +43,10 @@ FASTSTORE_DIRS=(
     "plex/logs"
 )
 
-create_structure "/Volumes/faststore" "faststore (NVMe)" "${FASTSTORE_DIRS[@]}"
+if ! create_structure "/Volumes/faststore" "faststore (NVMe)" "${FASTSTORE_DIRS[@]}"; then
+    echo "❌ Failed to create faststore directory structure"
+    echo "💡 Try: Ensure /Volumes/faststore is mounted before running this script"
+fi
 
 # Create warmstore directory structure (SSD - Sequential storage)
 WARMSTORE_DIRS=(
@@ -60,7 +64,10 @@ WARMSTORE_DIRS=(
     "logs/web"
 )
 
-create_structure "/Volumes/warmstore" "warmstore (SSD)" "${WARMSTORE_DIRS[@]}"
+if ! create_structure "/Volumes/warmstore" "warmstore (SSD)" "${WARMSTORE_DIRS[@]}"; then
+    echo "❌ Failed to create warmstore directory structure"
+    echo "💡 Try: Ensure /Volumes/warmstore is mounted before running this script"
+fi
 
 # Set proper permissions (only on our application directories)
 echo "Setting permissions..."

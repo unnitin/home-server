@@ -13,17 +13,18 @@ teardown() {
     teardown_test_env
 }
 
-@test "ensure_storage_mounts.sh creates required directories" {
-    # Test that the script exists and is executable
-    assert_script_exists "scripts/storage/ensure_mounts.sh"
-    assert_valid_bash_syntax "scripts/storage/ensure_mounts.sh"
+@test "setup_direct_mounts.sh creates required directories" {
+    # Test that the new direct mounts script exists and is executable
+    assert_script_exists "scripts/storage/setup_direct_mounts.sh"
+    assert_valid_bash_syntax "scripts/storage/setup_direct_mounts.sh"
     
     # Test basic functionality without actually running it (since it requires sudo)
     # Just verify the script structure and key functions
-    run grep -q "mkdir -p" scripts/storage/ensure_mounts.sh
+    run grep -q "mkdir -p" scripts/storage/setup_direct_mounts.sh
     [ "$status" -eq 0 ]
     
-    run grep -q "ln -sf" scripts/storage/ensure_mounts.sh
+    # Test that it creates direct directories (no symlinks)
+    run grep -q "Creating.*structure" scripts/storage/setup_direct_mounts.sh
     [ "$status" -eq 0 ]
 }
 

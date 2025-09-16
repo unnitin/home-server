@@ -49,17 +49,17 @@ teardown() {
     
     # Create scenario with missing mount points
     local mount_points=(
-        "/Volumes/Media"
-        "/Volumes/Photos" 
+        "/Volumes/warmstore"
+        "/Volumes/faststore" 
         "/Volumes/Archive"
     )
     
     # Test storage mount script can handle missing directories
-    run bash -n scripts/storage/ensure_mounts.sh
+    run bash -n scripts/storage/setup_direct_mounts.sh
     [ "$status" -eq 0 ] || fail "Storage mount script has syntax errors"
     
     # Verify it creates required directories
-    run grep -q "mkdir -p" scripts/storage/ensure_mounts.sh
+    run grep -q "mkdir -p" scripts/storage/setup_direct_mounts.sh
     [ "$status" -eq 0 ] || fail "Should create missing directories"
 }
 
@@ -120,7 +120,7 @@ teardown() {
     [ "$status" -eq 0 ] || fail "Immich should wait for storage before starting"
     
     # Test the wait script has proper validation
-    run grep -E "(warmstore|Photos)" scripts/storage/wait_for_storage.sh
+    run grep -E "(warmstore|faststore)" scripts/storage/wait_for_storage.sh
     [ "$status" -eq 0 ] || fail "wait_for_storage.sh should check for required storage"
 }
 
@@ -157,7 +157,7 @@ teardown() {
     # Test that critical scripts fail gracefully when dependencies are missing
     
     local critical_scripts=(
-        "scripts/storage/ensure_mounts.sh"
+        "scripts/storage/setup_direct_mounts.sh"
         "scripts/infrastructure/start_docker.sh"
         "scripts/services/deploy_containers.sh"
         "scripts/media/watcher.sh"
@@ -180,53 +180,52 @@ teardown() {
     # Test that recovery events are properly logged
     
     local log_paths=(
-        "/Volumes/warmstore/logs/storage/"
-        "/Volumes/warmstore/logs/colima/"
-        "/Volumes/warmstore/logs/immich/"
-        "/Volumes/warmstore/logs/plex/"
-        "/Volumes/warmstore/logs/media-watcher/"
+        "/Volumes/warmstore/logs/system/"
+        "/Volumes/faststore/immich/logs/"
+        "/Volumes/faststore/plex/logs/"
+        "/Volumes/warmstore/logs/media-processing/"
     )
     
-    # Verify LaunchD services use centralized logging
+            # Verify LaunchD services use proper logging architecture
     local services_with_logging=0
     for plist in launchd/*.plist; do
         if [[ -f "$plist" ]]; then
             run grep "StandardOutPath\|StandardErrorPath" "$plist"
             if [ "$status" -eq 0 ]; then
-                if [[ "$output" =~ "/Volumes/warmstore/logs/" ]]; then
+                if [[ "$output" =~ "/Volumes/warmstore/logs/" ]] || [[ "$output" =~ "/Volumes/faststore/" ]]; then
                     ((services_with_logging++))
                 else
-                    echo "⚠️  $plist uses non-centralized logging: $output"
+                    echo "⚠️  $plist uses unexpected logging: $output"
                 fi
             fi
         fi
     done
     
-    # At least some services should use centralized logging
-    [ "$services_with_logging" -gt 0 ] || fail "At least some services should use centralized logging"
+    # At least some services should use proper logging architecture
+    [ "$services_with_logging" -gt 0 ] || fail "At least some services should use proper logging architecture"
 }
 
 @test "recovery process preserves user data" {
     # Test that recovery operations don't affect user data
     
     local data_directories=(
-        "/Volumes/warmstore/Movies"
-        "/Volumes/warmstore/TV Shows"
-        "/Volumes/warmstore/Photos"
-        "/Volumes/warmstore/Staging"
+        "/Volumes/warmstore/movies"
+        "/Volumes/warmstore/tv-shows"
+        "/Volumes/faststore/immich"
+        "/Volumes/warmstore/staging"
     )
     
     # Verify recovery scripts don't contain destructive operations on data dirs
     local recovery_scripts=(
         "scripts/core/health_check.sh"
-        "scripts/storage/ensure_mounts.sh"
+        "scripts/storage/setup_direct_mounts.sh"
         "scripts/automation/configure_launchd.sh"
     )
     
     for script in "${recovery_scripts[@]}"; do
         if [[ -f "$script" ]]; then
             # Should not contain rm -rf on data directories
-            run grep "rm -rf.*\(Movies\|TV Shows\|Photos\|Staging\)" "$script"
+            run grep "rm -rf.*\(movies\|tv-shows\|immich\|staging\)" "$script"
             [ "$status" -ne 0 ] || fail "$script should not delete user data directories"
         fi
     done

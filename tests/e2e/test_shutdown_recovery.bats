@@ -77,7 +77,7 @@ EOF
 @test "service startup scripts exist for automation timeline" {
     # Verify scripts exist for each service in automation timeline
     local service_scripts=(
-        "scripts/storage/ensure_mounts.sh:storage"
+        "scripts/storage/setup_direct_mounts.sh:storage"
         "scripts/infrastructure/install_tailscale.sh:tailscale"
         "scripts/infrastructure/start_docker.sh:colima"
         "scripts/services/deploy_containers.sh:immich"
@@ -248,7 +248,7 @@ EOF
                 # Verify no RAID modification commands in LaunchD automation scripts
                 # (Setup scripts are allowed to have RAID commands, but not automation)
                 local automation_scripts=(
-                    "scripts/storage/ensure_mounts.sh"
+                    "scripts/storage/setup_direct_mounts.sh"
                     "scripts/storage/wait_for_storage.sh"
                     "scripts/media/watcher.sh"
                     "scripts/media/processor.sh"

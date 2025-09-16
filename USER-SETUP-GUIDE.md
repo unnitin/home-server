@@ -1,3 +1,4 @@
+
 # 🏠 Home Server Setup Guide
 
 Welcome to your personal home server! This guide will help you set up access to **Immich** (photo management) and **Plex** (media streaming) on your devices.

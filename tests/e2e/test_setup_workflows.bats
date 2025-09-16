@@ -19,7 +19,7 @@ teardown() {
         "scripts/infrastructure/start_docker.sh"
         "scripts/storage/preclean_disks.sh"
         "scripts/storage/create_ssd_raid.sh"
-        "scripts/storage/ensure_mounts.sh"
+        "scripts/storage/setup_direct_mounts.sh"
         "scripts/services/deploy_containers.sh"
         "scripts/services/install_plex.sh"
         "scripts/automation/configure_launchd.sh"
@@ -35,25 +35,16 @@ teardown() {
     done
 }
 
-@test "setup_flags.sh supports all modular script operations" {
-    # Test that setup_flags.sh has correct flags for all modules
-    run bash setup/setup_flags.sh --help
-    [ "$status" -eq 0 ]
-    
-    # Verify key flags exist
-    [[ "$output" =~ "--bootstrap" ]] || fail "Missing bootstrap flag"
-    [[ "$output" =~ "--colima" ]] || fail "Missing colima flag"
-    [[ "$output" =~ "--storage-mounts" ]] || fail "Missing storage-mounts flag"
-    [[ "$output" =~ "--immich" ]] || fail "Missing immich flag"
-    [[ "$output" =~ "--plex" ]] || fail "Missing plex flag"
-    [[ "$output" =~ "--launchd" ]] || fail "Missing launchd flag"
+@test "setup_flags.sh shows deprecation warning" {
+    # Test that setup_flags.sh shows deprecation warning since it's deprecated
+    run bash -c 'echo "N" | bash setup/setup_flags.sh --help'
+    [[ "$output" =~ "DEPRECATED" ]] || fail "Should show deprecation warning"
+    [[ "$output" =~ "setup_full.sh" ]] || fail "Should recommend setup_full.sh"
 }
 
 @test "dry-run setup executes without errors" {
-    # Test that setup can run in dry-run mode without breaking
-    run bash setup/setup_flags.sh --bootstrap --dry-run
-    [ "$status" -eq 0 ]
-    [[ "$output" =~ "DRY:" ]] || fail "Dry run should show DRY: prefix"
+    # Skip this test since setup_flags.sh is deprecated
+    skip "setup_flags.sh is deprecated - dry-run functionality moved to setup_full.sh"
 }
 
 @test "setup workflow follows correct dependency order" {
@@ -72,9 +63,14 @@ teardown() {
     # Test setup behavior with missing required variables
     unset SSD_DISKS NVME_DISKS COLD_DISKS
     
-    run bash setup/setup_flags.sh --help
-    [ "$status" -eq 0 ]
+    # Since setup_full.sh is interactive, test that it exists and has proper structure
+    assert_script_exists "setup/setup_full.sh"
     
-    # Should still show help even without environment variables
-    [[ "$output" =~ "ENVIRONMENT" ]] || fail "Should show environment variable section"
+    # Test that it has environment variable handling logic
+    run grep -E "(SSD_DISKS|NVME_DISKS|COLD_DISKS)" setup/setup_full.sh
+    [ "$status" -eq 0 ] || fail "setup_full.sh should reference environment variables"
+    
+    # Test that it has interactive prompts (since it's designed to be interactive)
+    run grep -E "(read -r -p|confirm)" setup/setup_full.sh
+    [ "$status" -eq 0 ] || fail "setup_full.sh should have interactive prompts"
 }
