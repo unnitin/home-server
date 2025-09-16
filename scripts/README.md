@@ -10,10 +10,10 @@ The scripts are organized into 6 functional modules with layered dependencies:
 
 ```
 scripts/
-├── core/           # 🔧 System bootstrap & environment (3 scripts)
+├── core/           # 🔧 System bootstrap & environment (4 scripts)
 ├── storage/        # 💾 RAID & storage management (10 scripts + lib)
 ├── infrastructure/ # 🏗️ Docker, networking, VPN (7 scripts + lib)
-├── services/       # 🚀 Application deployment (5 scripts)
+├── services/       # 🚀 Application deployment (6 scripts)
 ├── automation/     # 🤖 LaunchD & maintenance (3 scripts)
 └── media/         # 📁 Media processing (5 scripts)
 ```
@@ -30,6 +30,7 @@ scripts/
 | [`core/fix_permissions.sh`](core/README.md#fix_permissionssh) | Fix script permissions | Manual maintenance |
 | [`core/ensure_power_settings.sh`](core/README.md#ensure_power_settingssh) | Monitor power settings | LaunchD io.homelab.powermgmt |
 | [`core/health_check.sh`](core/README.md#health_checksh) | System health validation | Manual troubleshooting |
+| [`core/check_storage_usage.sh`](core/README.md#check_storage_usagesh) | Monitor storage usage | Manual monitoring |
 
 ### **💾 Storage Module**
 | Script | Purpose | Used By |
@@ -62,6 +63,7 @@ scripts/
 | [`services/deploy_containers.sh`](services/README.md#deploy_containerssh) | Deploy container services | setup_full.sh, setup_flags.sh |
 | [`services/install_plex.sh`](services/README.md#install_plexsh) | Install Plex Media Server | setup_full.sh, setup_flags.sh |
 | [`services/start_plex_safe.sh`](services/README.md#start_plex_safesh) | Safe Plex startup | LaunchD io.homelab.plex |
+| [`services/configure_plex_direct.sh`](services/README.md#configure_plex_directsh) | Configure Plex direct paths | setup_full.sh, Manual |
 | [`services/enable_landing.sh`](services/README.md#enable_landingsh) | Landing page service | setup_full.sh, LaunchD |
 | [`services/import_takeout.sh`](services/README.md#import_takeoutsh) | Google Takeout import | Manual |
 
