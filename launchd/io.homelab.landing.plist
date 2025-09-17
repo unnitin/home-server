@@ -25,8 +25,8 @@
 		<string>__USER__</string>
 	</dict>
        <key>StandardOutPath</key>
-       <string>/Volumes/warmstore/logs/web/landing.out</string>
+       <string>/tmp/homelab-landing.out</string>
    <key>StandardErrorPath</key>
-       <string>/Volumes/warmstore/logs/web/landing.err</string>
+       <string>/tmp/homelab-landing.err</string>
 </dict>
 </plist>

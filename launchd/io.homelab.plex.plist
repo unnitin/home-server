@@ -25,9 +25,9 @@
         <string>__USER__</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>/Volumes/faststore/plex/logs/plex.out</string>
+    <string>/tmp/homelab-plex.out</string>
   <key>StandardErrorPath</key>
-    <string>/Volumes/faststore/plex/logs/plex.err</string>
+    <string>/tmp/homelab-plex.err</string>
 </dict>
 </plist>
 

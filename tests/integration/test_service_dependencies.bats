@@ -96,33 +96,32 @@ teardown() {
 
 @test "services use proper logging architecture" {
     # Test that services use the correct logging structure:
-    # - Service-specific logs: /Volumes/faststore/{service}/logs/
-    # - System logs: /Volumes/warmstore/logs/system/
-    # - Application logs: /Volumes/warmstore/logs/{category}/
+    # Updated for LaunchD boot-time compatibility:
+    # - All LaunchD services now use /tmp/ for immediate startup without storage dependencies
+    # - Application logs can still write to external storage during runtime
     
-    # Service-specific logs (faststore)
-    run grep "/Volumes/faststore/immich/logs/" "launchd/io.homelab.compose.immich.plist"
-    [ "$status" -eq 0 ] || fail "Immich should use service-specific logging"
-    
-    run grep "/Volumes/faststore/plex/logs/" "launchd/io.homelab.plex.plist"
-    [ "$status" -eq 0 ] || fail "Plex should use service-specific logging"
-    
-    # System logs (warmstore/logs/system/)
-    local system_services=(
+    # All LaunchD services should use /tmp/ paths for StandardOutPath/StandardErrorPath
+    local all_services=(
         "io.homelab.colima.plist"
+        "io.homelab.compose.immich.plist" 
+        "io.homelab.plex.plist"
         "io.homelab.powermgmt.plist"
         "io.homelab.tailscale.plist"
         "io.homelab.updatecheck.plist"
+        "io.homelab.media.watcher.plist"
+        "io.homelab.landing.plist"
+        "io.homelab.storage.plist"
     )
     
-    for service in "${system_services[@]}"; do
-        run grep "/Volumes/warmstore/logs/system/" "launchd/$service"
-        [ "$status" -eq 0 ] || fail "Service $service should use system logging"
+    for service in "${all_services[@]}"; do
+        # Check that service uses /tmp/ for LaunchD logging
+        run grep "/tmp/homelab-" "launchd/$service"
+        [ "$status" -eq 0 ] || fail "Service $service should use /tmp/ for LaunchD logging"
+        
+        # Verify both StandardOutPath and StandardErrorPath are configured
+        run grep "StandardOutPath\|StandardErrorPath" "launchd/$service"
+        [ "$status" -eq 0 ] || fail "Service $service should have logging configured"
     done
-    
-    # Application category logs (warmstore/logs/{category}/)
-    run grep "/Volumes/warmstore/logs/media-processing/" "launchd/io.homelab.media.watcher.plist"
-    [ "$status" -eq 0 ] || fail "Media watcher should use media-processing category logging"
 }
 
 @test "configure_launchd.sh installs all required services" {

@@ -102,7 +102,7 @@ class TestShutdownRecovery:
             "POST-BOOT RECOVERY COMMANDS:",
             "1. Health check: ./scripts/post_boot_health_check.sh",
             "2. Auto-recovery: ./scripts/post_boot_health_check.sh --auto-recover",
-            "3. Monitor logs: tail -f /Volumes/warmstore/logs/{service}/{service}.{out,err}"
+            "3. Monitor logs: tail -f /tmp/homelab-{service}.{out,err}"
         ]
         
         with open(recovery_file, 'w') as f:

@@ -190,19 +190,18 @@ teardown() {
     local services_with_logging=0
     for plist in launchd/*.plist; do
         if [[ -f "$plist" ]]; then
-            run grep "StandardOutPath\|StandardErrorPath" "$plist"
-            if [ "$status" -eq 0 ]; then
-                if [[ "$output" =~ "/Volumes/warmstore/logs/" ]] || [[ "$output" =~ "/Volumes/faststore/" ]]; then
-                    ((services_with_logging++))
-                else
-                    echo "⚠️  $plist uses unexpected logging: $output"
-                fi
+            # Check if the plist contains /tmp/homelab- anywhere in the file
+            if grep -q "/tmp/homelab-" "$plist"; then
+                ((services_with_logging++))
+                echo "✅ $plist uses proper LaunchD logging: /tmp/"
+            else
+                echo "⚠️  $plist missing /tmp/ logging"
             fi
         fi
     done
     
-    # At least some services should use proper logging architecture
-    [ "$services_with_logging" -gt 0 ] || fail "At least some services should use proper logging architecture"
+    # All services should use /tmp/ logging for boot compatibility
+    [ "$services_with_logging" -gt 8 ] || fail "At least 9 services should use /tmp/ logging architecture"
 }
 
 @test "recovery process preserves user data" {
