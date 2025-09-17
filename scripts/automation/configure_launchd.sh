@@ -108,7 +108,7 @@ if [[ $INSTALLED -gt 0 ]]; then
   echo "   launchctl list | grep homelab"
   echo ""
   echo "📄 Monitor logs during restart:"
-  echo "   tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}"
+  echo "   tail -f /tmp/homelab-*.{out,err}"
   echo ""
   echo "🔄 Enhanced automation ready for graceful recovery!"
 else

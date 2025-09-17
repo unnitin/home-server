@@ -20,10 +20,10 @@
     <true/>
     
     <key>StandardOutPath</key>
-    <string>/Volumes/warmstore/logs/system/powermgmt.out</string>
+    <string>/tmp/homelab-powermgmt.out</string>
   
   <key>StandardErrorPath</key>
-    <string>/Volumes/warmstore/logs/system/powermgmt.err</string>
+    <string>/tmp/homelab-powermgmt.err</string>
     
     <key>EnvironmentVariables</key>
     <dict>
