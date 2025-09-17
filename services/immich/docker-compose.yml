@@ -16,7 +16,7 @@ services:
       - REDIS_HOST=redis
       - IMMICH_MEDIA_LOCATION=/photos
     volumes:
-      - /Volumes/faststore/immich-new:/photos
+      - /Volumes/faststore/immich:/photos
     ports:
       - "127.0.0.1:2283:2283"
     restart: unless-stopped
@@ -41,7 +41,7 @@ services:
     shm_size: 128mb
     restart: unless-stopped
     volumes:
-      - /Volumes/faststore/immich-new/database:/var/lib/postgresql/data
+      - /Volumes/faststore/immich/database:/var/lib/postgresql/data
 
 # Database now uses bind mount to faststore
 # volumes:
