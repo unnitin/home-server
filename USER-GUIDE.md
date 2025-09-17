@@ -151,7 +151,7 @@ After setup, you have a complete home media server with:
 
 #### 1. Organize Your Media Files
 ```
-/Volumes/Media/
+/Volumes/warmstore/
 ├── Movies/
 │   ├── The Matrix (1999)/
 │   │   └── The Matrix (1999).mkv
@@ -319,7 +319,7 @@ After setup, you have a complete home media server with:
 - [ ] Set up media organization folders
 
 #### First Content:
-- [ ] Add some movies to `/Volumes/Media/Movies/`
+- [ ] Add some movies to `/Volumes/warmstore/Movies/`
 - [ ] Upload test photos to Immich
 - [ ] Verify everything works on mobile
 - [ ] Share access with family members

@@ -8,34 +8,32 @@ Comprehensive guide for managing storage arrays, expansion, backups, and optimiz
 
 | Tier | Purpose | Technology | Mount Point | Array Name | Status |
 |------|---------|------------|-------------|------------|---------|
-| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/Photos` | `faststore` | 🟡 *Interim: symlink to warmstore* |
-| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/Media` | `warmstore` | ✅ **Active** |
+| **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/faststore` | `faststore` | ✅ **Active** |
+| **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/warmstore` | `warmstore` | ✅ **Active** |
 | **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/Archive` | `coldstore` | 🟡 *Placeholder directory* |
 
-### Current Interim Configuration
+### Current Direct Mount Configuration
 
-**Mount Structure** (until NVMe drives available):
+**Mount Structure** (no symlinks, direct access):
 ```bash
-/Volumes/warmstore/          # Real SSD RAID array (2.0TB)
-├── Movies/                  # 10 folders, ~320GB (Plex Movies)
-├── TV Shows/               # 25 folders, ~554GB (Plex TV Shows)  
-└── Photos/                 # Ready for Immich (Future: 0-500GB)
+/Volumes/faststore/          # NVMe RAID array for photos
+├── photos/                  # Immich photo storage
+├── import/                  # Photo import staging
+└── backup/                  # Photo backups
 
-# Service Access Points:
-/Volumes/Media/Movies/       → /Volumes/warmstore/Movies/     (Plex)
-/Volumes/Media/TV/           → /Volumes/warmstore/TV Shows/   (Plex)
-/Volumes/Photos/             → /Volumes/warmstore/Photos/     (Immich)
-/Volumes/Archive/            → (placeholder directory)
+/Volumes/warmstore/          # SSD RAID array for media (2.0TB)
+├── movies/                  # 10 folders, ~320GB (Plex Movies)
+├── tv-shows/               # 25 folders, ~554GB (Plex TV Shows)
+└── music/                  # Plex music library
+
+/Volumes/Archive/            # Archive directory (placeholder)
 ```
 
-**Automation Requirements**: The interim setup requires mount point recreation after reboot:
-```bash
-mkdir -p /Volumes/Media
-ln -sf /Volumes/warmstore/Movies /Volumes/Media/Movies
-ln -sf "/Volumes/warmstore/TV Shows" /Volumes/Media/TV  
-ln -sf /Volumes/warmstore/Photos /Volumes/Photos
-mkdir -p /Volumes/Archive
-```
+**Direct Access Benefits**:
+- **No symlink complexity** - services access storage directly
+- **Better mobile app compatibility** - Immich mobile app works properly
+- **Improved performance** - eliminates symlink overhead
+- **Simplified permissions** - no symlink permission issues
 
 ### RAID Configurations
 - **2 disks**: Mirror (RAID1) - 50% capacity, 1-disk fault tolerance
@@ -116,7 +114,7 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"    # 4-disk RAID10
 **1. Backup existing data**:
 ```bash
 # Backup warmstore to external drive
-rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/Backup/MediaBackup/
 
 # Verify backup
 ls -la /Volumes/Backup/MediaBackup/
@@ -138,7 +136,7 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"  # Add new disks
 **4. Restore data**:
 ```bash
 # Restore from backup using rsync
-rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/Media/
+rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/warmstore/
 ```
 
 **5. Verify**:
@@ -169,11 +167,11 @@ export COLD_DISKS="disk8 disk9"
 **External drive backup**:
 ```bash
 # Backup specific array
-rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
-rsync -av --progress /Volumes/Photos/ /Volumes/MyBackup/PhotoBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
+rsync -av --progress /Volumes/faststore/ /Volumes/MyBackup/PhotoBackup/
 
 # Check backup progress (dry run first)
-rsync --dry-run -av /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+rsync --dry-run -av /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
 ```
 
 **What gets backed up**:
@@ -185,7 +183,7 @@ rsync --dry-run -av /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
 **Backup verification**:
 ```bash
 # Compare source and backup
-diff -r /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+diff -r /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
 
 # Check backup size
 du -sh /Volumes/MyBackup/*
@@ -196,17 +194,17 @@ du -sh /Volumes/MyBackup/*
 **Restore from backup**:
 ```bash
 # Restore specific array (dry run first - recommended)
-rsync --dry-run -av /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
+rsync --dry-run -av /Volumes/MyBackup/MediaBackup/ /Volumes/warmstore/
 
 # Actual restore
-rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
+rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/warmstore/
 ```
 
 **Selective restore**:
 ```bash
 # Restore specific folders
-rsync -av /Volumes/MyBackup/MediaBackup/Movies/ /Volumes/Media/Movies/
-rsync -av /Volumes/MyBackup/PhotoBackup/2023/ /Volumes/Photos/2023/
+rsync -av /Volumes/MyBackup/MediaBackup/Movies/ /Volumes/warmstore/Movies/
+rsync -av /Volumes/MyBackup/PhotoBackup/2023/ /Volumes/faststore/2023/
 ```
 
 ### Automated Backup Scripts
@@ -218,8 +216,8 @@ BACKUP_ROOT="/Volumes/Backup"
 DATE=$(date +%Y%m%d)
 
 # Backup each tier using rsync
-rsync -av --progress /Volumes/Media/ "$BACKUP_ROOT/Media_$DATE/"
-rsync -av --progress /Volumes/Photos/ "$BACKUP_ROOT/Photos_$DATE/"
+rsync -av --progress /Volumes/warmstore/ "$BACKUP_ROOT/Media_$DATE/"
+rsync -av --progress /Volumes/faststore/ "$BACKUP_ROOT/Photos_$DATE/"
 
 # Cleanup old backups (keep 4 weeks)
 find "$BACKUP_ROOT" -name "Media_*" -mtime +28 -exec rm -rf {} \;
@@ -260,18 +258,18 @@ Device Node:          /dev/disk5
 
 # Detailed usage
 df -h /Volumes/*
-du -sh /Volumes/Media/*
-du -sh /Volumes/Photos/*
+du -sh /Volumes/warmstore/*
+du -sh /Volumes/faststore/*
 ```
 
 ### Performance Testing
 ```bash
 # Write speed test
-dd if=/dev/zero of=/Volumes/Photos/test_file bs=1m count=1000
-rm /Volumes/Photos/test_file
+dd if=/dev/zero of=/Volumes/faststore/test_file bs=1m count=1000
+rm /Volumes/faststore/test_file
 
 # Read speed test
-dd if=/Volumes/Photos/large_file of=/dev/null bs=1m
+dd if=/Volumes/faststore/large_file of=/dev/null bs=1m
 ```
 
 ### Disk Health
@@ -302,8 +300,8 @@ diskutil list
 sudo diskutil mount /dev/disk5
 
 # Repair filesystem
-sudo diskutil verifyVolume /Volumes/Media
-sudo diskutil repairVolume /Volumes/Media
+sudo diskutil verifyVolume /Volumes/warmstore
+sudo diskutil repairVolume /Volumes/warmstore
 ```
 
 ### Degraded Array
@@ -341,10 +339,10 @@ diskutil appleRAID list
 **Partial data loss**:
 ```bash
 # Use backup to restore missing files
-rsync -av --existing /Volumes/Backup/MediaBackup/ /Volumes/Media/
+rsync -av --existing /Volumes/Backup/MediaBackup/ /Volumes/warmstore/
 
 # Find and restore specific files
-find /Volumes/Backup -name "missing_file.mkv" -exec cp {} /Volumes/Media/ \;
+find /Volumes/Backup -name "missing_file.mkv" -exec cp {} /Volumes/warmstore/ \;
 ```
 
 **Complete array failure**:
@@ -374,23 +372,23 @@ df -h /Volumes/*
 
 ```bash
 # Full backup verification (dry run)
-rsync --dry-run -av /Volumes/Media/ /tmp/backup_test/
+rsync --dry-run -av /Volumes/warmstore/ /tmp/backup_test/
 
 # Disk health check
-diskutil verifyVolume /Volumes/Media
-diskutil verifyVolume /Volumes/Photos
+diskutil verifyVolume /Volumes/warmstore
+diskutil verifyVolume /Volumes/faststore
 
 # Performance test
-dd if=/dev/zero of=/Volumes/Media/perf_test bs=1m count=100
-rm /Volumes/Media/perf_test
+dd if=/dev/zero of=/Volumes/warmstore/perf_test bs=1m count=100
+rm /Volumes/warmstore/perf_test
 ```
 
 ### Quarterly Maintenance
 
 ```bash
 # Complete backup refresh
-rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup_Q$(date +%q)/
-rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup_Q$(date +%q)/
+rsync -av --progress /Volumes/warmstore/ /Volumes/Backup/MediaBackup_Q$(date +%q)/
+rsync -av --progress /Volumes/faststore/ /Volumes/Backup/PhotoBackup_Q$(date +%q)/
 
 # Array rebuild test (if spare disks available)
 # Document the process and timing
@@ -413,9 +411,9 @@ rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup_Q$(date +%q)/
 **File organization**:
 ```bash
 # Optimize by access patterns
-/Volumes/Photos/          # Current photos (NVMe)
-/Volumes/Media/Current/   # Recently added media (SSD)
-/Volumes/Media/Archive/   # Older media (consider moving to coldstore)
+/Volumes/faststore/          # Current photos (NVMe)
+/Volumes/warmstore/Current/   # Recently added media (SSD)
+/Volumes/warmstore/Archive/   # Older media (consider moving to coldstore)
 /Volumes/Archive/         # Long-term storage (HDD)
 ```
 
@@ -424,8 +422,8 @@ rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup_Q$(date +%q)/
 **Monitor growth trends**:
 ```bash
 # Track usage over time
-echo "$(date): $(df -h /Volumes/Photos | tail -1)" >> /tmp/storage_growth.log
-echo "$(date): $(df -h /Volumes/Media | tail -1)" >> /tmp/storage_growth.log
+echo "$(date): $(df -h /Volumes/faststore | tail -1)" >> /tmp/storage_growth.log
+echo "$(date): $(df -h /Volumes/warmstore | tail -1)" >> /tmp/storage_growth.log
 ```
 
 **Expansion triggers**:
@@ -458,7 +456,7 @@ export NVME_RAID_NAME="photo_vault"
 export COLD_RAID_NAME="archive_depot"
 
 # Custom mount points
-export MEDIA_MOUNT="/Volumes/MediaServer"
+export MEDIA_MOUNT="/Volumes/warmstoreServer"
 export PHOTOS_MOUNT="/Volumes/PhotoVault"
 export ARCHIVE_MOUNT="/Volumes/ArchiveDepot"
 ```

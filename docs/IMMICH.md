@@ -37,7 +37,7 @@ ${EDITOR:-nano} .env
 | **Redis** | Cache and job queue | `immich-redis` | - |
 
 ### Storage Configuration
-- **Photos/Videos**: `/Volumes/Photos` (faststore NVMe array)
+- **Photos/Videos**: `/Volumes/faststore` (faststore NVMe array)
 - **Database**: Docker volume `immich-db`
 - **Machine Learning**: Models cached in container
 
@@ -60,7 +60,7 @@ Open http://localhost:2283
 
 ### 4. Storage Settings
 **Defaults are optimal**:
-- **Upload Location**: `/photos` (maps to `/Volumes/Photos`)
+- **Upload Location**: `/photos` (maps to `/Volumes/faststore`)
 - **Thumbnail Quality**: High
 - **Preview Quality**: Medium
 
@@ -217,7 +217,7 @@ export IMMICH_API_KEY=your_api_key_here
 # Immich web UI → Administration → Jobs
 
 # Check storage usage
-df -h /Volumes/Photos
+df -h /Volumes/faststore
 ```
 
 ---
@@ -441,7 +441,7 @@ docker compose logs immich-ml
 **Storage monitoring**:
 ```bash
 # Photo storage usage
-df -h /Volumes/Photos
+df -h /Volumes/faststore
 
 # Database size
 cd services/immich
@@ -473,7 +473,7 @@ docker compose logs -f database
 ### Common Issues
 
 **Upload failures**:
-1. Check storage space: `df -h /Volumes/Photos`
+1. Check storage space: `df -h /Volumes/faststore`
 2. Verify network connectivity
 3. Check mobile app server URL
 4. Restart containers: `cd services/immich && docker compose restart`
@@ -503,7 +503,7 @@ docker compose restart immich-ml
 
 **Slow uploads**:
 - Check network speed between device and server
-- Verify storage write speed on `/Volumes/Photos`
+- Verify storage write speed on `/Volumes/faststore`
 - Monitor server CPU/memory usage
 
 **Slow web interface**:
@@ -546,7 +546,7 @@ docker compose up -d
 
 ### Custom Domain
 
-**With reverse proxy**:
+**With landing page**:
 - Access via: `https://your-macmini.your-tailnet.ts.net/photos`
 - Mobile apps work with subdirectory paths
 

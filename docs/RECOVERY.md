@@ -40,8 +40,8 @@ ls -la /Volumes/
 ./scripts/ensure_storage_mounts.sh
 
 # Verify mount points
-ls -la /Volumes/Media/Movies/
-ls -la /Volumes/Photos/
+ls -la /Volumes/warmstore/Movies/
+ls -la /Volumes/faststore/
 ls -la /Volumes/Archive/
 ```
 
@@ -193,8 +193,8 @@ docker-compose restart immich-server
 **Solution**:
 ```bash
 # Check storage mounts
-ls -la /Volumes/Media/Movies/
-ls -la /Volumes/Media/TV/
+ls -la /Volumes/warmstore/Movies/
+ls -la /Volumes/warmstore/TV/
 
 # Recreate mounts if missing
 ./scripts/ensure_storage_mounts.sh
@@ -206,7 +206,7 @@ open -a "Plex Media Server"
 
 ### **"Storage Mount Points Missing"**
 
-**Symptoms**: `/Volumes/Media`, `/Volumes/Photos` missing
+**Symptoms**: `/Volumes/warmstore`, `/Volumes/faststore` missing
 
 **Solution**:
 ```bash

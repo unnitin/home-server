@@ -22,7 +22,7 @@ setup/setup.sh
 ---
 
 ### **setup_full.sh** - Interactive Setup  
-Interactive full setup with confirmations. Installs Docker/Colima, Immich, Plex, media processing automation, launchd jobs, Tailscale, and optional reverse proxy.
+Interactive full setup with confirmations. Installs Docker/Colima, Immich, Plex, media processing automation, launchd jobs, and Tailscale.
 
 ```bash
 setup/setup_full.sh

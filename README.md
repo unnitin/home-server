@@ -19,11 +19,10 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 - **🎬 Plex Media Server** (native app) - Stream movies, TV shows, music with hardware transcoding
 - **📸 Immich** (Docker via Colima) - Self-hosted photo backup and browsing (Google Photos alternative)
 - **🔒 Tailscale** - Secure remote access with HTTPS to your services from anywhere
-- **🌐 Caddy Reverse Proxy** *(optional)* - Single URL access to all services
 
 ### Storage Architecture
-- **⚡ faststore** (NVMe): High-speed storage for photos → `/Volumes/Photos`
-- **💾 warmstore** (SSD): Media library storage → `/Volumes/Media`  
+- **⚡ faststore** (NVMe): High-speed storage for photos → `/Volumes/faststore`
+- **💾 warmstore** (SSD): Media library storage → `/Volumes/warmstore`  
 - **🗄️ coldstore** (HDD): Archive storage → `/Volumes/Archive`
 
 **Storage Scaling**: 2 disks = mirror, 4 disks = RAID10. Rebuild scripts handle growth.
@@ -48,7 +47,6 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 - [🎬 **Plex Setup & Usage**](docs/PLEX.md) - Native Plex installation and configuration
 - [📸 **Immich Setup & Usage**](docs/IMMICH.md) - Photo management and Google Takeout import
 - [🔒 **Tailscale Setup & Usage**](docs/TAILSCALE.md) - Remote access configuration
-- [🌐 **Reverse Proxy Setup**](docs/REVERSE-PROXY.md) - Single URL access with Caddy
 
 ### Advanced Topics
 - [💾 **Storage Management**](docs/STORAGE.md) - RAID setup, growth, and backups
@@ -83,16 +81,14 @@ After setup, you'll have access to:
 ### 🎬 Plex Media Server
 - **Local**: http://localhost:32400/web
 - **Remote**: https://your-macmini.tailnet.ts.net:32400
-- **Via Proxy**: https://your-macmini.tailnet.ts.net/plex
 
 ### 📸 Immich Photo Management  
 - **Local**: http://localhost:2283
 - **Remote**: https://your-macmini.tailnet.ts.net
-- **Via Proxy**: https://your-macmini.tailnet.ts.net/photos
 
-### 🏠 Server Dashboard *(with reverse proxy)*
-- **Home Page**: https://your-macmini.tailnet.ts.net
-- One-click access to all services with status indicators
+### 🏠 Server Dashboard
+- **Home Page**: https://your-macmini.tailnet.ts.net  
+- Simple landing page with direct service links
 
 ## 🗂️ Repository Structure
 
@@ -106,7 +102,6 @@ home-server/
 │   ├── PLEX.md                    # Plex setup & usage
 │   ├── IMMICH.md                  # Immich setup & usage
 │   ├── TAILSCALE.md               # Remote access setup
-│   ├── REVERSE-PROXY.md           # Reverse proxy guide
 │   ├── STORAGE.md                 # Storage management
 │   ├── AUTOMATION.md              # LaunchD & automation
 │   ├── DIAGNOSTICS.md             # Monitoring & health checks
@@ -119,7 +114,6 @@ home-server/
 ├── 📜 scripts/                    # Individual setup scripts
 ├── 🐳 services/                   # Service configurations
 │   ├── immich/                    # Immich Docker setup
-│   └── caddy/                     # Reverse proxy config
 ├── 🤖 launchd/                    # Auto-start configurations
 └── 🔍 diagnostics/                # Health check scripts
 ```
@@ -145,8 +139,7 @@ home-server/
 
 ### Remote Access Setup
 1. [🔒 Install Tailscale](docs/TAILSCALE.md)
-2. [🌐 Optional: Enable reverse proxy](docs/REVERSE-PROXY.md)
-3. [📱 Configure mobile apps](docs/TAILSCALE.md#mobile-setup)
+2. [📱 Configure mobile apps](docs/TAILSCALE.md#mobile-setup)
 
 ## 🆘 Need Help?
 
