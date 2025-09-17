@@ -43,7 +43,7 @@ EOF
 POST-BOOT RECOVERY COMMANDS:
 1. Health check: ./scripts/core/health_check.sh
 2. Auto-recovery: ./scripts/core/health_check.sh --auto-recover
-3. Monitor logs: tail -f /Volumes/warmstore/logs/{service}/{service}.{out,err}
+3. Monitor logs: tail -f /tmp/homelab-{service}.{out,err}
 EOF
     
     # Verify recovery reference
@@ -196,16 +196,16 @@ EOF
 @test "log monitoring commands are valid" {
     # Test log monitoring from shutdown test instructions
     local log_patterns=(
-        "/Volumes/warmstore/logs/storage/storage.out"
-        "/Volumes/warmstore/logs/colima/colima.out"
-        "/Volumes/warmstore/logs/immich/immich.out"
-        "/Volumes/warmstore/logs/plex/plex.out"
-        "/Volumes/warmstore/logs/landing/landing.out"
+        "/tmp/homelab-storage.out"
+        "/tmp/homelab-colima.out" 
+        "/tmp/homelab-immich.out"
+        "/tmp/homelab-plex.out"
+        "/tmp/homelab-landing.out"
     )
     
     for log_path in "${log_patterns[@]}"; do
         # Verify log path structure
-        [[ "$log_path" =~ ^/Volumes/warmstore/logs/ ]] || fail "Log should be in centralized location: $log_path"
+        [[ "$log_path" =~ ^/tmp/homelab- ]] || fail "Log should be in /tmp/ location: $log_path"
         [[ "$log_path" =~ \.out$ ]] || fail "Log should be .out file: $log_path"
         
         # Create mock log file for testing
@@ -273,8 +273,8 @@ EOF
                 assert_script_exists "scripts/automation/configure_launchd.sh"
                 ;;
             "actions_are_logged")
-                # Verify logging is configured
-                grep -r "/Volumes/warmstore/logs/" launchd/ || fail "Services should use centralized logging"
+                # Verify logging is configured - updated for /tmp/ LaunchD logging
+                grep -r "/tmp/homelab-" launchd/ || fail "Services should use /tmp/ LaunchD logging"
                 ;;
         esac
     done
