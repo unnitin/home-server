@@ -79,11 +79,11 @@ Look for output like:
 # Safety gate - REQUIRED for any RAID operations
 export RAID_I_UNDERSTAND_DATA_LOSS=1
 
-# SSD Array (warmstore) - for Plex media at /Volumes/Media
+# SSD Array (warmstore) - for Plex media at /Volumes/warmstore
 export SSD_DISKS="disk4 disk5"              # 2 disks = mirror
 export SSD_DISKS="disk4 disk5 disk6 disk7"  # 4 disks = RAID10
 
-# NVMe Array (faststore) - for Immich photos at /Volumes/Photos  
+# NVMe Array (faststore) - for Immich photos at /Volumes/faststore  
 export NVME_DISKS="disk2 disk3"             # 2 disks = mirror
 export NVME_DISKS="disk2 disk3 disk8 disk9" # 4 disks = RAID10
 
@@ -96,8 +96,8 @@ export COLD_DISKS="disk6 disk7"             # 2 disks = mirror
 
 | Array Name | Default Mount | Purpose | Disk Variable |
 |------------|---------------|---------|---------------|
-| `faststore` | `/Volumes/Photos` | Immich photos (high-speed) | `NVME_DISKS` |
-| `warmstore` | `/Volumes/Media` | Plex media (good speed) | `SSD_DISKS` |
+| `faststore` | `/Volumes/faststore` | Immich photos (high-speed) | `NVME_DISKS` |
+| `warmstore` | `/Volumes/warmstore` | Plex media (good speed) | `SSD_DISKS` |
 | `coldstore` | `/Volumes/Archive` | Archive storage (capacity) | `COLD_DISKS` |
 
 **Custom names/mounts** *(advanced)*:
@@ -172,10 +172,10 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 No environment variables needed - use explicit paths:
 ```bash
 # Backup warmstore to external drive
-rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
 
 # Restore from backup  
-rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/Media/
+rsync -av --progress /Volumes/MyBackup/MediaBackup/ /Volumes/warmstore/
 ```
 
 ---
@@ -200,7 +200,7 @@ export NVME_DISKS="disk2 disk3"
 IMMICH_DB_PASSWORD=my_secure_password123
 ```
 
-**Result**: 2-disk NVMe mirror at `/Volumes/Photos` for Immich.
+**Result**: 2-disk NVMe mirror at `/Volumes/faststore` for Immich.
 
 ### Example 3: Full Media Server (SSD + NVMe RAID)
 ```bash
@@ -218,8 +218,8 @@ export IMMICH_API_KEY=abcd1234-your-api-key
 ```
 
 **Result**: 
-- `/Volumes/Photos` (NVMe mirror) for Immich
-- `/Volumes/Media` (SSD RAID10) for Plex  
+- `/Volumes/faststore` (NVMe mirror) for Immich
+- `/Volumes/warmstore` (SSD RAID10) for Plex  
 - Google Takeout import ready
 
 ### Example 4: Complete Setup with Archive
@@ -242,7 +242,7 @@ IMMICH_DB_PASSWORD=my_secure_password123
 
 ### RAID Operations
 - **DESTRUCTIVE**: Rebuilds delete existing data
-- **Backup first**: Use `rsync -av /Volumes/Media/ /Volumes/Backup/`
+- **Backup first**: Use `rsync -av /Volumes/warmstore/ /Volumes/Backup/`
 - **Safety gate**: `RAID_I_UNDERSTAND_DATA_LOSS=1` required
 - **Re-runnable**: Scripts delete and recreate existing arrays
 

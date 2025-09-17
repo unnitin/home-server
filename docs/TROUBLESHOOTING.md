@@ -161,8 +161,8 @@ docker compose up -d
 **Permission issues**:
 ```bash
 # Fix volume permissions
-sudo chown -R $(whoami):staff /Volumes/Photos
-chmod -R 755 /Volumes/Photos
+sudo chown -R $(whoami):staff /Volumes/faststore
+chmod -R 755 /Volumes/faststore
 ```
 
 ### Network Issues
@@ -205,7 +205,7 @@ diskutil appleRAID list
 ```bash
 # Check disk health
 diskutil info disk4
-diskutil verifyVolume /Volumes/Media
+diskutil verifyVolume /Volumes/warmstore
 ```
 
 **Mount issues**:
@@ -214,8 +214,8 @@ diskutil verifyVolume /Volumes/Media
 sudo diskutil mount /dev/disk5
 
 # Fix permissions
-sudo chown -R $(whoami):staff /Volumes/Media
-sudo chmod -R 755 /Volumes/Media
+sudo chown -R $(whoami):staff /Volumes/warmstore
+sudo chmod -R 755 /Volumes/warmstore
 ```
 
 **Rebuild required** (⚠️ DESTRUCTIVE):
@@ -224,14 +224,14 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 export SSD_DISKS="disk4 disk5"
 
 # Backup first!
-rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/Backup/MediaBackup/
 
 # Rebuild
 ./scripts/09_rebuild_storage.sh warmstore
 ./scripts/12_format_and_mount_raids.sh
 
 # Restore
-rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/Media/
+rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/warmstore/
 ```
 
 ### Disk Space Issues
@@ -299,14 +299,14 @@ docker compose logs database
 **Mobile app issues**:
 1. **Check server URL**: Ensure correct URL in app
 2. **Network connectivity**: Test from same device in browser
-3. **Storage space**: Check `/Volumes/Photos` has space
+3. **Storage space**: Check `/Volumes/faststore` has space
 4. **App restart**: Force close and reopen Immich app
 
 **Web upload issues**:
 ```bash
 # Check upload permissions
-sudo chown -R $(whoami):staff /Volumes/Photos
-chmod -R 755 /Volumes/Photos
+sudo chown -R $(whoami):staff /Volumes/faststore
+chmod -R 755 /Volumes/faststore
 
 # Check container logs
 cd services/immich
@@ -400,7 +400,7 @@ tail -f ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Server.log | grep Transc
 ### Library Issues
 
 **Media not scanning**:
-1. **Check mount**: `/Volumes/Media` accessible?
+1. **Check mount**: `/Volumes/warmstore` accessible?
 2. **Permissions**: Can Plex read the files?
 3. **Manual scan**: Settings → Library → Scan Library Files
 4. **File naming**: Follow Plex naming conventions
@@ -615,8 +615,8 @@ df -h
 **Storage performance**:
 ```bash
 # Test write speed
-dd if=/dev/zero of=/Volumes/Photos/test bs=1m count=1000
-rm /Volumes/Photos/test
+dd if=/dev/zero of=/Volumes/faststore/test bs=1m count=1000
+rm /Volumes/faststore/test
 
 # Check RAID health
 ./diagnostics/check_raid_status.sh

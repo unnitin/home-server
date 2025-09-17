@@ -314,7 +314,7 @@ lsof -i :32400
 ### Troubleshooting
 - **Service not starting**: Check system logs with `Console.app`
 - **No hardware transcoding**: Verify codec support on your Mac model
-- **Library not scanning**: Check folder permissions on `/Volumes/Media`
+- **Library not scanning**: Check folder permissions on `/Volumes/warmstore`
 - **Remote access issues**: Configure Plex settings for external access
 
 ---
@@ -547,10 +547,10 @@ pgrep -f "Plex Media Server" | xargs ps -p
 ### Backup Procedures
 ```bash
 # Backup media to external drive
-rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
 
 # Backup photos
-rsync -av --progress /Volumes/Photos/ /Volumes/MyBackup/PhotoBackup/
+rsync -av --progress /Volumes/faststore/ /Volumes/MyBackup/PhotoBackup/
 ```
 
 ---

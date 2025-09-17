@@ -92,18 +92,18 @@ After RAID setup, you have three primary storage locations:
 
 | Mount Point | Purpose | RAID Type | Usage |
 |-------------|---------|-----------|--------|
-| `/Volumes/Media` | Plex media library | SSD Mirror/RAID10 | Movies, TV Shows, Music |
-| `/Volumes/Photos` | Immich photo storage | NVMe Mirror/RAID10 | Photos, videos, albums |
+| `/Volumes/warmstore` | Plex media library | SSD Mirror/RAID10 | Movies, TV Shows, Music |
+| `/Volumes/faststore` | Immich photo storage | NVMe Mirror/RAID10 | Photos, videos, albums |
 | `/Volumes/Archive` | Long-term storage | HDD Single/Mirror | Backups, archives, old files |
 
 ### Ideal Folder Structure
 
-#### 📹 Media Storage (`/Volumes/Media`)
+#### 📹 Media Storage (`/Volumes/warmstore`)
 
 **For Plex to work optimally, organize content like this:**
 
 ```bash
-/Volumes/Media/
+/Volumes/warmstore/
 ├── Movies/
 │   ├── The Matrix (1999)/
 │   │   ├── The Matrix (1999).mkv
@@ -144,12 +144,12 @@ After RAID setup, you have three primary storage locations:
     └── Studio Ghibli/
 ```
 
-#### 📸 Photo Storage (`/Volumes/Photos`)
+#### 📸 Photo Storage (`/Volumes/faststore`)
 
 **Immich manages this automatically, but you can also manually organize:**
 
 ```bash
-/Volumes/Photos/
+/Volumes/faststore/
 ├── library/                 # Immich managed files
 │   ├── upload/
 │   ├── thumbs/
@@ -194,30 +194,30 @@ After RAID setup, you have three primary storage locations:
 
 ```bash
 # Create Movies structure
-sudo mkdir -p "/Volumes/Media/Movies"
-sudo mkdir -p "/Volumes/Media/TV Shows"
-sudo mkdir -p "/Volumes/Media/Music"
-sudo mkdir -p "/Volumes/Media/Collections"
+sudo mkdir -p "/Volumes/warmstore/Movies"
+sudo mkdir -p "/Volumes/warmstore/TV Shows"
+sudo mkdir -p "/Volumes/warmstore/Music"
+sudo mkdir -p "/Volumes/warmstore/Collections"
 
 # Create staging areas
-sudo mkdir -p "/Volumes/Media/New Uploads"
-sudo mkdir -p "/Volumes/Media/To Process"
+sudo mkdir -p "/Volumes/warmstore/New Uploads"
+sudo mkdir -p "/Volumes/warmstore/To Process"
 
 # Set permissions
-sudo chown -R $(whoami):staff "/Volumes/Media"
-sudo chmod -R 755 "/Volumes/Media"
+sudo chown -R $(whoami):staff "/Volumes/warmstore"
+sudo chmod -R 755 "/Volumes/warmstore"
 ```
 
 #### 2. Create Photo Import Structure
 
 ```bash
 # Create photo organization folders
-sudo mkdir -p "/Volumes/Photos/import"
-sudo mkdir -p "/Volumes/Photos/backup"
+sudo mkdir -p "/Volumes/faststore/import"
+sudo mkdir -p "/Volumes/faststore/backup"
 
 # Set permissions for Immich
-sudo chown -R $(whoami):staff "/Volumes/Photos"
-sudo chmod -R 755 "/Volumes/Photos"
+sudo chown -R $(whoami):staff "/Volumes/faststore"
+sudo chmod -R 755 "/Volumes/faststore"
 ```
 
 #### 3. Create Archive Structure
@@ -254,14 +254,14 @@ sudo chmod -R 755 "/Volumes/Archive"
 
 ```bash
 # 1. Upload to staging area
-cp new_movie.mkv "/Volumes/Media/New Uploads/"
+cp new_movie.mkv "/Volumes/warmstore/New Uploads/"
 
 # 2. Rename properly
-mv "/Volumes/Media/New Uploads/new_movie.mkv" \
-   "/Volumes/Media/Movies/Movie Title (2023)/Movie Title (2023).mkv"
+mv "/Volumes/warmstore/New Uploads/new_movie.mkv" \
+   "/Volumes/warmstore/Movies/Movie Title (2023)/Movie Title (2023).mkv"
 
 # 3. Fix permissions
-chmod 644 "/Volumes/Media/Movies/Movie Title (2023)/Movie Title (2023).mkv"
+chmod 644 "/Volumes/warmstore/Movies/Movie Title (2023)/Movie Title (2023).mkv"
 
 # 4. Trigger Plex scan
 # Plex will auto-scan, or force scan in Plex settings
@@ -273,8 +273,8 @@ chmod 644 "/Volumes/Media/Movies/Movie Title (2023)/Movie Title (2023).mkv"
 ```bash
 #!/bin/bash
 # organize_movies.sh
-MOVIES_DIR="/Volumes/Media/Movies"
-STAGING_DIR="/Volumes/Media/New Uploads"
+MOVIES_DIR="/Volumes/warmstore/Movies"
+STAGING_DIR="/Volumes/warmstore/New Uploads"
 
 for file in "$STAGING_DIR"/*.{mkv,mp4,avi}; do
     if [[ -f "$file" ]]; then
@@ -295,8 +295,8 @@ done
 ```bash
 #!/bin/bash
 # organize_tv.sh
-TV_DIR="/Volumes/Media/TV Shows"
-STAGING_DIR="/Volumes/Media/New Uploads"
+TV_DIR="/Volumes/warmstore/TV Shows"
+STAGING_DIR="/Volumes/warmstore/New Uploads"
 
 for file in "$STAGING_DIR"/*.{mkv,mp4,avi}; do
     if [[ -f "$file" ]]; then
@@ -330,31 +330,31 @@ done
 df -h /Volumes/*
 
 # Detailed usage by directory
-du -sh /Volumes/Media/* | sort -hr
-du -sh /Volumes/Photos/* | sort -hr
+du -sh /Volumes/warmstore/* | sort -hr
+du -sh /Volumes/faststore/* | sort -hr
 du -sh /Volumes/Archive/* | sort -hr
 
 # Find large files
-find /Volumes/Media -size +5G -type f -exec ls -lh {} \;
+find /Volumes/warmstore -size +5G -type f -exec ls -lh {} \;
 ```
 
 #### Clean Up and Optimization
 
 ```bash
 # Find duplicate files (install fdupes first: brew install fdupes)
-fdupes -r /Volumes/Media/Movies/
+fdupes -r /Volumes/warmstore/Movies/
 
 # Find empty directories
-find /Volumes/Media -type d -empty
+find /Volumes/warmstore -type d -empty
 
 # Check for permission issues
-find /Volumes/Media -type f ! -perm 644
-find /Volumes/Media -type d ! -perm 755
+find /Volumes/warmstore -type f ! -perm 644
+find /Volumes/warmstore -type d ! -perm 755
 
 # Fix common permission issues
-sudo chown -R $(whoami):staff /Volumes/Media
-sudo find /Volumes/Media -type f -exec chmod 644 {} \;
-sudo find /Volumes/Media -type d -exec chmod 755 {} \;
+sudo chown -R $(whoami):staff /Volumes/warmstore
+sudo find /Volumes/warmstore -type f -exec chmod 644 {} \;
+sudo find /Volumes/warmstore -type d -exec chmod 755 {} \;
 ```
 
 ### Automated Organization
@@ -365,8 +365,8 @@ sudo find /Volumes/Media -type d -exec chmod 755 {} \;
 # Create organization script
 cat > ~/bin/auto_organize_media.sh << 'EOF'
 #!/bin/bash
-STAGING="/Volumes/Media/New Uploads"
-PROCESSED="/Volumes/Media/To Process"
+STAGING="/Volumes/warmstore/New Uploads"
+PROCESSED="/Volumes/warmstore/To Process"
 
 # Only run if staging directory has content
 if [[ $(ls -A "$STAGING" 2>/dev/null) ]]; then
@@ -395,7 +395,7 @@ If using download automation tools:
 
 ```bash
 # Configure download tools to use staging directory
-DOWNLOAD_DIR="/Volumes/Media/New Uploads"
+DOWNLOAD_DIR="/Volumes/warmstore/New Uploads"
 
 # Tools like Sonarr/Radarr can be configured to:
 # 1. Download to staging area
@@ -469,7 +469,7 @@ open http://localhost:32400/web/index.html#!/settings/server
 
 ```bash
 # Check Immich storage usage
-df -h /Volumes/Photos
+df -h /Volumes/faststore
 
 # View Immich logs
 cd services/immich && docker-compose logs immich-server | tail -50
@@ -497,8 +497,8 @@ cd services/immich && docker-compose exec database pg_dump -U postgres immich > 
 
 # Storage monitoring
 df -h /Volumes/*
-du -sh /Volumes/Media/* | sort -hr
-du -sh /Volumes/Photos/* | sort -hr
+du -sh /Volumes/warmstore/* | sort -hr
+du -sh /Volumes/faststore/* | sort -hr
 ```
 
 ### Service Management
@@ -541,10 +541,10 @@ cd services/immich && docker-compose pull && docker-compose up -d
 
 ```bash
 # Backup media storage (manual rsync)
-rsync -av --progress /Volumes/Media/ /Volumes/Backup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/Backup/MediaBackup/
 
 # Backup photo storage (manual rsync)
-rsync -av --progress /Volumes/Photos/ /Volumes/Backup/PhotoBackup/
+rsync -av --progress /Volumes/faststore/ /Volumes/Backup/PhotoBackup/
 
 # Backup Immich database
 cd services/immich
@@ -557,8 +557,8 @@ BACKUP_DIR="/Volumes/Backup"
 DATE=$(date +%Y%m%d)
 
 echo "Starting backup at $(date)"
-rsync -av --progress /Volumes/Media/ "$BACKUP_DIR/MediaBackup_$DATE/"
-rsync -av --progress /Volumes/Photos/ "$BACKUP_DIR/PhotoBackup_$DATE/"
+rsync -av --progress /Volumes/warmstore/ "$BACKUP_DIR/MediaBackup_$DATE/"
+rsync -av --progress /Volumes/faststore/ "$BACKUP_DIR/PhotoBackup_$DATE/"
 echo "Backup completed at $(date)"
 EOF
 
@@ -578,7 +578,7 @@ du -sh /Volumes/*/
 
 # Clean up old files
 # (Be careful - verify before deleting)
-find /Volumes/Media -name "*.tmp" -delete
+find /Volumes/warmstore -name "*.tmp" -delete
 find /tmp -name "*homelab*" -mtime +7 -delete
 ```
 

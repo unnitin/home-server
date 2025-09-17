@@ -17,8 +17,8 @@ Export them in your shell or create a `.env.local` and `source` it before runnin
 | `SSD_RAID_NAME` | `warmstore` | storage scripts | AppleRAID set name (SSD). |
 | `NVME_RAID_NAME` | `faststore` | storage scripts | AppleRAID set name (NVMe). |
 | `COLD_RAID_NAME` | `coldstore` | storage scripts | AppleRAID set name (HDD). |
-| `MEDIA_MOUNT` | `/Volumes/Media` | storage scripts | Mount point for `warmstore` (Plex/media). |
-| `PHOTOS_MOUNT` | `/Volumes/Photos` | storage scripts | Mount point for `faststore` (Immich/photos). |
+| `MEDIA_MOUNT` | `/Volumes/warmstore` | storage scripts | Mount point for `warmstore` (Plex/media). |
+| `PHOTOS_MOUNT` | `/Volumes/faststore` | storage scripts | Mount point for `faststore` (Immich/photos). |
 | `ARCHIVE_MOUNT` | `/Volumes/Archive` | storage scripts | Mount point for `coldstore` (HDD archive). |
 | `RAID_I_UNDERSTAND_DATA_LOSS` | *(unset)* | `09_rebuild_storage.sh`, storage scripts | Must be `1` to allow **destructive rebuilds** (hard safety gate). |
 
@@ -49,7 +49,7 @@ If you enable **landing page**, `./scripts/37_enable_simple_landing.sh` maps `:4
 
 ---
 
-## Reverse Proxy (Caddy)
+## Landing Page Service
 
 | Variable | Default | Used by | Meaning |
 |---------|---------|--------|--------|
@@ -73,14 +73,14 @@ Routes:
 No variables required. Use explicit paths with:
 ```bash
 # Backup warmstore to external drive
-rsync -av --progress /Volumes/Media/ /Volumes/MyBackupDrive/MediaBackup/
-# Restore: rsync -av /Volumes/MyBackupDrive/MediaBackup/ /Volumes/Media/
+rsync -av --progress /Volumes/warmstore/ /Volumes/MyBackupDrive/MediaBackup/
+# Restore: rsync -av /Volumes/MyBackupDrive/MediaBackup/ /Volumes/warmstore/
 ```
 
 ---
 
 ## Conventions Recap
 - **Array names**: `faststore` (NVMe), `warmstore` (SSD), `coldstore` (HDD).  
-- **Mounts**: `/Volumes/Photos`, `/Volumes/Media`, `/Volumes/Archive`.  
+- **Mounts**: `/Volumes/faststore`, `/Volumes/warmstore`, `/Volumes/Archive`.  
 - **2 disks → mirror**, **4 disks → RAID10**.  
 - Rebuilds require `RAID_I_UNDERSTAND_DATA_LOSS=1`.

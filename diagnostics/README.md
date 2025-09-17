@@ -62,8 +62,8 @@ Checks that storage volumes are mounted and accessible with disk usage.
 ```
 
 **Checks**:
-- `/Volumes/Media` (warmstore)
-- `/Volumes/Photos` (faststore)  
+- `/Volumes/warmstore` (warmstore)
+- `/Volumes/faststore` (faststore)  
 - `/Volumes/Archive` (coldstore)
 - Mount permissions and disk usage
 

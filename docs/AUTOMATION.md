@@ -346,9 +346,9 @@ sudo tailscale down
 
 **What it does**:
 - Waits for `/Volumes/warmstore` to be available
-- Creates `/Volumes/Media/Movies` → `/Volumes/warmstore/Movies` symlink
-- Creates `/Volumes/Media/TV` → `/Volumes/warmstore/TV Shows` symlink  
-- Creates `/Volumes/Photos` → `/Volumes/warmstore/Photos` symlink
+- Creates `/Volumes/warmstore/Movies` → `/Volumes/warmstore/Movies` symlink
+- Creates `/Volumes/warmstore/TV` → `/Volumes/warmstore/TV Shows` symlink  
+- Creates `/Volumes/faststore` → `/Volumes/warmstore/Photos` symlink
 - Creates `/Volumes/Archive` placeholder directory
 
 **Management**:
@@ -357,7 +357,7 @@ sudo tailscale down
 ./scripts/ensure_storage_mounts.sh
 
 # Check mount status
-ls -la /Volumes/Media/ /Volumes/Photos /Volumes/Archive
+ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
 ```
 
 ### **io.homelab.plex.plist** - Native Plex Service
