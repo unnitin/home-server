@@ -111,13 +111,13 @@ install_system_dependencies() {
     # Install immich-go if not present
     if ! command -v immich-go &> /dev/null; then
         log "Installing immich-go..."
-        
+
         # Try Homebrew tap first
         if brew install immich-app/immich-go/immich-go 2>/dev/null; then
             success "immich-go installed successfully via Homebrew"
         else
             log "Homebrew tap failed, installing via direct download..."
-            
+
             # Determine architecture
             local arch
             if [[ "$(uname -m)" == "arm64" ]]; then
@@ -125,11 +125,11 @@ install_system_dependencies() {
             else
                 arch="amd64"
             fi
-            
+
             # Download and install immich-go binary directly
             local download_url="https://github.com/immich-app/immich-go/releases/latest/download/immich-go_Darwin_${arch}.tar.gz"
             local temp_dir=$(mktemp -d)
-            
+
             if curl -L -o "$temp_dir/immich-go.tar.gz" "$download_url" && \
                tar -xzf "$temp_dir/immich-go.tar.gz" -C "$temp_dir" && \
                sudo mv "$temp_dir/immich-go" /usr/local/bin/ && \
@@ -192,7 +192,7 @@ check_prerequisites() {
             # Fallback to individual packages including new ones
             pip install --quiet piexif pillow ffmpeg-python pillow-heif
         fi
-        
+
         # Install exiftool if available (optional, for advanced HEIC processing)
         if command -v brew >/dev/null 2>&1; then
             log "Installing exiftool for advanced metadata handling..."
@@ -202,7 +202,7 @@ check_prerequisites() {
                 log "exiftool already installed"
             fi
         fi
-        
+
         success "Python dependencies installed with v4.0 enhancements"
     fi
     
