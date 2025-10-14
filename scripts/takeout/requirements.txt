@@ -1,5 +1,6 @@
-# Requirements for Enhanced Google Photos Takeout Import
+# Requirements for Enhanced Google Photos Takeout Import v3.0
 piexif==1.1.3
 Pillow==10.0.1
 ffmpeg-python==0.2.0
+pillow-heif>=0.10.0
 
