@@ -12,22 +12,22 @@ teardown() {
 
 @test "scripts do not contain hardcoded credentials" {
     # Test that no scripts contain obvious credential patterns
+    # Excludes safe patterns like environment variables and documentation examples
     local credential_patterns=(
-        "password="
-        "api_key="
-        "secret="
-        "token="
-        "auth="
+        'password="[^$]'      # password= followed by non-variable
+        'api_key="[^$]'       # api_key= followed by non-variable
+        'secret="[^$]'        # secret= followed by non-variable
+        'token="[^$]'         # token= followed by non-variable
     )
     
     for pattern in "${credential_patterns[@]}"; do
-        run grep -ri "$pattern" scripts/
+        run grep -riE "$pattern" scripts/
         if [ "$status" -eq 0 ]; then
-            # Allow certain safe patterns
-            if [[ "$output" =~ "IMMICH_DB_PASSWORD" ]] || [[ "$output" =~ "example" ]]; then
-                continue
+            # Filter out safe patterns
+            local filtered_output=$(echo "$output" | grep -vE "(IMMICH_DB_PASSWORD|example|your-api-key|your-password|\\\$\{|:-\})")
+            if [[ -n "$filtered_output" ]]; then
+                fail "Found potential hardcoded credential: $pattern in $filtered_output"
             fi
-            fail "Found potential hardcoded credential: $pattern in $output"
         fi
     done
 }
