@@ -2,10 +2,17 @@
 set -euo pipefail
 # Usage: ./scripts/services/import_takeout.sh /path/to/Takeout.zip
 # Optional env: IMMICH_SERVER (e.g., http://localhost:2283), IMMICH_API_KEY
+#
+# NOTE: For enhanced Google Photos takeout import with full metadata preservation,
+# use the new enhanced solution: scripts/takeout/enhanced_takeout_import.sh
 
 ZIP="${1:-}"
 if [[ -z "$ZIP" || ! -f "$ZIP" ]]; then
-  echo "Usage: $0 </path/to/Takeout.zip>"; exit 1
+  echo "Usage: $0 </path/to/Takeout.zip>"
+  echo ""
+  echo "For enhanced Google Photos takeout import with full metadata preservation:"
+  echo "  cd scripts/takeout && ./enhanced_takeout_import.sh --help"
+  exit 1
 fi
 
 WORK="$(mktemp -d /tmp/takeout.XXXXXX)"

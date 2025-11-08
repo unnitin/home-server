@@ -77,7 +77,18 @@ fi
 scripts/services/deploy_containers.sh
 
 banner "Plex (native)"
-if confirm "Install Plex now?"; then scripts/services/install_plex.sh; fi
+if confirm "Install Plex now?"; then 
+    scripts/services/install_plex.sh
+    if [[ -f scripts/services/configure_plex_direct.sh ]]; then
+        scripts/services/configure_plex_direct.sh
+    fi
+fi
+
+banner "Jellyfin (native)"
+if confirm "Install Jellyfin now?"; then 
+    scripts/services/install_jellyfin.sh
+    scripts/services/configure_jellyfin.sh
+fi
 
 banner "Launch at boot (launchd)"
 scripts/automation/configure_launchd.sh

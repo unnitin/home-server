@@ -13,9 +13,10 @@ scripts/
 ├── core/           # 🔧 System bootstrap & environment (4 scripts)
 ├── storage/        # 💾 RAID & storage management (10 scripts + lib)
 ├── infrastructure/ # 🏗️ Docker, networking, VPN (7 scripts + lib)
-├── services/       # 🚀 Application deployment (6 scripts)
+├── services/       # 🚀 Application deployment (10 scripts)
 ├── automation/     # 🤖 LaunchD & maintenance (3 scripts)
-└── media/         # 📁 Media processing (5 scripts)
+├── media/          # 📁 Media processing (5 scripts)
+└── takeout/        # 📸 Google Photos import (2 scripts)
 ```
 
 **Dependency Flow**: `core` → `storage` → `infrastructure` → `services` → `automation`/`media`
@@ -61,11 +62,14 @@ scripts/
 | Script | Purpose | Used By |
 |--------|---------|---------|
 | [`services/deploy_containers.sh`](services/README.md#deploy_containerssh) | Deploy container services | setup_full.sh, setup_flags.sh |
+| [`services/install_jellyfin.sh`](services/README.md#install_jellyfinsh) | Install Jellyfin Media Server | setup_full.sh, setup_flags.sh |
+| [`services/configure_jellyfin.sh`](services/README.md#configure_jellyfinsh) | Configure Jellyfin faststore paths | setup_full.sh, Manual |
+| [`services/start_jellyfin_safe.sh`](services/README.md#start_jellyfin_safesh) | Safe Jellyfin startup | LaunchD io.homelab.jellyfin |
 | [`services/install_plex.sh`](services/README.md#install_plexsh) | Install Plex Media Server | setup_full.sh, setup_flags.sh |
 | [`services/start_plex_safe.sh`](services/README.md#start_plex_safesh) | Safe Plex startup | LaunchD io.homelab.plex |
 | [`services/configure_plex_direct.sh`](services/README.md#configure_plex_directsh) | Configure Plex direct paths | setup_full.sh, Manual |
 | [`services/enable_landing.sh`](services/README.md#enable_landingsh) | Landing page service | setup_full.sh, LaunchD |
-| [`services/import_takeout.sh`](services/README.md#import_takeoutsh) | Google Takeout import | Manual |
+| [`services/import_takeout.sh`](services/README.md#import_takeoutsh) | Google Takeout import wrapper | Manual |
 
 ### **🤖 Automation Module**
 | Script | Purpose | Used By |
@@ -82,6 +86,12 @@ scripts/
 | [`media/process_movie.sh`](media/README.md#process_moviesh) | Movie file processing | media/processor.sh |
 | [`media/process_tv_show.sh`](media/README.md#process_tv_showsh) | TV show processing | media/processor.sh |
 | [`media/process_collection.sh`](media/README.md#process_collectionsh) | Collection processing | media/processor.sh |
+
+### **📸 Takeout Module**
+| Script | Purpose | Used By |
+|--------|---------|---------|
+| [`takeout/enhanced_takeout_import.sh`](takeout/README.md#enhanced_takeout_importsh) | Enhanced Google Photos import | Manual |
+| [`takeout/enhanced_takeout_import.py`](takeout/DOCUMENTATION.md) | Python implementation for import | enhanced_takeout_import.sh |
 
 ---
 

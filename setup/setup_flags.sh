@@ -40,7 +40,7 @@ find "$_REPO_ROOT/setup" "$_REPO_ROOT/scripts" "$_REPO_ROOT/diagnostics" \
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-DO_BOOTSTRAP=0; DO_COLIMA=0; DO_IMMICH=0; DO_PLEX=0; DO_LAUNCHD=0
+DO_BOOTSTRAP=0; DO_COLIMA=0; DO_IMMICH=0; DO_PLEX=0; DO_JELLYFIN=0; DO_LAUNCHD=0
 DO_TS_INSTALL=0; DO_TS_UP=0; DO_TS_CONFIGURE_HTTPS=0; DO_CONFIGURE_POWER=0; DO_TS_SERVE_DIRECT=0; DO_PROXY=0; DO_LANDING=0
 DO_STORAGE_MOUNTS=0; DO_REBUILD_TARGETS=""; DO_FORMAT_MOUNT=0; DRY_RUN=0
 
@@ -54,12 +54,13 @@ USAGE
   setup/setup_flags.sh [OPTIONS]
 
 OPTIONS
-  --all                     bootstrap + colima + storage-mounts + immich + plex + launchd + tailscale-install + tailscale-up + tailscale-https + configure-power + landing
+  --all                     bootstrap + colima + storage-mounts + immich + plex + jellyfin + launchd + tailscale-install + tailscale-up + tailscale-https + configure-power + landing
   --bootstrap               run setup/setup.sh
   --colima                  install/start Colima
   --storage-mounts          create storage mount points for services
   --immich                  deploy Immich (docker compose)
   --plex                    install native Plex
+  --jellyfin                install native Jellyfin
   --launchd                 configure launchd jobs
   --tailscale-install       install tailscale
   --tailscale-up            run 'sudo tailscale up --accept-dns=true'
@@ -81,12 +82,13 @@ EOF
 
 for a in "$@"; do
   case "$a" in
-    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_STORAGE_MOUNTS=1; DO_IMMICH=1; DO_PLEX=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_UP=1; DO_TS_CONFIGURE_HTTPS=1; DO_CONFIGURE_POWER=1; DO_LANDING=1 ;;
+    --all) DO_BOOTSTRAP=1; DO_COLIMA=1; DO_STORAGE_MOUNTS=1; DO_IMMICH=1; DO_PLEX=1; DO_JELLYFIN=1; DO_LAUNCHD=1; DO_TS_INSTALL=1; DO_TS_UP=1; DO_TS_CONFIGURE_HTTPS=1; DO_CONFIGURE_POWER=1; DO_LANDING=1 ;;
     --bootstrap) DO_BOOTSTRAP=1 ;;
     --colima) DO_COLIMA=1 ;;
     --storage-mounts) DO_STORAGE_MOUNTS=1 ;;
     --immich) DO_IMMICH=1 ;;
     --plex) DO_PLEX=1 ;;
+    --jellyfin) DO_JELLYFIN=1 ;;
     --launchd) DO_LAUNCHD=1 ;;
     --tailscale-install) DO_TS_INSTALL=1 ;;
     --tailscale-up) DO_TS_UP=1 ;;
@@ -112,6 +114,7 @@ if (( DO_IMMICH )); then
   run scripts/services/deploy_containers.sh
 fi
 if (( DO_PLEX )); then log "Plex"; run scripts/services/install_plex.sh; fi
+if (( DO_JELLYFIN )); then log "Jellyfin"; run scripts/services/install_jellyfin.sh; run scripts/services/configure_jellyfin.sh; fi
 
 if [[ -n "$DO_REBUILD_TARGETS" ]]; then
   [[ "${RAID_I_UNDERSTAND_DATA_LOSS:-0}" == "1" ]] || { echo "Set RAID_I_UNDERSTAND_DATA_LOSS=1"; exit 2; }

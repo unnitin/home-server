@@ -55,12 +55,30 @@ Monitors and maintains Mac mini power settings for 24/7 server operation.
 
 ---
 
+### **io.homelab.plex.plist** - Plex Media Server
+Auto-starts Plex Media Server for local media streaming.
+
+**Service**: Plex Media Server  
+**Trigger**: System startup  
+**Purpose**: Local media streaming and management
+
+---
+
+### **io.homelab.jellyfin.plist** - Jellyfin Media Server
+Auto-starts Jellyfin Media Server for remote media streaming via Tailscale.
+
+**Service**: Jellyfin Media Server  
+**Trigger**: System startup  
+**Purpose**: Remote media streaming with Tailscale integration
+
+---
+
 ### **io.homelab.media.watcher.plist** - Media Processing Automation
 Monitors Staging directories for new media files and automatically processes them according to Plex naming conventions.
 
 **Service**: Media processing watcher  
 **Trigger**: System startup (RunAtLoad)  
-**Purpose**: Automated media file organization for Plex Media Server
+**Purpose**: Automated media file organization for Plex and Jellyfin Media Servers
 
 **Features**:
 - Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
