@@ -72,6 +72,7 @@ SERVICES=(
   "colima"        # Docker runtime for Immich
   "compose.immich" # Immich containers
   "plex"          # Plex Media Server
+  "jellyfin"      # Jellyfin Media Server
   "landing"       # Landing page + Tailscale serving
   "media.watcher" # Media processing automation
   "tailscale"     # Tailscale VPN connection

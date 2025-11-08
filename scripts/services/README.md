@@ -1,6 +1,6 @@
 # 🚀 Services Module
 
-Application layer managing Plex, Immich, web services, and data import/export.
+Application layer managing Jellyfin, Plex, Immich, web services, and data import/export.
 
 ## 📋 Scripts
 
@@ -13,10 +13,27 @@ Application layer managing Plex, Immich, web services, and data import/export.
 
 ### **Native Applications**
 
+#### **install_jellyfin.sh**
+**Purpose**: Install Jellyfin Media Server as native macOS application  
+**Usage**: Run during setup for video streaming  
+**Dependencies**: Internet connection
+**Documentation**: [Jellyfin Setup Guide](../../docs/JELLYFIN.md)
+
+#### **configure_jellyfin.sh**
+**Purpose**: Configure Jellyfin to use faststore for metadata/transcoding  
+**Usage**: Run after installation to optimize storage paths  
+**Dependencies**: Jellyfin installed, faststore mounted
+
+#### **start_jellyfin_safe.sh**
+**Purpose**: Safely start Jellyfin with Tailscale configuration  
+**Usage**: Called by LaunchD or manual startup  
+**Features**: Detects port conflicts, configures Tailscale serve
+
 #### **install_plex.sh**
 **Purpose**: Install Plex Media Server as native macOS application  
 **Usage**: Run during setup when Plex is requested  
 **Dependencies**: Internet connection
+**Documentation**: [Plex Setup Guide](../../docs/PLEX.md)
 
 #### **start_plex_safe.sh**
 **Purpose**: Safely start Plex with Tailscale port conflict resolution  
@@ -52,6 +69,9 @@ Application layer managing Plex, Immich, web services, and data import/export.
 ```
 scripts/services/
 ├── deploy_containers.sh    # Container service deployment
+├── install_jellyfin.sh     # Jellyfin Media Server setup
+├── configure_jellyfin.sh   # Jellyfin storage configuration
+├── start_jellyfin_safe.sh  # Safe Jellyfin startup
 ├── install_plex.sh         # Plex Media Server setup
 ├── start_plex_safe.sh      # Safe Plex startup
 ├── configure_plex_direct.sh # Plex direct path configuration
