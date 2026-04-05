@@ -10,7 +10,7 @@ This repository configures a Mac mini as a self-hosted home server running:
 - **AppleRAID** — three-tier storage (NVMe faststore, SSD warmstore, HDD coldstore)
 - **LaunchD** — macOS service automation and boot sequencing
 
-The codebase is **39 shell scripts** organized in 7 modules, with a Python script for Google Takeout import, Docker Compose for Immich, and LaunchD plists for automation.
+The codebase contains shell scripts organized in 7 modules (plus a standalone `diagnostics/` directory), with a Python script for Google Takeout import, Docker Compose for Immich, and LaunchD plists for automation. To get a current count: `find scripts/ diagnostics/ -name "*.sh" | wc -l`
 
 ---
 
@@ -28,6 +28,14 @@ media/          → file watching, processing (depends on: core, storage, servic
 takeout/        → Google Photos import (depends on: core, services)
 ```
 
+Sibling directory (outside the scripts/ module tree):
+
+```
+diagnostics/    → health checks and observability (standalone — no dependencies on scripts/)
+```
+
+Diagnostics scripts use raw CLI tools directly and do not source from `scripts/core/` or any other module. This is intentional so they can run even if the scripts module tree is broken.
+
 **Runtime boot order**: Colima → Storage mounts → Immich containers → Plex → Jellyfin → Tailscale → Media watcher
 
 ---
@@ -40,7 +48,7 @@ Always use these exact names — they are hardcoded across LaunchD plists, diagn
 |------|--------|-------------|-----|
 | `faststore` | NVMe RAID | `/Volumes/faststore` | Photo library (Immich) |
 | `warmstore` | SSD RAID | `/Volumes/warmstore` | Media library (Plex/Jellyfin), logs |
-| `coldstore` / `Archive` | HDD RAID | `/Volumes/Archive` | Cold archive storage |
+| `coldstore` | HDD RAID | `/Volumes/Archive` | Cold archive storage (volume label is `Archive` for historical reasons) |
 
 Log directory: `/Volumes/warmstore/logs/{module}/`
 
