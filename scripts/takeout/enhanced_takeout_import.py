@@ -340,9 +340,11 @@ class TakeoutProcessor:
                     cmd = [
                         'immich-go',
                         'upload',
-                        '--server', self.immich_server,
-                        '--api-key', self.api_key,
-                        '--album', album_dir.name,
+                        'from-folder',
+                        '-s', self.immich_server,
+                        '-k', self.api_key,
+                        '--folder-as-album', 'FOLDER',
+                        '--pause-immich-jobs=false',
                         str(album_dir)
                     ]
                     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
