@@ -17,6 +17,7 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 
 ### Core Services
 - **🎬 Plex Media Server** (native app) - Stream movies, TV shows, music with hardware transcoding
+- **📺 Jellyfin** (native/Docker) - Open-source media streaming via Tailscale
 - **📸 Immich** (Docker via Colima) - Self-hosted photo backup and browsing (Google Photos alternative)
 - **🔒 Tailscale** - Secure remote access with HTTPS to your services from anywhere
 
@@ -40,11 +41,12 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 - [📖 **Detailed Setup Guide**](docs/SETUP.md) - Step-by-step comprehensive setup
 
 ### User Guides
-- [📱 **User Guide**](USER-GUIDE.md) - How to use Plex and Immich on web and mobile
-- [🔧 **Admin Guide**](ADMIN-GUIDE.md) - Server administration and user management
+- [📱 **User Guide**](docs/USER-GUIDE.md) - How to use Plex and Immich on web and mobile
+- [🔧 **Admin Guide**](docs/ADMIN-GUIDE.md) - Server administration and user management
 
 ### Service Guides  
 - [🎬 **Plex Setup & Usage**](docs/PLEX.md) - Native Plex installation and configuration
+- [📺 **Jellyfin Setup & Usage**](docs/JELLYFIN.md) - Open-source media server setup
 - [📸 **Immich Setup & Usage**](docs/IMMICH.md) - Photo management and Google Takeout import
 - [🔒 **Tailscale Setup & Usage**](docs/TAILSCALE.md) - Remote access configuration
 
@@ -60,7 +62,7 @@ Choose your setup method:
 
 ### 1. Interactive Setup (Recommended for first-time users)
 ```bash
-cd /Users/nitinsrivastava/Documents/home-server
+cd ~/Documents/home-server
 setup/setup_full.sh
 ```
 
@@ -99,7 +101,11 @@ home-server/
 │   ├── QUICKSTART.md              # Quick start guide
 │   ├── SETUP.md                   # Detailed setup steps
 │   ├── ENVIRONMENT.md             # Environment variables
+│   ├── ADMIN-GUIDE.md             # Server administration
+│   ├── USER-GUIDE.md              # End-user guide
+│   ├── USER-SETUP-GUIDE.md        # User onboarding
 │   ├── PLEX.md                    # Plex setup & usage
+│   ├── JELLYFIN.md                # Jellyfin setup & usage
 │   ├── IMMICH.md                  # Immich setup & usage
 │   ├── TAILSCALE.md               # Remote access setup
 │   ├── STORAGE.md                 # Storage management
