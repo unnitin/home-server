@@ -55,6 +55,7 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 - [🤖 **Automation & LaunchD**](docs/AUTOMATION.md) - Auto-start and scheduled tasks
 - [📊 **Diagnostics & Monitoring**](docs/DIAGNOSTICS.md) - Health checks and troubleshooting
 - [🔧 **Troubleshooting**](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- [🤖 **MCP Health Server**](docs/MCP.md) - Ask Claude about server health via Tailscale
 
 ## 🎯 Setup Options
 
