@@ -1,69 +1,95 @@
-import sys
 import os
+import subprocess
+from mcp.server import Server
+from mcp.server.sse import SseServerTransport
+from mcp.types import Tool, TextContent
+from starlette.applications import Starlette
+from starlette.routing import Route
+import uvicorn
 
-# Ensure the repo root is on the path so `mcp.routing` resolves correctly
-# regardless of how the server is launched (launchd, direct python3, etc.)
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if BASE not in sys.path:
-    sys.path.insert(0, BASE)
-
-from mcp.server import Server  # noqa: E402  (MCP SDK)
-from mcp.server.sse import SseServerTransport  # noqa: E402
-from mcp.types import Tool, TextContent  # noqa: E402
-from starlette.applications import Starlette  # noqa: E402
-from starlette.routing import Route  # noqa: E402
-import uvicorn  # noqa: E402
-
-from mcp.routing import TOOL_SCRIPTS, dispatch  # noqa: E402  (our module)
+DIAG = os.path.join(BASE, "diagnostics")
 
 app = Server("io.homelab.mcp")
 
 
+def run(cmd: list[str], timeout: int = 60) -> str:
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    return result.stdout + result.stderr
+
+
 @app.list_tools()
 async def list_tools():
-    tools = [
-        Tool(name=name, description=_description(name))
-        for name in TOOL_SCRIPTS
-    ]
-    tools.append(Tool(
-        name="check_port",
-        description="Check a specific host:port",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "host": {"type": "string", "default": "localhost"},
-                "port": {"type": "integer"},
+    return [
+        Tool(name="run_all_diagnostics", description="Full health check across all components"),
+        Tool(name="quick_summary", description="Quick summary of server health"),
+        Tool(name="check_prereqs", description="Check prerequisites and dependencies"),
+        Tool(name="check_homebrew", description="Check Homebrew package manager health"),
+        Tool(name="check_raid", description="Check RAID array status and disk health"),
+        Tool(name="check_storage", description="Check storage health across all tiers"),
+        Tool(name="verify_media_paths", description="Verify faststore/warmstore/coldstore mount points"),
+        Tool(name="check_colima_docker", description="Check Colima and Docker runtime health"),
+        Tool(name="check_docker_services", description="Check Immich container health"),
+        Tool(name="check_immich", description="Check Immich photo service end-to-end"),
+        Tool(name="check_plex", description="Check Plex Media Server health"),
+        Tool(name="check_tailscale", description="Check Tailscale VPN status"),
+        Tool(name="check_reverse_proxy", description="Check Caddy reverse proxy"),
+        Tool(name="check_launchd", description="Check LaunchD automation services"),
+        Tool(name="collect_logs", description="Collect all logs into a tgz archive"),
+        Tool(
+            name="check_port",
+            description="Check a specific host:port",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "host": {"type": "string", "default": "localhost"},
+                    "port": {"type": "integer"},
+                },
+                "required": ["port"],
             },
-            "required": ["port"],
-        },
-    ))
-    return tools
-
-
-def _description(name):
-    descriptions = {
-        "run_all_diagnostics":   "Full health check across all components",
-        "quick_summary":         "Quick summary of server health",
-        "check_prereqs":         "Check prerequisites and dependencies",
-        "check_homebrew":        "Check Homebrew package manager health",
-        "check_raid":            "Check RAID array status and disk health",
-        "check_storage":         "Check storage health across all tiers",
-        "verify_media_paths":    "Verify faststore/warmstore/coldstore mount points",
-        "check_colima_docker":   "Check Colima and Docker runtime health",
-        "check_docker_services": "Check Immich container health",
-        "check_immich":          "Check Immich photo service end-to-end",
-        "check_plex":            "Check Plex Media Server health",
-        "check_tailscale":       "Check Tailscale VPN status",
-        "check_reverse_proxy":   "Check Caddy reverse proxy",
-        "check_launchd":         "Check LaunchD automation services",
-        "collect_logs":          "Collect all logs into a tgz archive",
-    }
-    return descriptions.get(name, name)
+        ),
+    ]
 
 
 @app.call_tool()
-async def call_tool(name, arguments):
-    out = dispatch(name, arguments)
+async def call_tool(name: str, arguments: dict):
+    match name:
+        case "run_all_diagnostics":
+            out = run(["bash", f"{DIAG}/run_all.sh"])
+        case "quick_summary":
+            out = run(["bash", f"{DIAG}/full_summary.sh"])
+        case "check_prereqs":
+            out = run(["bash", f"{DIAG}/check_prereqs.sh"])
+        case "check_homebrew":
+            out = run(["bash", f"{DIAG}/check_homebrew.sh"])
+        case "check_raid":
+            out = run(["bash", f"{DIAG}/check_raid_status.sh"])
+        case "check_storage":
+            out = run(["bash", f"{DIAG}/check_storage.sh"])
+        case "verify_media_paths":
+            out = run(["bash", f"{DIAG}/verify_media_paths.sh"])
+        case "check_colima_docker":
+            out = run(["bash", f"{DIAG}/check_colima_docker.sh"])
+        case "check_docker_services":
+            out = run(["bash", f"{DIAG}/check_docker_services.sh"])
+        case "check_immich":
+            out = run(["bash", f"{DIAG}/check_immich.sh"])
+        case "check_plex":
+            out = run(["bash", f"{DIAG}/check_plex_native.sh"])
+        case "check_tailscale":
+            out = run(["bash", f"{DIAG}/check_tailscale.sh"])
+        case "check_reverse_proxy":
+            out = run(["bash", f"{DIAG}/check_reverse_proxy.sh"])
+        case "check_launchd":
+            out = run(["bash", f"{DIAG}/check_launchd.sh"])
+        case "collect_logs":
+            out = run(["bash", f"{DIAG}/collect_logs.sh"], timeout=120)
+        case "check_port":
+            host = arguments.get("host", "localhost")
+            port = str(arguments["port"])
+            out = run(["bash", f"{DIAG}/network_port_check.sh", host, port])
+        case _:
+            out = f"Unknown tool: {name}"
     return [TextContent(type="text", text=out)]
 
 
