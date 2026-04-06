@@ -317,41 +317,56 @@ class TakeoutProcessor:
         if not self.immich_server or not self.api_key:
             logger.warning("Immich server or API key not provided. Skipping upload.")
             return
-        
+
         processed_dir = self.output_dir / "processed"
         if not processed_dir.exists():
             logger.error("No processed files found for upload")
             return
-        
-        logger.info("Uploading to Immich...")
-        
+
         try:
             # Check if immich-go is available
             subprocess.run(['immich-go', '--version'], check=True, capture_output=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             logger.error("immich-go not found. Please install from https://github.com/immich-app/immich-go")
             return
-        
-        # Upload each album separately to maintain structure
-        for album_dir in processed_dir.iterdir():
-            if album_dir.is_dir():
-                logger.info(f"Uploading album: {album_dir.name}")
-                try:
-                    cmd = [
-                        'immich-go',
-                        'upload',
-                        'from-folder',
-                        '-s', self.immich_server,
-                        '-k', self.api_key,
-                        '--folder-as-album', 'FOLDER',
-                        '--pause-immich-jobs=false',
-                        str(album_dir)
-                    ]
-                    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-                    logger.info(f"Successfully uploaded {album_dir.name}")
-                except subprocess.CalledProcessError as e:
-                    logger.error(f"Failed to upload {album_dir.name}: {e.stderr}")
-                    self.stats['errors'] += 1
+
+        # Wait for Immich to be ready (up to 2 minutes)
+        import urllib.request
+        import time
+        ping_url = self.immich_server.rstrip('/') + '/api/server/ping'
+        logger.info("Waiting for Immich to be ready...")
+        for attempt in range(24):
+            try:
+                with urllib.request.urlopen(ping_url, timeout=5) as resp:
+                    if resp.status == 200:
+                        logger.info("Immich is ready.")
+                        break
+            except Exception:
+                pass
+            if attempt == 23:
+                logger.error("Immich did not become ready after 2 minutes. Aborting upload.")
+                return
+            logger.info(f"Immich not ready, retrying in 5s... ({attempt + 1}/24)")
+            time.sleep(5)
+
+        # Upload entire processed directory in one call, using folder names as albums
+        logger.info("Uploading to Immich...")
+        try:
+            cmd = [
+                'immich-go',
+                'upload',
+                'from-folder',
+                '-s', self.immich_server,
+                '-k', self.api_key,
+                '--folder-as-album', 'FOLDER',
+                '--pause-immich-jobs=false',
+                str(processed_dir)
+            ]
+            subprocess.run(cmd, check=True)
+            logger.info("Upload to Immich completed successfully.")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Upload to Immich failed: {e}")
+            self.stats['errors'] += 1
     
     def process_all(self) -> None:
         """Process all takeout data."""
