@@ -6,37 +6,10 @@ MCP_DIR = os.path.dirname(os.path.abspath(__file__))
 if MCP_DIR not in sys.path:
     sys.path.insert(0, MCP_DIR)
 
-from mcp.server import Server  # noqa: E402  (MCP SDK)
-from mcp.server.sse import SseServerTransport  # noqa: E402
-from mcp.types import Tool, TextContent  # noqa: E402
-from starlette.applications import Starlette  # noqa: E402
-from starlette.routing import Route  # noqa: E402
-import uvicorn  # noqa: E402
-
+from mcp.server.fastmcp import FastMCP  # noqa: E402
 from mcp_routing import TOOL_SCRIPTS, dispatch  # noqa: E402
 
-app = Server("io.homelab.mcp")
-
-
-@app.list_tools()
-async def list_tools():
-    tools = [
-        Tool(name=name, description=_description(name))
-        for name in TOOL_SCRIPTS
-    ]
-    tools.append(Tool(
-        name="check_port",
-        description="Check a specific host:port",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "host": {"type": "string", "default": "localhost"},
-                "port": {"type": "integer"},
-            },
-            "required": ["port"],
-        },
-    ))
-    return tools
+mcp = FastMCP("io.homelab.mcp", host="0.0.0.0", port=8765)
 
 
 def _description(name):
@@ -60,26 +33,25 @@ def _description(name):
     return descriptions.get(name, name)
 
 
-@app.call_tool()
-async def call_tool(name, arguments):
-    out = dispatch(name, arguments)
-    return [TextContent(type="text", text=out)]
+# Register each no-argument tool dynamically
+def _make_tool(tool_name):
+    desc = _description(tool_name)
+
+    @mcp.tool(name=tool_name, description=desc)
+    def tool_fn():
+        return dispatch(tool_name)
+
+    return tool_fn
 
 
-sse = SseServerTransport("/messages/")
+for _name in TOOL_SCRIPTS:
+    _make_tool(_name)
 
 
-async def handle_sse(request):
-    async with sse.connect_sse(request.scope, request.receive, request._send) as (r, w):
-        await app.run(r, w, app.create_initialization_options())
+@mcp.tool(name="check_port", description="Check a specific host:port")
+def check_port(port: int, host: str = "localhost") -> str:
+    return dispatch("check_port", {"host": host, "port": port})
 
-
-starlette_app = Starlette(
-    routes=[
-        Route("/sse", endpoint=handle_sse),
-        Route("/messages/", endpoint=sse.handle_post_message, methods=["POST"]),
-    ]
-)
 
 if __name__ == "__main__":
-    uvicorn.run(starlette_app, host="0.0.0.0", port=8765)
+    mcp.run(transport="sse")

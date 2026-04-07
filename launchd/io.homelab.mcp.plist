@@ -17,8 +17,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Volumes/warmstore/logs/mcp/mcp.log</string>
+    <string>/tmp/io.homelab.mcp.log</string>
     <key>StandardErrorPath</key>
-    <string>/Volumes/warmstore/logs/mcp/mcp.error.log</string>
+    <string>/tmp/io.homelab.mcp.error.log</string>
 </dict>
 </plist>
