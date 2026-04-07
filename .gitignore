@@ -66,3 +66,8 @@ htmlcov/
 test_temp_*
 *_test_temp
 
+# TLS certificates — generated per-machine via `tailscale cert <hostname>`
+# Never commit .key files (private key). .crt is public but machine-specific.
+*.crt
+*.key
+

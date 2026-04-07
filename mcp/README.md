@@ -4,6 +4,20 @@ This MCP server runs on the Mac Mini and exposes all diagnostic tools to Claude 
 
 ---
 
+## Mac Mini: TLS Certificate
+
+The server uses a Tailscale-issued TLS cert. Certs are machine-specific and the private key must never be committed — they are in `.gitignore`. Generate them once:
+
+```bash
+cd ~/Documents/home-server
+tailscale cert nitins-mac-mini.tailb6b278.ts.net
+# → writes nitins-mac-mini.tailb6b278.ts.net.crt and .key to the current directory
+```
+
+Certs expire periodically. Regenerate with the same command — Tailscale will renew automatically if `tailscaled` is running, but you can also force renewal manually.
+
+---
+
 ## Mac Mini: Start the Server
 
 ```bash
