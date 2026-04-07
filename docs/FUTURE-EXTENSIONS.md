@@ -8,7 +8,7 @@ This document outlines potential enhancements and extensions for the `mac-mini-h
 Replace Tailscale's default domain format (`device.tailnet.ts.net`) with user-friendly custom domains like `photos.yourdomain.com`.
 
 ### End Result Examples
-- **Current**: `https://nitins-mac-mini.tailb6b278.ts.net`
+- **Current**: `https://your-mac-mini.tailXXXXXX.ts.net`
 - **With Custom Domain**: `https://photos.srivastava.family`
 
 ### Benefits

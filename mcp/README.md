@@ -6,15 +6,15 @@ This MCP server runs on the Mac Mini and exposes all diagnostic tools to Claude 
 
 ## Mac Mini: TLS Certificate
 
-The server uses a Tailscale-issued TLS cert. Certs are machine-specific and the private key must never be committed — they are in `.gitignore`. Generate them once:
+The server uses a Tailscale-issued TLS cert stored outside the repo in `~/.config/tailscale/`. Generate once:
 
 ```bash
-cd ~/Documents/home-server
-tailscale cert nitins-mac-mini.tailb6b278.ts.net
-# → writes nitins-mac-mini.tailb6b278.ts.net.crt and .key to the current directory
+mkdir -p ~/.config/tailscale
+cd ~/.config/tailscale
+tailscale cert $(tailscale status --json | python3 -c "import sys,json; print(json.load(sys.stdin)['Self']['DNSName'].rstrip('.'))")
 ```
 
-Certs expire periodically. Regenerate with the same command — Tailscale will renew automatically if `tailscaled` is running, but you can also force renewal manually.
+Certs expire periodically. Regenerate with the same command — Tailscale will renew automatically if `tailscaled` is running.
 
 ---
 
@@ -78,7 +78,7 @@ Add the MCP server entry using `mcp-remote`:
   "mcpServers": {
     "io.homelab.mcp": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp"]
+      "args": ["-y", "mcp-remote", "http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp"]
     }
   }
 }
@@ -106,14 +106,14 @@ Other prompts that work:
 
 **Claude Desktop doesn't show the tools**
 - Confirm Node is installed on MacBook: `node --version`
-- Confirm the server is reachable from MacBook: `curl -i http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp`
+- Confirm the server is reachable from MacBook: `curl -i http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp`
 - Confirm Tailscale is connected on both devices: `tailscale status`
 - Check server logs on Mac Mini: `tail -f /tmp/io.homelab.mcp.log`
 - Check Claude Desktop logs (MacBook): `tail -f ~/Library/Logs/Claude/mcp-server-io.homelab.mcp.log`
 
 **"Some MCP servers could not be loaded" error**
 - This means Claude Desktop tried to spawn the process but it failed
-- Run manually to see the error: `npx -y mcp-remote http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp`
+- Run manually to see the error: `npx -y mcp-remote http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp`
 - If network is unreachable: check Tailscale is running on both machines
 
 **Tools time out**

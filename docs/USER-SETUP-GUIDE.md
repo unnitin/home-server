@@ -32,7 +32,7 @@ Immich lets you backup, organize, and share photos with your family.
 ### **Web Access:**
 1. **Open your browser** and go to:
    ```
-   https://nitins-mac-mini.tailb6b278.ts.net:2283
+   https://your-mac-mini.tailXXXXXX.ts.net:2283
    ```
 2. **Create your account:**
    - Click "Sign Up"
@@ -44,7 +44,7 @@ Immich lets you backup, organize, and share photos with your family.
 2. **Open the app** and tap "Add Server"
 3. **Enter server URL:**
    ```
-   https://nitins-mac-mini.tailb6b278.ts.net:2283
+   https://your-mac-mini.tailXXXXXX.ts.net:2283
    ```
 4. **Sign in** with your account credentials
 5. **Enable auto-backup:**
@@ -69,7 +69,7 @@ Plex streams your movies, TV shows, and music to all your devices.
 ### **Web Access:**
 1. **Open your browser** and go to:
    ```
-   https://nitins-mac-mini.tailb6b278.ts.net:32400
+   https://your-mac-mini.tailXXXXXX.ts.net:32400
    ```
 2. **Create your Plex account:**
    - Click "Sign Up" or "Sign In"
@@ -113,17 +113,17 @@ Bookmark these URLs for easy access:
 
 ### **Immich (Photos):**
 ```
-https://nitins-mac-mini.tailb6b278.ts.net:2283
+https://your-mac-mini.tailXXXXXX.ts.net:2283
 ```
 
 ### **Plex (Media):**
 ```
-https://nitins-mac-mini.tailb6b278.ts.net:32400
+https://your-mac-mini.tailXXXXXX.ts.net:32400
 ```
 
 ### **Home Server Status:**
 ```
-https://nitins-mac-mini.tailb6b278.ts.net
+https://your-mac-mini.tailXXXXXX.ts.net
 ```
 
 ---

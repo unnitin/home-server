@@ -53,12 +53,28 @@ def check_port(port: int, host: str = "localhost") -> str:
     return dispatch("check_port", {"host": host, "port": port})
 
 
+def _tailscale_hostname():
+    """Return the machine's Tailscale FQDN, or None if unavailable."""
+    import json
+    import subprocess
+    try:
+        out = subprocess.run(
+            ["tailscale", "status", "--json"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return json.loads(out.stdout)["Self"]["DNSName"].rstrip(".")
+    except Exception:
+        return None
+
+
 if __name__ == "__main__":
     import uvicorn
-    HOSTNAME = "nitins-mac-mini.tailb6b278.ts.net"
-    CERT = os.path.join(MCP_DIR, "..", f"{HOSTNAME}.crt")
-    KEY = os.path.join(MCP_DIR, "..", f"{HOSTNAME}.key")
+    CERT_DIR = os.path.expanduser("~/.config/tailscale")
+    HOSTNAME = _tailscale_hostname()
     ssl_kwargs = {}
-    if os.path.exists(CERT) and os.path.exists(KEY):
-        ssl_kwargs = {"ssl_certfile": os.path.abspath(CERT), "ssl_keyfile": os.path.abspath(KEY)}
+    if HOSTNAME:
+        CERT = os.path.join(CERT_DIR, f"{HOSTNAME}.crt")
+        KEY = os.path.join(CERT_DIR, f"{HOSTNAME}.key")
+        if os.path.exists(CERT) and os.path.exists(KEY):
+            ssl_kwargs = {"ssl_certfile": CERT, "ssl_keyfile": KEY}
     uvicorn.run(mcp.streamable_http_app(), host="0.0.0.0", port=8765, **ssl_kwargs)

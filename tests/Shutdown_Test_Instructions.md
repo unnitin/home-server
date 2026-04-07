@@ -24,9 +24,9 @@ cd ~/Documents/home-server
 
 ### ✅ **2. Test Service URLs**
 Open in browser or test with curl:
-- 📍 **Landing Page**: https://nitins-mac-mini.tailb6b278.ts.net
-- 📸 **Immich**: https://nitins-mac-mini.tailb6b278.ts.net:2283
-- 🎬 **Plex**: https://nitins-mac-mini.tailb6b278.ts.net:32400
+- 📍 **Landing Page**: https://your-mac-mini.tailXXXXXX.ts.net
+- 📸 **Immich**: https://your-mac-mini.tailXXXXXX.ts.net:2283
+- 🎬 **Plex**: https://your-mac-mini.tailXXXXXX.ts.net:32400
 
 **Record Results:**
 - Landing Page: ⬜ Working ⬜ Failed  
@@ -105,9 +105,9 @@ tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}
 
 ### **2. Service URL Testing**
 ```bash
-curl -s -o /dev/null -w "Landing: %{http_code}\n" https://nitins-mac-mini.tailb6b278.ts.net
-curl -s -o /dev/null -w "Immich:  %{http_code}\n" https://nitins-mac-mini.tailb6b278.ts.net:2283  
-curl -s -o /dev/null -w "Plex:    %{http_code}\n" https://nitins-mac-mini.tailb6b278.ts.net:32400
+curl -s -o /dev/null -w "Landing: %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net
+curl -s -o /dev/null -w "Immich:  %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net:2283  
+curl -s -o /dev/null -w "Plex:    %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net:32400
 ```
 
 **Record HTTP Status Codes:**
