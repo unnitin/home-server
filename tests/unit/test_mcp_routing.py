@@ -173,7 +173,7 @@ def test_no_unregistered_diagnostic_scripts():
 # ---------------------------------------------------------------------------
 
 def test_server_file_exists():
-    assert (REPO_ROOT / "mcp" / "home-server-mcpserver.py").exists()
+    assert (REPO_ROOT / "mcp" / "mcp_server.py").exists()
 
 
 def test_routing_file_exists():

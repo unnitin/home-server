@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/bin/python3.11</string>
-        <string>mcp/home-server-mcpserver.py</string>
+        <string>mcp/mcp_server.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/nitinsrivastava/Documents/home-server</string>
