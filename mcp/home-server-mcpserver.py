@@ -1,11 +1,10 @@
 import sys
 import os
 
-# Ensure the repo root is on the path so `mcp.routing` resolves correctly
-# regardless of how the server is launched (launchd, direct python3, etc.)
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if BASE not in sys.path:
-    sys.path.insert(0, BASE)
+# Add mcp/ dir to path so mcp_routing resolves without package conflicts
+MCP_DIR = os.path.dirname(os.path.abspath(__file__))
+if MCP_DIR not in sys.path:
+    sys.path.insert(0, MCP_DIR)
 
 from mcp.server import Server  # noqa: E402  (MCP SDK)
 from mcp.server.sse import SseServerTransport  # noqa: E402
@@ -14,7 +13,7 @@ from starlette.applications import Starlette  # noqa: E402
 from starlette.routing import Route  # noqa: E402
 import uvicorn  # noqa: E402
 
-from mcp.routing import TOOL_SCRIPTS, dispatch  # noqa: E402  (our module)
+from mcp_routing import TOOL_SCRIPTS, dispatch  # noqa: E402
 
 app = Server("io.homelab.mcp")
 

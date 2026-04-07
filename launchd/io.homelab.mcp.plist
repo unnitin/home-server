@@ -7,8 +7,8 @@
     <string>io.homelab.mcp</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
-        <string>mcp/server.py</string>
+        <string>/opt/homebrew/bin/python3.11</string>
+        <string>mcp/home-server-mcpserver.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/nitinsrivastava/Documents/home-server</string>
