@@ -9,9 +9,11 @@ The MCP (Model Context Protocol) server surfaces all diagnostic tools as Claude-
 ```
 MacBook (Claude Desktop)
         │
-        │  HTTPS via Tailscale mesh VPN
+        │  npx mcp-remote (stdio ↔ HTTP bridge)
+        │
+        │  HTTP via Tailscale mesh VPN
         ▼
-Mac Mini :8765/sse  ←  MCP server (SSE/HTTP, managed by LaunchD)
+Mac Mini :8765/mcp  ←  MCP server (streamable-http, managed by LaunchD)
         │
         │  subprocess calls
         ▼
@@ -26,8 +28,8 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 
 | File | Purpose |
 |---|---|
-| `mcp/server.py` | SSE server — handles MCP protocol, delegates to routing.py |
-| `mcp/routing.py` | Tool-to-script mapping and subprocess executor |
+| `mcp/mcp_server.py` | streamable-http server — handles MCP protocol, delegates to mcp_routing.py |
+| `mcp/mcp_routing.py` | Tool-to-script mapping and subprocess executor |
 | `mcp/requirements.txt` | Python deps: `mcp`, `uvicorn`, `starlette` |
 | `launchd/io.homelab.mcp.plist` | LaunchD service — starts on boot, restarts on crash |
 
@@ -65,24 +67,28 @@ Quick version:
 ```bash
 # Mac Mini — install and start
 pip3 install -r mcp/requirements.txt
-python3 mcp/server.py
+python3 mcp/mcp_server.py
 
 # Mac Mini — install as LaunchD service
 cp launchd/io.homelab.mcp.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/io.homelab.mcp.plist
 ```
 
-Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`) on your MacBook:
+Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`) on your MacBook.
+Claude Desktop only supports local stdio processes — use `mcp-remote` as a bridge:
 
 ```json
 {
   "mcpServers": {
     "io.homelab.mcp": {
-      "url": "http://<tailscale-hostname>:8765/sse"
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://<tailscale-hostname>:8765/mcp"]
     }
   }
 }
 ```
+
+Node.js must be installed on the MacBook (`brew install node` if missing).
 
 ---
 
@@ -105,8 +111,8 @@ Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_conf
 ## Adding a New Tool
 
 1. Add the diagnostic script to `diagnostics/` following existing conventions
-2. Register it in `mcp/routing.py` — add an entry to `TOOL_SCRIPTS`
-3. Add a description in `mcp/server.py` — add an entry to the `_description()` dict
+2. Register it in `mcp/mcp_routing.py` — add an entry to `TOOL_SCRIPTS`
+3. Add a description in `mcp/mcp_server.py` — add an entry to the `_description()` dict
 4. The unit test `test_no_unregistered_diagnostic_scripts` will catch scripts that exist on disk but are not registered
 
 ---

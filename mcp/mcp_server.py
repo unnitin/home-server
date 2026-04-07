@@ -54,4 +54,11 @@ def check_port(port: int, host: str = "localhost") -> str:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="sse")
+    import uvicorn
+    HOSTNAME = "nitins-mac-mini.tailb6b278.ts.net"
+    CERT = os.path.join(MCP_DIR, "..", f"{HOSTNAME}.crt")
+    KEY = os.path.join(MCP_DIR, "..", f"{HOSTNAME}.key")
+    ssl_kwargs = {}
+    if os.path.exists(CERT) and os.path.exists(KEY):
+        ssl_kwargs = {"ssl_certfile": os.path.abspath(CERT), "ssl_keyfile": os.path.abspath(KEY)}
+    uvicorn.run(mcp.streamable_http_app(), host="0.0.0.0", port=8765, **ssl_kwargs)

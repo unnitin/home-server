@@ -11,11 +11,11 @@ This MCP server runs on the Mac Mini and exposes all diagnostic tools to Claude 
 pip3 install -r mcp/requirements.txt
 
 # Start manually to verify it works
-python3 mcp/server.py
+python3 mcp/mcp_server.py
 # → Running on http://0.0.0.0:8765
 
-# Verify the SSE endpoint responds
-curl http://localhost:8765/sse
+# Verify the endpoint responds (405 = server is up, expects POST)
+curl -i http://localhost:8765/mcp
 ```
 
 To run as a background service (survives reboots):
@@ -26,45 +26,53 @@ launchctl load ~/Library/LaunchAgents/io.homelab.mcp.plist
 
 # Check it loaded
 launchctl list | grep io.homelab.mcp
+
+# Tail logs
+tail -f /tmp/io.homelab.mcp.log
 ```
 
 ---
 
 ## MacBook: Connect Claude Desktop
 
-1. Get the Mac Mini's Tailscale hostname:
+Claude Desktop only launches local stdio processes — it cannot connect to a remote HTTP server directly. Use `mcp-remote` (an npm package) as a stdio-to-HTTP bridge.
 
-   ```bash
-   # Run on the Mac Mini
-   tailscale status | grep mac-mini
-   # e.g. nitins-mac-mini.tail-xxxx.ts.net
-   ```
+### Prerequisites
 
-2. Edit Claude Desktop config on your MacBook:
+Node.js must be installed on the MacBook:
 
-   ```
-   ~/Library/Application Support/Claude/claude_desktop_config.json
-   ```
+```bash
+# Check if node is installed
+node --version
 
-3. Add the MCP server entry:
+# Install via Homebrew if missing
+brew install node
+```
 
-   ```json
-   {
-     "mcpServers": {
-       "io.homelab.mcp": {
-         "url": "http://nitins-mac-mini.tail-xxxx.ts.net:8765/sse"
-       }
-     }
-   }
-   ```
+### Config
 
-   Replace `nitins-mac-mini.tail-xxxx.ts.net` with your actual Tailscale hostname.
+Edit Claude Desktop config on your MacBook:
 
-4. Restart Claude Desktop. The tools appear automatically in the tool list.
+```
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
 
----
+Add the MCP server entry using `mcp-remote`:
 
-## Verify It's Working
+```json
+{
+  "mcpServers": {
+    "io.homelab.mcp": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp"]
+    }
+  }
+}
+```
+
+The `-y` flag tells npx to auto-install `mcp-remote` if not cached. Restart Claude Desktop after saving.
+
+### Verify
 
 In Claude Desktop, try:
 
@@ -83,15 +91,22 @@ Other prompts that work:
 ## Troubleshooting
 
 **Claude Desktop doesn't show the tools**
-- Confirm the server is running: `curl http://localhost:8765/sse` from the Mac Mini
+- Confirm Node is installed on MacBook: `node --version`
+- Confirm the server is reachable from MacBook: `curl -i http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp`
 - Confirm Tailscale is connected on both devices: `tailscale status`
-- Check server logs: `tail /Volumes/warmstore/logs/mcp/mcp.log`
+- Check server logs on Mac Mini: `tail -f /tmp/io.homelab.mcp.log`
+- Check Claude Desktop logs (MacBook): `tail -f ~/Library/Logs/Claude/mcp-server-io.homelab.mcp.log`
+
+**"Some MCP servers could not be loaded" error**
+- This means Claude Desktop tried to spawn the process but it failed
+- Run manually to see the error: `npx -y mcp-remote http://nitins-mac-mini.tailb6b278.ts.net:8765/mcp`
+- If network is unreachable: check Tailscale is running on both machines
 
 **Tools time out**
 - Most tools have a 60s timeout; `collect_logs` has 120s
 - If a diagnostic script hangs, run it directly: `bash diagnostics/check_immich.sh`
 
-**Server won't start**
+**Server won't start on Mac Mini**
 - Check Python version (requires 3.9+): `python3 --version`
 - Check dependencies: `pip3 install -r mcp/requirements.txt`
 - Check port isn't already in use: `lsof -i :8765`
