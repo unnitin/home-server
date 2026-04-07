@@ -51,7 +51,7 @@ if curl -s http://localhost:8096/health >/dev/null 2>&1; then
     echo "Re-enabling Tailscale HTTPS serving for Jellyfin..."
     if tailscale serve --bg --https=8096 http://localhost:8096 >/dev/null 2>&1; then
         echo "✅ Tailscale HTTPS serving enabled for Jellyfin"
-        echo "🌐 Remote access: https://nitins-mac-mini.tailb6b278.ts.net:8096"
+        echo "🌐 Remote access: https://your-mac-mini.tailXXXXXX.ts.net:8096"
     else
         echo "⚠️  Failed to enable Tailscale HTTPS serving (run manually: tailscale serve --bg --https=8096 http://localhost:8096)"
     fi

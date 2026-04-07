@@ -19,7 +19,8 @@ sys.path.insert(0, str(REPO_ROOT))
 
 DIAG = str(REPO_ROOT / "diagnostics")
 
-from mcp.routing import TOOL_SCRIPTS, TOOL_TIMEOUTS, DEFAULT_TIMEOUT, dispatch  # noqa: E402
+sys.path.insert(0, str(REPO_ROOT / "mcp"))
+from mcp_routing import TOOL_SCRIPTS, TOOL_TIMEOUTS, DEFAULT_TIMEOUT, dispatch  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -172,11 +173,11 @@ def test_no_unregistered_diagnostic_scripts():
 # ---------------------------------------------------------------------------
 
 def test_server_file_exists():
-    assert (REPO_ROOT / "mcp" / "server.py").exists()
+    assert (REPO_ROOT / "mcp" / "mcp_server.py").exists()
 
 
 def test_routing_file_exists():
-    assert (REPO_ROOT / "mcp" / "routing.py").exists()
+    assert (REPO_ROOT / "mcp" / "mcp_routing.py").exists()
 
 
 def test_requirements_file_exists():

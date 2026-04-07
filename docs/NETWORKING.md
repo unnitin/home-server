@@ -144,7 +144,7 @@ nslookup your-device.your-tailnet.ts.net
 # Expected output:
 Server:         100.100.100.100
 Address:        100.100.100.100#53
-Name:   nitins-mac-mini.tailb6b278.ts.net
+Name:   your-mac-mini.tailXXXXXX.ts.net
 Address: 100.121.184.93
 ```
 
@@ -229,7 +229,7 @@ dig @100.100.100.100 your-device.your-tailnet.ts.net
 ### **Custom Domain (Future)**
 You can configure custom domains that point to your Tailscale IPs:
 ```bash
-# Example: photos.yourdomain.com → nitins-mac-mini.tailb6b278.ts.net
+# Example: photos.yourdomain.com → your-mac-mini.tailXXXXXX.ts.net
 # Requires DNS CNAME record and Tailscale certificate configuration
 ```
 
@@ -237,8 +237,8 @@ You can configure custom domains that point to your Tailscale IPs:
 Multiple Mac Minis can share the same Tailscale network:
 ```bash
 # Each device gets unique Tailscale IP and hostname
-mini-1.tailb6b278.ts.net → 100.121.184.93
-mini-2.tailb6b278.ts.net → 100.121.184.94
+mini-1.tailXXXXXX.ts.net → 100.x.x.x
+mini-2.tailXXXXXX.ts.net → 100.x.x.y
 ```
 
 ### **Network Segmentation**

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # MCP Server Smoke Test
-# Starts the server, verifies the SSE endpoint responds, then shuts it down.
+# Starts the server, verifies the /mcp endpoint responds, then shuts it down.
 # Usage: bash tests/mcp_smoke_test.sh
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERVER_PY="$REPO_ROOT/mcp/server.py"
+SERVER_PY="$REPO_ROOT/mcp/mcp_server.py"
 PORT=8765
 SERVER_PID=""
 
@@ -25,8 +25,8 @@ python3 -c "import mcp, uvicorn, starlette" 2>/dev/null \
 pass "Python dependencies available"
 
 # --- 2. Server file exists ---
-[[ -f "$SERVER_PY" ]] || fail "mcp/server.py not found"
-pass "mcp/server.py exists"
+[[ -f "$SERVER_PY" ]] || fail "mcp/mcp_server.py not found"
+pass "mcp/mcp_server.py exists"
 
 # --- 3. Port is free ---
 if lsof -iTCP:$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
@@ -40,7 +40,9 @@ SERVER_PID=$!
 
 # Wait up to 10s for the server to be ready
 for i in $(seq 1 20); do
-    if curl -s --max-time 1 "http://localhost:$PORT/sse" -o /dev/null 2>/dev/null; then
+    if curl -s --max-time 1 -X POST "http://localhost:$PORT/mcp" \
+        -H "Content-Type: application/json" \
+        -d '{}' -o /dev/null 2>/dev/null; then
         break
     fi
     sleep 0.5
@@ -50,12 +52,15 @@ for i in $(seq 1 20); do
 done
 pass "Server started (PID $SERVER_PID)"
 
-# --- 5. SSE endpoint returns correct content-type ---
-CONTENT_TYPE=$(curl -s -I --max-time 5 "http://localhost:$PORT/sse" \
-    | grep -i "content-type" | head -1)
-echo "$CONTENT_TYPE" | grep -qi "text/event-stream" \
-    || fail "Expected text/event-stream content-type, got: $CONTENT_TYPE"
-pass "SSE endpoint returns text/event-stream"
+# --- 5. MCP endpoint accepts POST and returns SSE stream ---
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+    -X POST "http://localhost:$PORT/mcp" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json, text/event-stream" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke-test","version":"1.0"}}}')
+[[ "$HTTP_CODE" == "200" ]] \
+    || fail "Expected HTTP 200 from /mcp, got: $HTTP_CODE"
+pass "MCP endpoint returns HTTP 200"
 
 # --- 6. Process is still alive after requests ---
 kill -0 "$SERVER_PID" 2>/dev/null \

@@ -33,9 +33,9 @@ class TestShutdownRecovery:
         
         # Mock service URLs (from test instructions)
         self.service_urls = {
-            "landing": "https://nitins-mac-mini.tailb6b278.ts.net",
-            "immich": "https://nitins-mac-mini.tailb6b278.ts.net:2283",
-            "plex": "https://nitins-mac-mini.tailb6b278.ts.net:32400"
+            "landing": "https://your-mac-mini.tailXXXXXX.ts.net",
+            "immich": "https://your-mac-mini.tailXXXXXX.ts.net:2283",
+            "plex": "https://your-mac-mini.tailXXXXXX.ts.net:32400"
         }
         
         # Expected automation timeline (from test instructions)

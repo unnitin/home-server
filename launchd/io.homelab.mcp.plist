@@ -7,8 +7,8 @@
     <string>io.homelab.mcp</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/python3</string>
-        <string>mcp/server.py</string>
+        <string>/opt/homebrew/bin/python3.11</string>
+        <string>mcp/mcp_server.py</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/nitinsrivastava/Documents/home-server</string>
@@ -17,8 +17,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Volumes/warmstore/logs/mcp/mcp.log</string>
+    <string>/tmp/io.homelab.mcp.log</string>
     <key>StandardErrorPath</key>
-    <string>/Volumes/warmstore/logs/mcp/mcp.error.log</string>
+    <string>/tmp/io.homelab.mcp.error.log</string>
 </dict>
 </plist>
