@@ -78,7 +78,6 @@ Tests whether services are reachable on expected ports.
 # Examples
 ./diagnostics/network_port_check.sh localhost 32400  # Plex
 ./diagnostics/network_port_check.sh localhost 2283   # Immich
-./diagnostics/network_port_check.sh localhost 8443   # Caddy
 ```
 
 **Default**: Tests Immich on localhost:2283

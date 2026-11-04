@@ -51,7 +51,6 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 | `check_immich` | `check_immich.sh` | Immich HTTP, database, API |
 | `check_plex` | `check_plex_native.sh` | Plex process, web interface, LaunchAgent |
 | `check_tailscale` | `check_tailscale.sh` | VPN status, IP, HTTPS config |
-| `check_reverse_proxy` | `check_reverse_proxy.sh` | Caddy health and routing |
 | `check_launchd` | `check_launchd.sh` | All LaunchD jobs status |
 | `collect_logs` | `collect_logs.sh` | Gather logs into timestamped `.tgz` |
 | `check_port` | `network_port_check.sh` | Test a specific host:port (takes `host`, `port` args) |

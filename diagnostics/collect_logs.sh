@@ -113,12 +113,6 @@ if command -v brew >/dev/null 2>&1; then
     capture_command "brew list --formula" "$OUTPUT_DIR/brew_packages.txt" "Installed packages"
 fi
 
-# Collect Caddy logs
-if command -v caddy >/dev/null 2>&1; then
-    capture_command "caddy version" "$OUTPUT_DIR/caddy_version.txt" "Caddy version"
-    safe_copy "/opt/homebrew/var/log/caddy.log" "$OUTPUT_DIR/" "Caddy access log"
-fi
-
 # Collect system logs (recent errors)
 capture_command "log show --predicate 'messageType == 16' --last 1h" "$OUTPUT_DIR/system_errors.txt" "Recent system errors"
 capture_command "log show --predicate 'subsystem BEGINSWITH \"io.homelab\"' --last 24h" "$OUTPUT_DIR/homelab_system_logs.txt" "HomeHub system logs"

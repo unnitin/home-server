@@ -124,12 +124,6 @@ sudo tailscale serve --https=32400 http://localhost:32400
 - **Web**: `https://your-macmini.your-tailnet.ts.net:32400`
 - **Mobile apps**: Use server IP `your-macmini.your-tailnet.ts.net:32400`
 
-### Reverse Proxy Access
-
-**With Caddy reverse proxy enabled**:
-- **Web**: `https://your-macmini.your-tailnet.ts.net/plex`
-- **Direct link**: `https://your-macmini.your-tailnet.ts.net/plex/web`
-
 ### Plex Relay (Fallback)
 
 If direct access fails, Plex uses relay servers:

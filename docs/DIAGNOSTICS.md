@@ -201,13 +201,6 @@ Tailscale connection and configuration validation.
 - HTTPS serving configuration
 - Network connectivity
 
-#### `check_reverse_proxy.sh` - Caddy Proxy
-Reverse proxy health and routing verification.
-
-```bash
-./diagnostics/check_reverse_proxy.sh
-```
-
 #### `network_port_check.sh` - Port Connectivity
 Enhanced network connectivity testing.
 
@@ -217,7 +210,6 @@ Enhanced network connectivity testing.
 # Examples with service detection
 ./diagnostics/network_port_check.sh localhost 2283   # Immich
 ./diagnostics/network_port_check.sh localhost 32400  # Plex
-./diagnostics/network_port_check.sh localhost 8443   # Caddy
 ```
 
 **Enhanced features**:
@@ -256,7 +248,7 @@ Enhanced log collection for troubleshooting support.
 
 **Improved features**:
 - **System information**: Hardware, OS version, processes
-- **Service logs**: Docker, Plex, Tailscale, Caddy
+- **Service logs**: Docker, Plex, Tailscale
 - **Configuration files**: Sanitized for privacy
 - **Recent error logs**: System and application errors
 - **Performance data**: Resource usage and metrics

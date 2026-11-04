@@ -88,24 +88,6 @@ sudo tailscale serve --https=32400 http://localhost:32400
 - **Port**: 32400 (Plex standard)
 - **Mobile apps**: Use this URL without `https://`
 
-### With Reverse Proxy (Optional)
-
-**Enable reverse proxy first**:
-```bash
-./scripts/37_enable_simple_landing.sh
-```
-
-**Then serve Caddy instead**:
-```bash
-# Replace direct Immich serving
-sudo tailscale serve --https=443 http://localhost:8443
-```
-
-**Access URLs**:
-- **Landing page**: `https://your-macmini.your-tailnet.ts.net`
-- **Immich**: `https://your-macmini.your-tailnet.ts.net/photos`
-- **Plex**: `https://your-macmini.your-tailnet.ts.net/plex`
-
 ---
 
 ## 📱 Mobile Device Setup
@@ -404,7 +386,6 @@ curl -H "Authorization: Bearer $TAILSCALE_API_KEY" \
 
 - **📋 [Quick Start Guide](QUICKSTART.md)** - Get Tailscale running quickly
 - **📖 [Detailed Setup Guide](SETUP.md)** - Complete installation walkthrough
-- **🌐 [Reverse Proxy Setup](REVERSE-PROXY.md)** - Single URL access configuration
 - **🎬 [Plex Setup](PLEX.md)** - Plex remote access configuration
 - **📸 [Immich Setup](IMMICH.md)** - Photo management remote access
 - **🔧 [Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions

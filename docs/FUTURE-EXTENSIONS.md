@@ -39,24 +39,7 @@ sudo tailscale cert photos.yourdomain.com
 sudo tailscale cert plex.yourdomain.com
 ```
 
-#### 4. Reverse Proxy Updates
-Update `services/caddy/Caddyfile`:
-```caddyfile
-photos.yourdomain.com {
-    reverse_proxy localhost:2283
-}
-
-plex.yourdomain.com {
-    reverse_proxy localhost:32400
-}
-
-home.yourdomain.com {
-    root * /opt/homebrew/var/www/hakuna_mateti
-    file_server
-}
-```
-
-#### 5. DNS Resolver Updates
+#### 4. DNS Resolver Updates
 ```bash
 # Add custom domain resolver
 echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/yourdomain.com
@@ -88,7 +71,6 @@ echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/yourdomai
 
 # Validate domain ownership
 # Request Tailscale certificates
-# Update Caddy configuration
 # Configure DNS resolvers
 # Test custom domain access
 ```

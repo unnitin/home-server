@@ -82,9 +82,6 @@ Open http://localhost:2283
 - **Server URL**: `https://your-macmini.your-tailnet.ts.net`
 - **Login**: Same email/password from web setup
 
-**Reverse Proxy** *(if enabled)*:
-- **Server URL**: `https://your-macmini.your-tailnet.ts.net/photos`
-
 ### Backup Settings
 
 **Recommended configuration**:
@@ -545,10 +542,6 @@ docker compose up -d
 ## 📈 Advanced Configuration
 
 ### Custom Domain
-
-**With landing page**:
-- Access via: `https://your-macmini.your-tailnet.ts.net/photos`
-- Mobile apps work with subdirectory paths
 
 **Advanced DNS** (Tailscale MagicDNS):
 - Configure custom subdomain if needed

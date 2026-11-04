@@ -12,7 +12,7 @@ You'll set up:
 5. **🎬 Plex** - Native media server
 6. **🤖 Automation** - LaunchD for auto-start
 7. **🔒 Remote Access** - Tailscale VPN
-8. **🌐 Reverse Proxy** *(optional)* - Single URL access
+8. **🌐 Landing Page** *(optional)* - Service dashboard
 
 **Total time**: 45-90 minutes (depending on options)
 
@@ -504,11 +504,6 @@ curl -f https://your-macmini.your-tailnet.ts.net   # HTTPS landing page
 **Remote access (via Tailscale)**:
 - ✅ Immich: `https://your-macmini.your-tailnet.ts.net`
 - ✅ Plex: `https://your-macmini.your-tailnet.ts.net:32400`
-
-**Reverse proxy (if enabled)**:
-- ✅ Landing: `https://your-macmini.your-tailnet.ts.net`
-- ✅ Photos: `https://your-macmini.your-tailnet.ts.net/photos`
-- ✅ Media: `https://your-macmini.your-tailnet.ts.net/plex`
 
 ### Performance Verification
 ```bash

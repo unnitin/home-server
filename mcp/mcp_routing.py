@@ -23,7 +23,6 @@ TOOL_SCRIPTS = {
     "check_immich":          "check_immich.sh",
     "check_plex":            "check_plex_native.sh",
     "check_tailscale":       "check_tailscale.sh",
-    "check_reverse_proxy":   "check_reverse_proxy.sh",
     "check_launchd":         "check_launchd.sh",
     "collect_logs":          "collect_logs.sh",
 }

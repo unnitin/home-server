@@ -100,14 +100,6 @@ sudo tailscale serve --https=443   http://localhost:2283      # Immich
 sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 ```
 
-### 5. Optional: Enable Reverse Proxy (3 minutes)
-
-For single-URL access in browsers:
-
-```bash
-./scripts/37_enable_simple_landing.sh
-```
-
 ## ✅ Verify Your Setup
 
 ### Local Access
@@ -117,7 +109,6 @@ For single-URL access in browsers:
 ### Remote Access (via Tailscale)
 - **Immich**: https://your-macmini.tailnet.ts.net  
 - **Plex**: https://your-macmini.tailnet.ts.net:32400
-- **Landing Page** *(with reverse proxy)*: https://your-macmini.tailnet.ts.net
 
 ### Quick Health Check
 ```bash

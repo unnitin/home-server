@@ -26,7 +26,6 @@ def _description(name):
         "check_immich":          "Check Immich photo service end-to-end",
         "check_plex":            "Check Plex Media Server health",
         "check_tailscale":       "Check Tailscale VPN status",
-        "check_reverse_proxy":   "Check Caddy reverse proxy",
         "check_launchd":         "Check LaunchD automation services",
         "collect_logs":          "Collect all logs into a tgz archive",
     }

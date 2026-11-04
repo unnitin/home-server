@@ -11,7 +11,6 @@ section "Network Port Check - $HOST:$PORT"
 case "$PORT" in
     2283) service_name="Immich Photo Service" ;;
     32400) service_name="Plex Media Server" ;;
-    8443) service_name="Caddy Reverse Proxy" ;;
     22) service_name="SSH" ;;
     80) service_name="HTTP" ;;
     443) service_name="HTTPS" ;;
@@ -33,7 +32,7 @@ if nc -z "$HOST" "$PORT" 2>/dev/null; then
     
     # For HTTP services, try a basic HTTP probe
     case "$PORT" in
-        2283|32400|8443|80|443)
+        2283|32400|80|443)
             if [[ "$HOST" == "localhost" || "$HOST" == "127.0.0.1" ]]; then
                 if [[ "$PORT" == "443" ]]; then
                     # HTTPS port
@@ -71,11 +70,6 @@ else
             echo "  💡 Suggestions:"
             echo "     - Check if Plex is running: ./diagnostics/check_plex_native.sh"
             echo "     - Start Plex: open -a 'Plex Media Server'"
-            ;;
-        8443)
-            echo "  💡 Suggestions:"
-            echo "     - Check if Caddy is running: brew services list | grep caddy"
-            echo "     - Start Caddy: brew services start caddy"
             ;;
     esac
 fi

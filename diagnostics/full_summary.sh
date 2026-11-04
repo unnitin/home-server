@@ -44,7 +44,7 @@ docker context ls 2>/dev/null || true
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || true
 
 echo -e "\n--- Network checks ---"
-for port in 32400 2283 8443; do
+for port in 32400 2283; do
   echo -n "Port $port: "
   nc -z localhost $port >/dev/null 2>&1 && echo "✅ Open" || echo "❌ Closed"
 done

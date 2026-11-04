@@ -61,7 +61,6 @@ run_diagnostic "check_plex_native.sh" "Plex Media Server"
 # Network & Remote Access
 section "Network & Remote Access"
 run_diagnostic "check_tailscale.sh" "Tailscale VPN"
-run_diagnostic "check_reverse_proxy.sh" "Reverse Proxy (Caddy)"
 
 # System Integration
 section "System Integration"
@@ -73,7 +72,6 @@ section "Network Connectivity"
 echo "Testing critical service ports..."
 "$SCRIPT_DIR/network_port_check.sh" localhost 2283   # Immich
 "$SCRIPT_DIR/network_port_check.sh" localhost 32400  # Plex
-"$SCRIPT_DIR/network_port_check.sh" localhost 8443   # Caddy
 
 # Final Summary
 echo -e "\n${YELLOW}📊 DIAGNOSTIC SUMMARY${NC}"

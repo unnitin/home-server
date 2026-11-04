@@ -150,9 +150,6 @@ sudo tailscale up --accept-dns=true --advertise-exit-node --ssh
 # Direct service access
 sudo tailscale serve --https=443   http://localhost:2283    # Immich
 sudo tailscale serve --https=32400 http://localhost:32400   # Plex
-
-# With reverse proxy (replaces direct Immich access)
-sudo tailscale serve --https=443   http://localhost:8443    # Caddy proxy
 ```
 
 ---
