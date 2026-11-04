@@ -81,7 +81,7 @@ Claude Desktop only supports local stdio processes — use `mcp-remote` as a bri
   "mcpServers": {
     "io.homelab.mcp": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://<tailscale-hostname>:8765/mcp"]
+      "args": ["-y", "mcp-remote", "http://your-macmini.your-tailnet.ts.net:8765/mcp"]
     }
   }
 }

@@ -78,7 +78,7 @@ Add the MCP server entry using `mcp-remote`:
   "mcpServers": {
     "io.homelab.mcp": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp"]
+      "args": ["-y", "mcp-remote", "http://your-macmini.your-tailnet.ts.net:8765/mcp"]
     }
   }
 }
@@ -106,14 +106,14 @@ Other prompts that work:
 
 **Claude Desktop doesn't show the tools**
 - Confirm Node is installed on MacBook: `node --version`
-- Confirm the server is reachable from MacBook: `curl -i http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp`
+- Confirm the server is reachable from MacBook: `curl -i http://your-macmini.your-tailnet.ts.net:8765/mcp`
 - Confirm Tailscale is connected on both devices: `tailscale status`
 - Check server logs on Mac Mini: `tail -f /tmp/io.homelab.mcp.log`
 - Check Claude Desktop logs (MacBook): `tail -f ~/Library/Logs/Claude/mcp-server-io.homelab.mcp.log`
 
 **"Some MCP servers could not be loaded" error**
 - This means Claude Desktop tried to spawn the process but it failed
-- Run manually to see the error: `npx -y mcp-remote http://your-mac-mini.tailXXXXXX.ts.net:8765/mcp`
+- Run manually to see the error: `npx -y mcp-remote http://your-macmini.your-tailnet.ts.net:8765/mcp`
 - If network is unreachable: check Tailscale is running on both machines
 
 **Tools time out**

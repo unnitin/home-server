@@ -86,9 +86,10 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 2. **Wait 2-3 minutes** → All services start in sequence
 3. **Check status**: Run `./scripts/post_boot_health_check.sh`
 4. **Access services**:
-   - 📍 **Landing Page**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net
-   - 📸 **Immich**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
-   - 🎬 **Plex**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
+   - 📍 **Landing Page**: https://your-macmini.your-tailnet.ts.net
+   - 📸 **Immich**: https://your-macmini.your-tailnet.ts.net:2283
+   - 🎬 **Plex**: https://your-macmini.your-tailnet.ts.net:32400
+   - 📺 **Jellyfin**: https://your-macmini.your-tailnet.ts.net:8096
 
 #### **🔧 If Something Doesn't Start**
 The automation system provides graceful fallback handling:
@@ -407,6 +408,7 @@ curl -I http://localhost:8080
 - Configures `https://hostname/` → `http://localhost:8080` (Landing Page)
 - Configures `https://hostname:2283` → `http://localhost:2283` (Immich)
 - Configures `https://hostname:32400` → `http://localhost:32400` (Plex)
+- Jellyfin's `https://hostname:8096` → `http://localhost:8096` rule is set by `scripts/services/start_jellyfin_safe.sh` (see [Service Addresses](../README.md#service-addresses))
 
 **Management**:
 ```bash

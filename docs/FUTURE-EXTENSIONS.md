@@ -8,7 +8,7 @@ This document outlines potential enhancements and extensions for the `mac-mini-h
 Replace Tailscale's default domain format (`device.tailnet.ts.net`) with user-friendly custom domains like `photos.yourdomain.com`.
 
 ### End Result Examples
-- **Current**: `https://your-mac-mini.tailXXXXXX.ts.net`
+- **Current**: `https://your-macmini.your-tailnet.ts.net:2283` (Immich)
 - **With Custom Domain**: `https://photos.srivastava.family`
 
 ### Benefits
@@ -27,9 +27,9 @@ Replace Tailscale's default domain format (`device.tailnet.ts.net`) with user-fr
 #### 2. DNS Configuration
 ```bash
 # Example DNS records (A records pointing to Tailscale IP)
-photos.yourdomain.com    → 100.121.184.93
-plex.yourdomain.com      → 100.121.184.93
-home.yourdomain.com      → 100.121.184.93
+photos.yourdomain.com    → 100.x.y.z
+plex.yourdomain.com      → 100.x.y.z
+home.yourdomain.com      → 100.x.y.z
 ```
 
 #### 3. Tailscale Certificate Configuration

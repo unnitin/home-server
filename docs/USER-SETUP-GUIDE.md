@@ -21,7 +21,7 @@ Tailscale provides secure access to your home server from anywhere.
 
 ### **Verify Connection:**
 - You should see your devices listed in the Tailscale app
-- Look for "nitins-mac-mini" (the home server)
+- Look for the Mac mini home server (its Tailscale hostname is the `your-macmini` part of the URLs below)
 
 ---
 
@@ -32,7 +32,7 @@ Immich lets you backup, organize, and share photos with your family.
 ### **Web Access:**
 1. **Open your browser** and go to:
    ```
-   https://your-mac-mini.tailXXXXXX.ts.net:2283
+   https://your-macmini.your-tailnet.ts.net:2283
    ```
 2. **Create your account:**
    - Click "Sign Up"
@@ -44,7 +44,7 @@ Immich lets you backup, organize, and share photos with your family.
 2. **Open the app** and tap "Add Server"
 3. **Enter server URL:**
    ```
-   https://your-mac-mini.tailXXXXXX.ts.net:2283
+   https://your-macmini.your-tailnet.ts.net:2283
    ```
 4. **Sign in** with your account credentials
 5. **Enable auto-backup:**
@@ -69,7 +69,7 @@ Plex streams your movies, TV shows, and music to all your devices.
 ### **Web Access:**
 1. **Open your browser** and go to:
    ```
-   https://your-mac-mini.tailXXXXXX.ts.net:32400
+   https://your-macmini.your-tailnet.ts.net:32400
    ```
 2. **Create your Plex account:**
    - Click "Sign Up" or "Sign In"
@@ -79,7 +79,7 @@ Plex streams your movies, TV shows, and music to all your devices.
 ### **iPhone App Setup:**
 1. **Download "Plex"** from the App Store
 2. **Open the app** and sign in with your Plex account
-3. **The server should appear automatically** (nitins-mac-mini)
+3. **The server should appear automatically** (listed under the Mac mini's name); if not, add it manually as `your-macmini.your-tailnet.ts.net:32400`
 4. **Tap to connect** and start browsing your media
 
 ### **Key Features:**
@@ -111,19 +111,24 @@ Plex streams your movies, TV shows, and music to all your devices.
 
 Bookmark these URLs for easy access:
 
+### **Home Server Landing Page:**
+```
+https://your-macmini.your-tailnet.ts.net
+```
+
 ### **Immich (Photos):**
 ```
-https://your-mac-mini.tailXXXXXX.ts.net:2283
+https://your-macmini.your-tailnet.ts.net:2283
 ```
 
 ### **Plex (Media):**
 ```
-https://your-mac-mini.tailXXXXXX.ts.net:32400
+https://your-macmini.your-tailnet.ts.net:32400
 ```
 
-### **Home Server Status:**
+### **Jellyfin (Media):**
 ```
-https://your-mac-mini.tailXXXXXX.ts.net
+https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 ---
@@ -132,9 +137,10 @@ https://your-mac-mini.tailXXXXXX.ts.net
 
 ### **Can't Connect to Services:**
 1. **Check Tailscale:** Make sure you're connected (green status)
-2. **Try local URLs:** If Tailscale fails, try:
+2. **Try local URLs:** If Tailscale fails and you're on the Mac mini itself, try:
    - Immich: `http://localhost:2283`
-   - Plex: `http://localhost:32400`
+   - Plex: `http://localhost:32400/web`
+   - Jellyfin: `http://localhost:8096`
 
 ### **Immich Storage Shows Wrong Size:**
 - This is a known bug. Go to Settings → User Management → Edit your account → Set storage quota to 500GB

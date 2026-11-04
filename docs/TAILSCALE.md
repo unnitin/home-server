@@ -63,30 +63,28 @@ your-macmini   [YOUR-IP]     macOS   active; direct [RELAY-IP]:41641
 
 ### 3. Configure Services
 
-**Enable HTTPS serving for direct access**:
+**Enable HTTPS serving for direct access** (`scripts/services/enable_landing.sh` does this for you):
 ```bash
-# Immich (photos)
-sudo tailscale serve --https=443 http://localhost:2283
-
-# Plex (media)  
-sudo tailscale serve --https=32400 http://localhost:32400
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich (photos)
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex (media)
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin (media)
 ```
+
+> With the Tailscale macOS app, use `/Applications/Tailscale.app/Contents/MacOS/Tailscale` in place of `tailscale`; `sudo` isn't required.
 
 ---
 
 ## 🌐 Service Access URLs
 
-### Direct Service Access
+Each service keeps its own port; the bare hostname (port 443) serves the landing page with links to everything. See [Service Addresses](../README.md#service-addresses) for the full table.
 
-**Immich (Photos)**:
-- **URL**: `https://your-macmini.your-tailnet.ts.net`
-- **Port**: 443 (standard HTTPS)
-- **Mobile apps**: Use this URL in server settings
-
-**Plex (Media)**:
-- **URL**: `https://your-macmini.your-tailnet.ts.net:32400`
-- **Port**: 32400 (Plex standard)
-- **Mobile apps**: Use this URL without `https://`
+| Service | URL |
+|---|---|
+| Landing page | `https://your-macmini.your-tailnet.ts.net` |
+| Immich (photos) | `https://your-macmini.your-tailnet.ts.net:2283` |
+| Plex (media) | `https://your-macmini.your-tailnet.ts.net:32400` |
+| Jellyfin (media) | `https://your-macmini.your-tailnet.ts.net:8096` |
 
 ---
 
@@ -102,14 +100,16 @@ sudo tailscale serve --https=32400 http://localhost:32400
 ### Mobile App Configuration
 
 **Immich Mobile App**:
-- **Server URL**: `https://your-macmini.your-tailnet.ts.net`
-- **No port needed**: Uses standard HTTPS (443)
+- **Server URL**: `https://your-macmini.your-tailnet.ts.net:2283`
 - **Auto-sync**: Works over cellular and WiFi
 
 **Plex Mobile App**:
 - **Manual server**: `your-macmini.your-tailnet.ts.net:32400`
 - **Or automatic**: Plex often finds the server automatically
 - **Quality settings**: Configure for mobile data usage
+
+**Jellyfin Mobile App**:
+- **Server address**: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Desktop/Laptop Setup
 

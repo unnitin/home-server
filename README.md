@@ -11,7 +11,7 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 
 ## 🔧 Recent Updates
 
-**HTTPS & DNS Fix (Latest)**: This setup now includes automatic HTTPS configuration with DNS resolution fixes for seamless access via secure URLs like `https://your-device.tailnet.ts.net`. The setup handles Homebrew prefix detection for both Intel and Apple Silicon Macs, and includes proper permission handling for storage operations.
+**HTTPS & DNS Fix (Latest)**: This setup now includes automatic HTTPS configuration with DNS resolution fixes for seamless access via secure URLs like `https://your-macmini.your-tailnet.ts.net`. The setup handles Homebrew prefix detection for both Intel and Apple Silicon Macs, and includes proper permission handling for storage operations.
 
 ## 📁 What You Get
 
@@ -79,19 +79,36 @@ setup/setup_flags.sh --all
 
 ## 🌟 Post-Setup: Using Your Server
 
-After setup, you'll have access to:
+After setup, every service is reachable locally on the Mac and remotely over Tailscale HTTPS.
 
-### 🎬 Plex Media Server
-- **Local**: http://localhost:32400/web
-- **Remote**: https://your-macmini.tailnet.ts.net:32400
+### Service Addresses
 
-### 📸 Immich Photo Management  
-- **Local**: http://localhost:2283
-- **Remote**: https://your-macmini.tailnet.ts.net
+This is the standard address layout used throughout the docs. Replace `your-macmini.your-tailnet.ts.net` with your server's Tailscale hostname (find it with `tailscale status`).
 
-### 🏠 Server Dashboard
-- **Home Page**: https://your-macmini.tailnet.ts.net  
-- Simple landing page with direct service links
+| Service | Local (on the Mac) | Tailscale HTTPS | `tailscale serve` rule |
+|---|---|---|---|
+| 🏠 Landing page | http://localhost:8080 | https://your-macmini.your-tailnet.ts.net | `--https=443` → `http://localhost:8080` |
+| 📸 Immich | http://localhost:2283 | https://your-macmini.your-tailnet.ts.net:2283 | `--https=2283` → `http://localhost:2283` |
+| 🎬 Plex | http://localhost:32400/web | https://your-macmini.your-tailnet.ts.net:32400 | `--https=32400` → `http://localhost:32400` |
+| 📺 Jellyfin | http://localhost:8096 | https://your-macmini.your-tailnet.ts.net:8096 | `--https=8096` → `http://localhost:8096` |
+
+The bare hostname (port 443) is the landing page, which links to each service. Every service keeps its own port.
+
+**Mobile apps:**
+- **Immich**: server URL `https://your-macmini.your-tailnet.ts.net:2283`
+- **Plex**: manual server `your-macmini.your-tailnet.ts.net:32400`
+- **Jellyfin**: server address `https://your-macmini.your-tailnet.ts.net:8096`
+
+**Serve rules** (set up by `scripts/services/enable_landing.sh` and `scripts/services/start_jellyfin_safe.sh`; to configure manually):
+```bash
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
+sudo tailscale serve status                                      # Verify
+```
+
+> **Tailscale macOS app:** if you installed the Tailscale app rather than the Homebrew CLI, the CLI is `/Applications/Tailscale.app/Contents/MacOS/Tailscale` and `sudo` isn't required, e.g. `/Applications/Tailscale.app/Contents/MacOS/Tailscale serve --bg --https=2283 http://localhost:2283`.
 
 ## 🗂️ Repository Structure
 

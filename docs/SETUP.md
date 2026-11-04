@@ -258,7 +258,7 @@ curl -f http://localhost:2283 || echo "Immich not ready yet"
 2. Create admin account
 3. Set up mobile apps:
    - **Server URL**: `http://your-local-ip:2283`
-   - **For Tailscale**: `https://your-macmini.tailnet.ts.net`
+   - **For Tailscale**: `https://your-macmini.your-tailnet.ts.net:2283`
 
 ### Troubleshooting
 - **Database connection failed**: Check `IMMICH_DB_PASSWORD` in `.env`
@@ -393,9 +393,13 @@ sudo tailscale up --accept-dns=true
 **Enable HTTPS serving**:
 ```bash
 # Direct service access
-sudo tailscale serve --https=443   http://localhost:2283      # Immich
-sudo tailscale serve --https=32400 http://localhost:32400      # Plex
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
+
+> With the Tailscale macOS app, use `/Applications/Tailscale.app/Contents/MacOS/Tailscale` in place of `tailscale`; `sudo` isn't required.
 
 ### What This Provides
 - **Encrypted VPN**: All traffic encrypted in transit
@@ -404,17 +408,22 @@ sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 - **Access Control**: Controlled via Tailscale admin console
 
 ### Network Access
-Your services become available at:
-- **Immich**: `https://your-macmini.your-tailnet.ts.net`
+Your services become available at (full table: [Service Addresses](../README.md#service-addresses)):
+- **Landing page**: `https://your-macmini.your-tailnet.ts.net`
+- **Immich**: `https://your-macmini.your-tailnet.ts.net:2283`
 - **Plex**: `https://your-macmini.your-tailnet.ts.net:32400`
+- **Jellyfin**: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Mobile App Configuration
 **Immich Mobile**:
-- **Server URL**: `https://your-macmini.your-tailnet.ts.net`
+- **Server URL**: `https://your-macmini.your-tailnet.ts.net:2283`
 - **Username/Password**: From Immich setup
 
 **Plex Mobile**:
 - **Server**: Automatically discovered or manual `your-macmini.your-tailnet.ts.net:32400`
+
+**Jellyfin Mobile**:
+- **Server address**: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Verification
 ```bash
@@ -425,8 +434,8 @@ tailscale status
 tailscale ip
 tailscale hostname
 
-# Test HTTPS access
-curl -k https://$(tailscale hostname).$(tailscale domain)
+# Test HTTPS access (replace with your Tailscale hostname)
+curl -k https://your-macmini.your-tailnet.ts.net:2283
 ```
 
 ### Troubleshooting
@@ -458,6 +467,7 @@ Sets up simple landing page with direct HTTPS access to all services.
 - **Homepage**: `https://your-macmini.your-tailnet.ts.net`
 - **Immich**: `https://your-macmini.your-tailnet.ts.net:2283`
 - **Plex**: `https://your-macmini.your-tailnet.ts.net:32400`
+- **Jellyfin**: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Landing Page Features
 - **Service Status**: Green/red indicators for each service
@@ -498,12 +508,16 @@ curl -f https://your-macmini.your-tailnet.ts.net   # HTTPS landing page
 
 ### Service Access Test
 **Local access**:
+- ✅ Landing page: http://localhost:8080
 - ✅ Immich: http://localhost:2283
 - ✅ Plex: http://localhost:32400/web
+- ✅ Jellyfin: http://localhost:8096
 
 **Remote access (via Tailscale)**:
-- ✅ Immich: `https://your-macmini.your-tailnet.ts.net`
+- ✅ Landing page: `https://your-macmini.your-tailnet.ts.net`
+- ✅ Immich: `https://your-macmini.your-tailnet.ts.net:2283`
 - ✅ Plex: `https://your-macmini.your-tailnet.ts.net:32400`
+- ✅ Jellyfin: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Performance Verification
 ```bash

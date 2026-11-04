@@ -147,9 +147,11 @@ sudo tailscale up --accept-dns=true --advertise-exit-node --ssh
 
 **HTTPS serving** (after setup):
 ```bash
-# Direct service access
-sudo tailscale serve --https=443   http://localhost:2283    # Immich
-sudo tailscale serve --https=32400 http://localhost:32400   # Plex
+# Direct service access (see README "Service Addresses")
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
 
 ---

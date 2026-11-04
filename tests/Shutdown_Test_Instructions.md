@@ -24,14 +24,16 @@ cd ~/Documents/home-server
 
 ### ✅ **2. Test Service URLs**
 Open in browser or test with curl:
-- 📍 **Landing Page**: https://your-mac-mini.tailXXXXXX.ts.net
-- 📸 **Immich**: https://your-mac-mini.tailXXXXXX.ts.net:2283
-- 🎬 **Plex**: https://your-mac-mini.tailXXXXXX.ts.net:32400
+- 📍 **Landing Page**: https://your-macmini.your-tailnet.ts.net
+- 📸 **Immich**: https://your-macmini.your-tailnet.ts.net:2283
+- 🎬 **Plex**: https://your-macmini.your-tailnet.ts.net:32400
+- 📺 **Jellyfin**: https://your-macmini.your-tailnet.ts.net:8096
 
 **Record Results:**
 - Landing Page: ⬜ Working ⬜ Failed  
 - Immich: ⬜ Working ⬜ Failed  
 - Plex: ⬜ Working ⬜ Failed  
+- Jellyfin: ⬜ Working ⬜ Failed  
 
 ### ✅ **3. Create Recovery Reference**
 ```bash
@@ -105,15 +107,17 @@ tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}
 
 ### **2. Service URL Testing**
 ```bash
-curl -s -o /dev/null -w "Landing: %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net
-curl -s -o /dev/null -w "Immich:  %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net:2283  
-curl -s -o /dev/null -w "Plex:    %{http_code}\n" https://your-mac-mini.tailXXXXXX.ts.net:32400
+curl -s -o /dev/null -w "Landing: %{http_code}\n" https://your-macmini.your-tailnet.ts.net
+curl -s -o /dev/null -w "Immich:  %{http_code}\n" https://your-macmini.your-tailnet.ts.net:2283  
+curl -s -o /dev/null -w "Plex:    %{http_code}\n" https://your-macmini.your-tailnet.ts.net:32400
+curl -s -o /dev/null -w "Jellyfin: %{http_code}\n" https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 **Record HTTP Status Codes:**
 - Landing Page: ________________ (Expected: 200/302)
 - Immich: ________________ (Expected: 200/302)
 - Plex: ________________ (Expected: 200/302)
+- Jellyfin: ________________ (Expected: 200/302)
 
 ### **3. Browser Verification**
 Test from another device:
@@ -146,9 +150,10 @@ sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos
 sudo mkdir -p /Volumes/Archive
 
 # HTTPS fixes (if needed):
-sudo tailscale serve --bg --https=443 http://localhost:8080
-sudo tailscale serve --bg --https=2283 http://localhost:2283
+sudo tailscale serve --bg --https=443   http://localhost:8080
+sudo tailscale serve --bg --https=2283  http://localhost:2283
 sudo tailscale serve --bg --https=32400 http://localhost:32400
+sudo tailscale serve --bg --https=8096  http://localhost:8096
 ```
 
 **Manual commands needed:**

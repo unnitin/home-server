@@ -96,19 +96,27 @@ sudo ./scripts/40_configure_launchd.sh
 sudo tailscale up --accept-dns=true
 
 # Enable HTTPS access to services
-sudo tailscale serve --https=443   http://localhost:2283      # Immich
-sudo tailscale serve --https=32400 http://localhost:32400      # Plex
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
 
 ## ✅ Verify Your Setup
 
+Full table: [Service Addresses](../README.md#service-addresses).
+
 ### Local Access
+- **Landing page**: http://localhost:8080
 - **Immich**: http://localhost:2283
 - **Plex**: http://localhost:32400/web
+- **Jellyfin**: http://localhost:8096
 
 ### Remote Access (via Tailscale)
-- **Immich**: https://your-macmini.tailnet.ts.net  
-- **Plex**: https://your-macmini.tailnet.ts.net:32400
+- **Landing page**: https://your-macmini.your-tailnet.ts.net
+- **Immich**: https://your-macmini.your-tailnet.ts.net:2283
+- **Plex**: https://your-macmini.your-tailnet.ts.net:32400
+- **Jellyfin**: https://your-macmini.your-tailnet.ts.net:8096
 
 ### Quick Health Check
 ```bash
@@ -134,7 +142,7 @@ sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 ### Immich Setup  
 1. Open http://localhost:2283
 2. Create your admin account
-3. Download mobile apps and configure server URL
+3. Download mobile apps and set the server URL to `https://your-macmini.your-tailnet.ts.net:2283`
 4. Start uploading photos!
 
 > 📖 **Detailed Guide**: [Immich Setup & Usage](IMMICH.md)

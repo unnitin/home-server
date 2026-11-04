@@ -117,12 +117,12 @@ tail -f "/Users/$(whoami)/Library/Logs/Plex Media Server/Plex Media Server.log" 
 
 **Setup HTTPS serving**:
 ```bash
-sudo tailscale serve --https=32400 http://localhost:32400
+sudo tailscale serve --bg --https=32400 http://localhost:32400
 ```
 
 **Access URLs**:
 - **Web**: `https://your-macmini.your-tailnet.ts.net:32400`
-- **Mobile apps**: Use server IP `your-macmini.your-tailnet.ts.net:32400`
+- **Mobile apps**: Manual server `your-macmini.your-tailnet.ts.net:32400`
 
 ### Plex Relay (Fallback)
 

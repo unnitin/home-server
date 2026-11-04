@@ -445,9 +445,11 @@ tailscale up
 ```bash
 sudo tailscale serve status
 
-# Reconfigure serving
-sudo tailscale serve --https=443 http://localhost:2283
-sudo tailscale serve --https=32400 http://localhost:32400
+# Reconfigure serving (see README "Service Addresses" for the full layout)
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
 
 **Certificate issues**:
@@ -459,7 +461,8 @@ sudo tailscale serve --https=32400 http://localhost:32400
 ```bash
 # Test from remote device
 ping your-macmini.your-tailnet.ts.net
-curl -k https://your-macmini.your-tailnet.ts.net
+curl -k https://your-macmini.your-tailnet.ts.net        # Landing page
+curl -k https://your-macmini.your-tailnet.ts.net:2283   # Immich
 ```
 
 ### Performance Issues
@@ -501,14 +504,16 @@ lsof -i :8080
 **Test individual services**:
 ```bash
 # Test backend services
+curl -f http://localhost:8080      # Landing page
 curl -f http://localhost:2283      # Immich
 curl -f http://localhost:32400     # Plex
-curl -f http://localhost:8080      # Landing page
+curl -f http://localhost:8096      # Jellyfin
 
 # Test HTTPS access
-curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net
-curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
-curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
+curl -f https://your-macmini.your-tailnet.ts.net         # Landing page
+curl -f https://your-macmini.your-tailnet.ts.net:2283    # Immich
+curl -f https://your-macmini.your-tailnet.ts.net:32400   # Plex
+curl -f https://your-macmini.your-tailnet.ts.net:8096    # Jellyfin
 ```
 
 **Check Tailscale serving**:
@@ -517,9 +522,10 @@ curl -f https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
 sudo tailscale serve status
 
 # Reconfigure if needed
-sudo tailscale serve --bg --https=443 http://localhost:8080
-sudo tailscale serve --bg --https=2283 http://localhost:2283
+sudo tailscale serve --bg --https=443   http://localhost:8080
+sudo tailscale serve --bg --https=2283  http://localhost:2283
 sudo tailscale serve --bg --https=32400 http://localhost:32400
+sudo tailscale serve --bg --https=8096  http://localhost:8096
 ```
 
 ---
@@ -532,6 +538,7 @@ sudo tailscale serve --bg --https=32400 http://localhost:32400
 ```bash
 lsof -i :2283   # Immich
 lsof -i :32400  # Plex
+lsof -i :8096   # Jellyfin
 lsof -i :8080   # Landing page HTTP server
 
 # Kill conflicting process

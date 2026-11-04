@@ -190,13 +190,13 @@ top -l 1 | grep -A 10 "CPU usage"
 
 When you run `start_jellyfin_safe.sh`, Tailscale serve is automatically configured:
 
-**Remote URL**: `https://your-mac-mini.tailXXXXXX.ts.net:8096`
+**Remote URL**: `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### Manual Configuration
 
 If needed, configure Tailscale serve manually:
 ```bash
-tailscale serve --bg --https=8096 http://localhost:8096
+sudo tailscale serve --bg --https=8096 http://localhost:8096
 ```
 
 ### Verify Remote Access
@@ -205,7 +205,7 @@ tailscale serve --bg --https=8096 http://localhost:8096
 tailscale serve status
 
 # Test from another device
-curl -k https://your-mac-mini.tailXXXXXX.ts.net:8096
+curl -k https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 ---
@@ -223,7 +223,7 @@ curl -k https://your-mac-mini.tailXXXXXX.ts.net:8096
 - **Login**: Same username/password from setup
 
 **Remote Access (Tailscale)**:
-- **Server Address**: `https://your-mac-mini.tailXXXXXX.ts.net:8096`
+- **Server Address**: `https://your-macmini.your-tailnet.ts.net:8096`
 - **Login**: Same username/password from setup
 - **No Plex Pass required!** ✅
 
@@ -273,7 +273,7 @@ pgrep -f "Jellyfin Server"
 curl -s http://localhost:8096/health
 
 # Check via Tailscale
-curl -k https://your-mac-mini.tailXXXXXX.ts.net:8096
+curl -k https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 ### View Logs
@@ -341,10 +341,10 @@ killall "Jellyfin Server"
 tailscale serve status
 
 # Re-enable Tailscale serve
-tailscale serve --bg --https=8096 http://localhost:8096
+sudo tailscale serve --bg --https=8096 http://localhost:8096
 
 # Verify from another device
-curl -k https://your-mac-mini.tailXXXXXX.ts.net:8096
+curl -k https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 ### Transcoding Fails

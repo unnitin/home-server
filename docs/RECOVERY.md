@@ -22,11 +22,12 @@ If your home server is completely down after a power outage or restart:
 ./scripts/37_enable_simple_landing.sh        # Setup landing page
 
 # 3. Verify everything is working
-# Replace YOUR-DEVICE.YOUR-TAILNET.ts.net with your actual hostname
+# Replace your-macmini.your-tailnet.ts.net with your actual hostname
 # See: https://tailscale.com/kb/1098/machine-names
-curl -I https://YOUR-DEVICE.YOUR-TAILNET.ts.net
-curl -I https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
-curl -I https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
+curl -I https://your-macmini.your-tailnet.ts.net
+curl -I https://your-macmini.your-tailnet.ts.net:2283
+curl -I https://your-macmini.your-tailnet.ts.net:32400
+curl -I https://your-macmini.your-tailnet.ts.net:8096
 ```
 
 ### **Service-Specific Recovery**
@@ -96,9 +97,10 @@ sudo tailscale serve status
 
 # Reset and reconfigure
 sudo tailscale serve reset
-sudo tailscale serve --bg --https=443 http://localhost:8080
-sudo tailscale serve --bg --https=2283 http://localhost:2283
-sudo tailscale serve --bg --https=32400 http://localhost:32400
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
 
 ---
@@ -238,11 +240,12 @@ ls -la /Volumes/warmstore/
 
 ### **Manual Service Verification**
 ```bash
-# Test all service URLs (replace YOUR-DEVICE.YOUR-TAILNET.ts.net with your hostname)
+# Test all service URLs (replace your-macmini.your-tailnet.ts.net with your hostname)
 # Find your hostname: tailscale status --json | grep '"DNSName"' | head -1 | cut -d'"' -f4 | sed 's/\.$//'
-echo "Landing Page: $(curl -s -o /dev/null -w "%{http_code}" https://YOUR-DEVICE.YOUR-TAILNET.ts.net)"
-echo "Immich: $(curl -s -o /dev/null -w "%{http_code}" https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283)"
-echo "Plex: $(curl -s -o /dev/null -w "%{http_code}" https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400)"
+echo "Landing Page: $(curl -s -o /dev/null -w "%{http_code}" https://your-macmini.your-tailnet.ts.net)"
+echo "Immich: $(curl -s -o /dev/null -w "%{http_code}" https://your-macmini.your-tailnet.ts.net:2283)"
+echo "Plex: $(curl -s -o /dev/null -w "%{http_code}" https://your-macmini.your-tailnet.ts.net:32400)"
+echo "Jellyfin: $(curl -s -o /dev/null -w "%{http_code}" https://your-macmini.your-tailnet.ts.net:8096)"
 ```
 
 ### **Resource Usage Check**

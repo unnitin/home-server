@@ -79,7 +79,7 @@ Open http://localhost:2283
 - **Find IP**: `ifconfig | grep "inet " | grep -v 127.0.0.1`
 
 **Remote Access (Tailscale)**:
-- **Server URL**: `https://your-macmini.your-tailnet.ts.net`
+- **Server URL**: `https://your-macmini.your-tailnet.ts.net:2283` (the bare hostname is the landing page, not Immich)
 - **Login**: Same email/password from web setup
 
 ### Backup Settings

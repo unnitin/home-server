@@ -23,7 +23,7 @@ Your Device → Tailscale Tunnel → Mac Mini → Local Services
 - **Purpose**: Resolve friendly domain names to Tailscale IPs
 - **DNS Server**: `100.100.100.100` (Tailscale's DNS)
 - **Domain Format**: `device-name.tailnet-id.ts.net`
-- **Example**: `your-device.your-tailnet.ts.net` → `100.121.184.93`
+- **Example**: `your-macmini.your-tailnet.ts.net` → `100.x.y.z`
 
 ### **3. HTTPS Serving**
 - **Purpose**: Provide valid SSL certificates for web services
@@ -36,10 +36,10 @@ Your Device → Tailscale Tunnel → Mac Mini → Local Services
 ### **Complete Request Journey**:
 
 ```
-1. User types: https://your-device.your-tailnet.ts.net
+1. User types: https://your-macmini.your-tailnet.ts.net:2283
 2. DNS Query: Device → Tailscale DNS (100.100.100.100)
-3. DNS Response: your-device.your-tailnet.ts.net → 100.121.184.93
-4. Connection: Device → Tailscale tunnel → Mac Mini (100.121.184.93:443)
+3. DNS Response: your-macmini.your-tailnet.ts.net → 100.x.y.z
+4. Connection: Device → Tailscale tunnel → Mac Mini (100.x.y.z:2283)
 5. HTTPS Termination: Tailscale validates certificate, establishes TLS
 6. Proxy: Tailscale → http://localhost:2283 (Immich)
 7. Response: Immich → Tailscale → Device (encrypted tunnel)
@@ -74,10 +74,10 @@ sudo killall -HUP mDNSResponder
 
 ### **Network Isolation**
 ```
-Internet Users → 🚫 Cannot reach 100.121.184.93
+Internet Users → 🚫 Cannot reach 100.x.y.z
                      (Tailscale IPs not routable)
 
-Tailscale Users → ✅ Can reach 100.121.184.93
+Tailscale Users → ✅ Can reach 100.x.y.z
                       (Authenticated mesh network)
 ```
 
@@ -107,55 +107,52 @@ Tailscale Users → ✅ Can reach 100.121.184.93
 ### **Windows/Linux**
 - Install Tailscale client
 - Run: `tailscale up --accept-dns`
-- Verify DNS with: `nslookup your-device.your-tailnet.ts.net`
+- Verify DNS with: `nslookup your-macmini.your-tailnet.ts.net`
 
 ## 🛠️ Service Configuration
 
-### **Immich (Photos)**
+Each service gets its own HTTPS port on the Tailscale hostname; the bare hostname (port 443) serves the landing page. This matches [Service Addresses](../README.md#service-addresses) in the README.
+
 ```bash
-# HTTPS serving on port 443
-sudo tailscale serve --bg --https=443 http://localhost:2283
-
-# Accessible at:
-https://your-device.your-tailnet.ts.net
-```
-
-### **Plex (Media)**
-```bash
-# HTTPS serving on port 32400
-sudo tailscale serve --bg --https=32400 http://localhost:32400
-
-# Accessible at:
-https://your-device.your-tailnet.ts.net:32400
+sudo tailscale serve --bg --https=443   http://localhost:8080    # Landing page
+sudo tailscale serve --bg --https=2283  http://localhost:2283    # Immich
+sudo tailscale serve --bg --https=32400 http://localhost:32400   # Plex
+sudo tailscale serve --bg --https=8096  http://localhost:8096    # Jellyfin
 ```
 
 ### **Port Mapping**
-- **Local Service**: `http://localhost:2283` (Immich)
-- **Tailscale Serve**: `https://domain:443` → proxy to localhost:2283
-- **Result**: Secure HTTPS with valid certificates
+| Tailscale HTTPS | Local service |
+|---|---|
+| `https://your-macmini.your-tailnet.ts.net` (443) | `http://localhost:8080` (landing page) |
+| `https://your-macmini.your-tailnet.ts.net:2283` | `http://localhost:2283` (Immich) |
+| `https://your-macmini.your-tailnet.ts.net:32400` | `http://localhost:32400` (Plex) |
+| `https://your-macmini.your-tailnet.ts.net:8096` | `http://localhost:8096` (Jellyfin) |
+
+Result: secure HTTPS with valid certificates, no port forwarding.
 
 ## 🔧 Troubleshooting
 
 ### **DNS Resolution Issues**
 ```bash
 # Test DNS resolution
-nslookup your-device.your-tailnet.ts.net
+nslookup your-macmini.your-tailnet.ts.net
 
 # Expected output:
 Server:         100.100.100.100
 Address:        100.100.100.100#53
-Name:   your-mac-mini.tailXXXXXX.ts.net
-Address: 100.121.184.93
+Name:   your-macmini.your-tailnet.ts.net
+Address: 100.x.y.z
 ```
 
 ### **HTTPS Connection Issues**
 ```bash
 # Test HTTPS connectivity
-curl -I https://your-device.your-tailnet.ts.net
+curl -I https://your-macmini.your-tailnet.ts.net        # Landing page
+curl -I https://your-macmini.your-tailnet.ts.net:2283   # Immich
 
-# Expected output:
-HTTP/2 404 
-content-type: application/json; charset=utf-8
+# Expected output (landing page):
+HTTP/2 200
+content-type: text/html
 ```
 
 ### **Common Fixes**
@@ -175,8 +172,9 @@ sudo dscacheutil -flushcache
 # Check Tailscale serve status
 sudo tailscale serve status
 
-# Reconfigure if needed
-sudo tailscale serve --bg --https=443 http://localhost:2283
+# Reconfigure if needed (full set in "Service Configuration" above)
+sudo tailscale serve --bg --https=443  http://localhost:8080
+sudo tailscale serve --bg --https=2283 http://localhost:2283
 ```
 
 #### **Certificate errors**
@@ -196,7 +194,7 @@ sudo tailscale up --accept-dns=true
 tailscale netcheck
 
 # DNS resolution test
-dig @100.100.100.100 your-device.your-tailnet.ts.net
+dig @100.100.100.100 your-macmini.your-tailnet.ts.net
 
 # Service availability
 ./diagnostics/network_port_check.sh localhost 2283
@@ -229,7 +227,7 @@ dig @100.100.100.100 your-device.your-tailnet.ts.net
 ### **Custom Domain (Future)**
 You can configure custom domains that point to your Tailscale IPs:
 ```bash
-# Example: photos.yourdomain.com → your-mac-mini.tailXXXXXX.ts.net
+# Example: photos.yourdomain.com → your-macmini.your-tailnet.ts.net
 # Requires DNS CNAME record and Tailscale certificate configuration
 ```
 
@@ -246,7 +244,7 @@ Tailscale ACLs can restrict access between devices:
 ```json
 {
   "acls": [
-    {"action": "accept", "src": ["mobile-devices"], "dst": ["home-servers:443,32400"]}
+    {"action": "accept", "src": ["mobile-devices"], "dst": ["home-servers:443,2283,32400,8096"]}
   ]
 }
 ```

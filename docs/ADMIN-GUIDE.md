@@ -31,12 +31,13 @@ tailscale status --json | grep '"DNSName"' | cut -d'"' -f4 | sed 's/\.$//'
 tailscale status
 ```
 
-**Example output:** `homeserver.tail9x8y7z.ts.net`
+**Example output:** `your-macmini.your-tailnet.ts.net`
 
-**Share with users:**
-- **Dashboard:** `https://homeserver.tail9x8y7z.ts.net`
-- **Photos (Immich):** `https://homeserver.tail9x8y7z.ts.net:2283`
-- **Media (Plex):** `https://homeserver.tail9x8y7z.ts.net:32400`
+**Share with users** (same layout as [Service Addresses](../README.md#service-addresses)):
+- **Dashboard (landing page):** `https://your-macmini.your-tailnet.ts.net`
+- **Photos (Immich):** `https://your-macmini.your-tailnet.ts.net:2283`
+- **Media (Plex):** `https://your-macmini.your-tailnet.ts.net:32400`
+- **Media (Jellyfin):** `https://your-macmini.your-tailnet.ts.net:8096`
 
 ---
 

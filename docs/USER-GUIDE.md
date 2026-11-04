@@ -10,24 +10,22 @@ Stream movies, manage photos, accessible anywhere on any device.
 After setup, you have a complete home media server with:
 
 - **🎬 Plex Media Server** - Stream movies, TV shows, music (like Netflix)
+- **📺 Jellyfin** - Open-source alternative for streaming the same media library
 - **📸 Immich** - Self-hosted photo backup and browsing (like Google Photos)
 - **🔒 Secure Remote Access** - Access from anywhere via Tailscale VPN
 
 **🌐 Your Server URLs:**
-- **Main Dashboard:** `https://your-device.your-tailnet.ts.net`
-- **Photos (Immich):** `https://your-device.your-tailnet.ts.net:2283`
-- **Media (Plex):** `https://your-device.your-tailnet.ts.net:32400`
+- **Main Dashboard (landing page):** `https://your-macmini.your-tailnet.ts.net`
+- **Photos (Immich):** `https://your-macmini.your-tailnet.ts.net:2283`
+- **Media (Plex):** `https://your-macmini.your-tailnet.ts.net:32400`
+- **Media (Jellyfin):** `https://your-macmini.your-tailnet.ts.net:8096`
 
 ### 🔍 Finding Your Server URL
 
-**Ask your server administrator for the URLs:**
+**Ask your server administrator for the hostname:**
 - They can find the exact hostname using admin commands
 - The format will be something like: `device-name.tailnet-id.ts.net`
-
-**Example URLs you'll receive:**
-- Dashboard: `https://homeserver.tail9x8y7z.ts.net`
-- Photos: `https://homeserver.tail9x8y7z.ts.net:2283`
-- Media: `https://homeserver.tail9x8y7z.ts.net:32400`
+- Replace `your-macmini.your-tailnet.ts.net` in this guide with the hostname they give you; the port numbers stay the same
 
 > **For Administrators:** See [ADMIN-GUIDE.md](ADMIN-GUIDE.md) for commands to get server hostnames and manage users.
 
@@ -69,14 +67,14 @@ After setup, you have a complete home media server with:
 2. Sign in to your Plex account
 3. **Add Server Manually:**
    - Server Name: `Home Server`
-   - Server Address: `your-device.your-tailnet.ts.net:32400`
-   - OR: `https://your-device.your-tailnet.ts.net:32400`
+   - Server Address: `your-macmini.your-tailnet.ts.net:32400`
+   - OR: `https://your-macmini.your-tailnet.ts.net:32400`
 4. ✅ Start streaming your media library
 
 #### 3. Immich App (Photos)
 1. Download **Immich** from the App Store
 2. **Server Settings:**
-   - Server URL: `https://your-device.your-tailnet.ts.net:2283`
+   - Server URL: `https://your-macmini.your-tailnet.ts.net:2283`
    - Username/Password: *(created during setup)*
 3. **Enable Auto-Backup:**
    - Go to Settings → Auto Backup
@@ -98,13 +96,13 @@ After setup, you have a complete home media server with:
 3. **Manual Server Connection:**
    - Tap "Got It" when it says no servers found
    - Tap "+" to add server manually
-   - Connection: `your-device.your-tailnet.ts.net:32400`
+   - Connection: `your-macmini.your-tailnet.ts.net:32400`
 4. ✅ Stream your content anywhere
 
 #### 3. Immich App (Photos)
 1. Download **Immich** from Google Play Store
 2. **Initial Setup:**
-   - Server Endpoint URL: `https://your-device.your-tailnet.ts.net:2283`
+   - Server Endpoint URL: `https://your-macmini.your-tailnet.ts.net:2283`
    - Login with your credentials
 3. **Auto-Upload Setup:**
    - Settings → Auto Upload
@@ -119,20 +117,24 @@ After setup, you have a complete home media server with:
 ### Any Device with Web Browser
 
 #### Access Methods:
-1. **Dashboard:** `https://your-device.your-tailnet.ts.net`
+1. **Dashboard:** `https://your-macmini.your-tailnet.ts.net`
    - Central hub with links to all services
    - Service status indicators
    - One-click access to photos and media
 
-2. **Direct Photo Access:** `https://your-device.your-tailnet.ts.net:2283`
+2. **Direct Photo Access:** `https://your-macmini.your-tailnet.ts.net:2283`
    - Full Immich web interface
    - Upload, organize, and share photos
    - Create albums and search by content
 
-3. **Direct Media Access:** `https://your-device.your-tailnet.ts.net:32400`
+3. **Direct Media Access:** `https://your-macmini.your-tailnet.ts.net:32400`
    - Full Plex web interface
    - Stream to any device
    - Manage libraries and users
+
+4. **Jellyfin:** `https://your-macmini.your-tailnet.ts.net:8096`
+   - Full Jellyfin web interface
+   - Also works in the Jellyfin mobile apps (use this as the server address)
 
 #### First-Time Setup:
 1. **Get Invited to Tailscale Network:**
@@ -359,7 +361,7 @@ After setup, you have a complete home media server with:
 tailscale status
 
 # Test server connectivity (replace with your actual hostname)
-curl -I https://your-device.your-tailnet.ts.net:2283
+curl -I https://your-macmini.your-tailnet.ts.net:2283
 ```
 
 ### For Administrators:
