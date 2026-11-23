@@ -39,6 +39,7 @@ Full system validation simulating real-world scenarios.
 | `test_data_integrity.py` | Python | Data preservation during operations | RAID safety, backup validation |
 | `test_network_scenarios.py` | Python | Network connectivity and VPN | Tailscale, HTTPS, port access |
 | `test_maintenance_workflows.bats` | BATS | Routine maintenance operations | Updates, cleanup, monitoring |
+| `vm/` | Python, bash | Sandbox kit: `data_guard.py` proves real data and backups are unchanged; VM deploy rehearsal (see `vm/README.md`) | Photo originals, database dumps, Plex/Jellyfin state |
 
 ---
 

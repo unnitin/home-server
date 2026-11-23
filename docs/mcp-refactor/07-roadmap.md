@@ -32,6 +32,12 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - `run_all.sh` completes with a summary on a box with failures.
 - All 16 existing tools return meaningful output, and the smoke test passes.
 
+**Before deploying** (found 2026-11-23):
+- Fix the boot storage job (D22). Phase 0 re-enables it, so it is a blocker.
+- Rehearse the deploy in a disposable macOS VM (`tests/e2e/vm/`): repo move, `configure_launchd.sh`, a reboot, and every job's exit status.
+- Take a `tests/e2e/vm/data_guard.py snapshot` before the deploy and `verify` against a second snapshot afterwards. It proves no photo, backup or database folder changed.
+- warmstore (D21) can be fixed before or after. Until it's back, the media watcher and the Plex and Jellyfin libraries have nothing to read.
+
 **Deploying Phase 0** is your call, after `mcp-refactor` is merged to `main`. Merging changes nothing on the running system.
 1. Move the repo out of `~/Documents`, e.g. `mv ~/Documents/home-server ~/home-server` (D19).
 2. Run `scripts/automation/configure_launchd.sh` to re-render and reload every job from the new path, `io.homelab.mcp` included.
