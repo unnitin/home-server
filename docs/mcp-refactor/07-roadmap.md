@@ -93,6 +93,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 
 Depends on Phase 2 (adapters), Phase 3 (jobs, scopes) and Phase 5 (approvals). The design is in [08-curation.md](08-curation.md).
 
+- **Fix photo dates first (D20)**, because date-based album rules depend on them.
 - **Verify first:** which provider-ID folder form (`{tmdb-…}`, `[tmdbid-…]` or both) Plex 1.42 and Jellyfin 10.11 both honor.
 - **Access:** create the restricted Immich API key, the `curator` scope and the `photo_access` token property.
 - **Photos:** album profiles, rule tests, review-album proposals, `review_apply`, the feedback table, tags, archive, sorting unsorted photos, new-album suggestions, undo.
