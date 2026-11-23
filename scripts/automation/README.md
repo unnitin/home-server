@@ -17,9 +17,10 @@ Automation layer managing LaunchD services, scheduled tasks, system monitoring, 
 ### **System Monitoring**
 
 #### **check_updates.sh**
-**Purpose**: Automated system update checking and notification  
-**Usage**: Run by LaunchD automation on schedule  
-**Features**: Checks Homebrew packages, monitors container images
+**Purpose**: Report available updates (report only: nothing is upgraded, pulled or restarted)
+**Usage**: Run nightly at 03:00 by LaunchD `io.homelab.updatecheck`; output in `/tmp/homelab-updatecheck.out`
+**Features**: Outdated Homebrew packages; running Immich version vs. the latest release, with a release-notes link
+**Note**: `--apply` is refused until Phase 5 adds version pinning, a database backup and approval. Unattended Immich upgrades can break the library
 
 ### **Media Automation Setup**
 
