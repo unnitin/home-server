@@ -4,10 +4,13 @@ set -euo pipefail
 # Movie Processor - Converts movie files to Plex naming convention
 # Expected Plex format: /Movies/Movie Name (Year)/Movie Name (Year).ext
 
-MOVIE_FILE="$1"
-TARGET_DIR="$2"
+MOVIE_FILE="${1:-}"
+TARGET_DIR="${2:-}"
 LOG_FILE="${3:-/tmp/movie_processor.log}"
-REL_PATH="${4:-$(basename "$1")}"
+REL_PATH="${4:-${MOVIE_FILE##*/}}"
+
+# Release-name tags that end the title part of a filename (matched case-insensitively)
+RELEASE_TAG_RE='^(480p|576p|720p|1080p|1080i|2160p|4k|uhd|hdr|hdr10|dv|bluray|blu-ray|brrip|bdrip|dvdrip|webrip|web-dl|webdl|web|hdtv|remux|x264|x265|h264|h265|hevc|avc|aac|ac3|dts|ddp5|dd5|atmos|10bit|proper|repack|extended|unrated|remastered|imax)$'
 
 # Logging function
 log() {
@@ -22,39 +25,54 @@ log() {
 extract_movie_info() {
     local filename="$1"
     local basename=$(basename "$filename" | sed 's/\.[^.]*$//')  # Remove extension
-    
+
     # Common patterns to extract title and year
     local title=""
     local year=""
-    
-    # Pattern 1: Title (Year) format
-    if [[ "$basename" =~ ^(.+)\ \(([0-9]{4})\).*$ ]]; then
+
+    # Pattern 1: "Title (Year)", the Plex form. Trust it as written.
+    if [[ "$basename" =~ ^(.+)\ \(((19|20)[0-9]{2})\) ]]; then
         title="${BASH_REMATCH[1]}"
         year="${BASH_REMATCH[2]}"
-    # Pattern 2: Title.Year format
-    elif [[ "$basename" =~ ^(.+)\.([0-9]{4}).*$ ]]; then
-        title="${BASH_REMATCH[1]//./ }"  # Replace dots with spaces
-        year="${BASH_REMATCH[2]}"
-    # Pattern 3: Title Year format (space separated)
-    elif [[ "$basename" =~ ^(.+)\ ([0-9]{4}).*$ ]]; then
-        title="${BASH_REMATCH[1]}"
-        year="${BASH_REMATCH[2]}"
-    # Pattern 4: Try to extract year from anywhere in the filename
-    elif [[ "$basename" =~ ([0-9]{4}) ]]; then
-        year="${BASH_REMATCH[1]}"
-        title=$(echo "$basename" | sed "s/$year//g" | sed 's/[._-]/ /g' | sed 's/^ *//;s/ *$//')
     else
-        # No year found, use entire basename as title
-        title=$(echo "$basename" | sed 's/[._-]/ /g' | sed 's/^ *//;s/ *$//')
-        year=""
+        # Release names like Title.Year.1080p.BluRay: split on dots, underscores and
+        # spaces. The title ends at the first release tag (1080p, BluRay, x264, ...), and
+        # the year is the LAST 1900-2099 token before that point. So 1080p/2160p are never
+        # read as years, and "Blade.Runner.2049.2017" keeps 2049 in the title.
+        local tokens=() i end year_idx=-1 token
+        read -r -a tokens <<< "$(echo "$basename" | tr '._' '  ')"
+        if [[ ${#tokens[@]} -eq 0 ]]; then
+            echo "|"
+            return 0
+        fi
+        end=${#tokens[@]}
+        for (( i = 0; i < ${#tokens[@]}; i++ )); do
+            token=$(echo "${tokens[$i]}" | tr -d '[]()' | tr '[:upper:]' '[:lower:]')
+            if [[ "$token" =~ $RELEASE_TAG_RE ]]; then
+                end=$i
+                break
+            fi
+        done
+        # Start at 1: a title may itself be a year ("1917", "2001 A Space Odyssey")
+        for (( i = 1; i < end; i++ )); do
+            token=$(echo "${tokens[$i]}" | tr -d '[]()')
+            if [[ "$token" =~ ^(19|20)[0-9]{2}$ ]]; then
+                year_idx=$i
+            fi
+        done
+        if (( year_idx > 0 )); then
+            year=$(echo "${tokens[$year_idx]}" | tr -d '[]()')
+            title="${tokens[*]:0:$year_idx}"
+        elif (( end > 0 )); then
+            title="${tokens[*]:0:$end}"
+        else
+            title="${tokens[*]}"
+        fi
     fi
-    
+
     # Clean up title
     title=$(echo "$title" | sed 's/[._-]/ /g' | sed 's/^ *//;s/ *$//' | sed 's/  */ /g')
-    
-    # Remove common quality indicators and release info
-    title=$(echo "$title" | sed -E 's/\b(720p|1080p|4K|BluRay|BRrip|DVDrip|WEBrip|HDTV|x264|x265|HEVC|AAC|AC3|DTS)\b//gi' | sed 's/^ *//;s/ *$//' | sed 's/  */ /g')
-    
+
     echo "$title|$year"
 }
 
@@ -76,15 +94,15 @@ process_subtitles() {
     local movie_file="$1"
     local target_movie_dir="$2"
     local movie_basename="$3"
-    
+
     local source_dir=$(dirname "$movie_file")
     local source_basename=$(basename "$movie_file" | sed 's/\.[^.]*$//')
-    
+
     # Look for subtitle files with same basename
     find "$source_dir" -maxdepth 1 -name "${source_basename}.*" -type f \( -name "*.srt" -o -name "*.ass" -o -name "*.ssa" -o -name "*.vtt" \) | while read -r subtitle_file; do
         local sub_ext=$(get_extension "$subtitle_file")
         local target_subtitle="$target_movie_dir/$movie_basename.$sub_ext"
-        
+
         if mv "$subtitle_file" "$target_subtitle" 2>/dev/null; then
             log "INFO" "Moved subtitle: $(basename "$subtitle_file") -> $(basename "$target_subtitle")"
         else
@@ -97,28 +115,28 @@ process_subtitles() {
 process_movie() {
     local movie_file="$1"
     local target_base_dir="$2"
-    
+
     if [[ ! -f "$movie_file" ]]; then
         log "ERROR" "Movie file does not exist: $movie_file"
         return 1
     fi
-    
+
     log "INFO" "Processing movie: $(basename "$movie_file")"
-    
+
     # Extract movie information
     local movie_info=$(extract_movie_info "$movie_file")
     local title=$(echo "$movie_info" | cut -d'|' -f1)
     local year=$(echo "$movie_info" | cut -d'|' -f2)
     local extension=$(get_extension "$movie_file")
-    
+
     # Sanitize title
     title=$(sanitize_filename "$title")
-    
+
     if [[ -z "$title" ]]; then
         log "ERROR" "Could not extract movie title from: $(basename "$movie_file")"
         return 1
     fi
-    
+
     # Create movie directory name
     local movie_dir_name
     if [[ -n "$year" ]]; then
@@ -127,18 +145,18 @@ process_movie() {
         movie_dir_name="$title"
         log "WARN" "No year found for movie: $title"
     fi
-    
+
     # Create target directory structure
     local target_movie_dir="$target_base_dir/$movie_dir_name"
     if ! mkdir -p "$target_movie_dir"; then
         log "ERROR" "Failed to create directory: $target_movie_dir"
         return 1
     fi
-    
+
     # Create target filename
     local target_filename="$movie_dir_name.$extension"
     local target_path="$target_movie_dir/$target_filename"
-    
+
     # Check if target already exists
     if [[ -f "$target_path" ]]; then
         log "WARN" "Target file already exists: $target_path"
@@ -148,14 +166,14 @@ process_movie() {
         target_path="$target_movie_dir/$target_filename"
         log "INFO" "Using alternative filename: $target_filename"
     fi
-    
+
     # Move the movie file
     if mv "$movie_file" "$target_path"; then
         log "SUCCESS" "Moved movie: $(basename "$movie_file") -> $target_path"
-        
+
         # Process any associated subtitle files
         process_subtitles "$movie_file" "$target_movie_dir" "${target_filename%.*}"
-        
+
         return 0
     else
         log "ERROR" "Failed to move movie file: $movie_file -> $target_path"
@@ -163,10 +181,12 @@ process_movie() {
     fi
 }
 
-# Main execution
-if [[ $# -lt 2 ]]; then
-    echo "Usage: $0 <movie_file> <target_directory> [log_file] [relative_path]"
-    exit 1
-fi
+# Main execution (skipped when the file is sourced, e.g. by tests)
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    if [[ $# -lt 2 ]]; then
+        echo "Usage: $0 <movie_file> <target_directory> [log_file] [relative_path]"
+        exit 1
+    fi
 
-process_movie "$MOVIE_FILE" "$TARGET_DIR"
+    process_movie "$MOVIE_FILE" "$TARGET_DIR"
+fi
