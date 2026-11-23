@@ -11,21 +11,22 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIAG = os.path.join(BASE, "diagnostics")
 
 TOOL_SCRIPTS = {
-    "run_all_diagnostics":   "run_all.sh",
-    "quick_summary":         "full_summary.sh",
-    "check_prereqs":         "check_prereqs.sh",
-    "check_homebrew":        "check_homebrew.sh",
-    "check_raid":            "check_raid_status.sh",
-    "check_storage":         "check_storage.sh",
-    "verify_media_paths":    "verify_media_paths.sh",
-    "check_colima_docker":   "check_colima_docker.sh",
+    "run_all_diagnostics": "run_all.sh",
+    "quick_summary": "full_summary.sh",
+    "check_prereqs": "check_prereqs.sh",
+    "check_homebrew": "check_homebrew.sh",
+    "check_raid": "check_raid_status.sh",
+    "check_storage": "check_storage.sh",
+    "verify_media_paths": "verify_media_paths.sh",
+    "check_colima_docker": "check_colima_docker.sh",
     "check_docker_services": "check_docker_services.sh",
-    "check_immich":          "check_immich.sh",
-    "check_plex":            "check_plex_native.sh",
-    "check_tailscale":       "check_tailscale.sh",
-    "check_reverse_proxy":   "check_reverse_proxy.sh",
-    "check_launchd":         "check_launchd.sh",
-    "collect_logs":          "collect_logs.sh",
+    "check_immich": "check_immich.sh",
+    "check_plex": "check_plex_native.sh",
+    "check_jellyfin": "check_jellyfin.sh",
+    "check_tailscale": "check_tailscale.sh",
+    "check_reverse_proxy": "check_reverse_proxy.sh",
+    "check_launchd": "check_launchd.sh",
+    "collect_logs": "collect_logs.sh",
 }
 
 # Tools that need a non-default timeout
@@ -49,12 +50,14 @@ def dispatch(name, arguments=None):
     if name == "check_port":
         host = arguments.get("host", "localhost")
         port = str(arguments["port"])
-        return run([
-            "bash",
-            os.path.join(DIAG, "network_port_check.sh"),
-            host,
-            port,
-        ])
+        return run(
+            [
+                "bash",
+                os.path.join(DIAG, "network_port_check.sh"),
+                host,
+                port,
+            ]
+        )
 
     if name in TOOL_SCRIPTS:
         script = TOOL_SCRIPTS[name]

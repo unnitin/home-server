@@ -4,13 +4,18 @@ set -euo pipefail
 # Diagnostic Library - Shared functions for homeserver diagnostics
 # Provides standardized output, checks, and utilities
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Color definitions. Disabled when NO_COLOR is set or stdout isn't a terminal
+# (e.g. output captured by the MCP server), so callers never get escape codes.
+if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
+    RED='' GREEN='' YELLOW='' BLUE='' CYAN='' NC=''
+else
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    CYAN='\033[0;36m'
+    NC='\033[0m' # No Color
+fi
 
 # Result tracking arrays
 SUMMARY_OK=()
@@ -18,21 +23,21 @@ SUMMARY_WARN=()
 SUMMARY_FAIL=()
 
 # Output functions with result tracking
-section() { 
+section() {
     echo -e "\n${CYAN}== $* ==${NC}"
 }
 
-ok() { 
+ok() {
     echo -e "${GREEN}OK${NC}  - $*"
     SUMMARY_OK+=("$*")
 }
 
-warn() { 
+warn() {
     echo -e "${YELLOW}WARN${NC} - $*"
     SUMMARY_WARN+=("$*")
 }
 
-fail() { 
+fail() {
     echo -e "${RED}FAIL${NC} - $*"
     SUMMARY_FAIL+=("$*")
 }
@@ -56,7 +61,7 @@ require_cmd() {
 tcp_open() {
     local host="$1"
     local port="$2"
-    
+
     if command -v nc >/dev/null 2>&1; then
         if nc -z "$host" "$port" >/dev/null 2>&1; then
             ok "TCP open: $host:$port"
@@ -75,7 +80,7 @@ tcp_open() {
 http_probe() {
     local url="$1"
     local timeout="${2:-4}"
-    
+
     if command -v curl >/dev/null 2>&1; then
         if curl -fsS -m "$timeout" "$url" >/dev/null 2>&1; then
             ok "HTTP 200: $url"
@@ -94,7 +99,7 @@ http_probe() {
 check_process() {
     local process_name="$1"
     local description="${2:-$process_name}"
-    
+
     if pgrep -f "$process_name" >/dev/null 2>&1; then
         ok "$description process running"
         return 0
@@ -108,7 +113,7 @@ check_process() {
 check_launchd_service() {
     local service_label="$1"
     local description="${2:-$service_label}"
-    
+
     if launchctl print "system/$service_label" >/dev/null 2>&1 || launchctl print "gui/$(id -u)/$service_label" >/dev/null 2>&1; then
         ok "$description LaunchD service loaded"
         return 0
@@ -123,7 +128,7 @@ check_path() {
     local path="$1"
     local description="${2:-$path}"
     local type="${3:-file}" # file, dir, or any
-    
+
     case "$type" in
         "file")
             if [[ -f "$path" ]]; then
@@ -163,7 +168,7 @@ check_path() {
 check_writable() {
     local path="$1"
     local description="${2:-$path}"
-    
+
     if [[ -w "$path" ]]; then
         ok "$description is writable"
         return 0
@@ -178,13 +183,13 @@ check_disk_usage() {
     local mount_point="$1"
     local warn_threshold="${2:-80}"
     local critical_threshold="${3:-90}"
-    
+
     if [[ -d "$mount_point" ]] && df "$mount_point" >/dev/null 2>&1; then
         local usage_info=$(df -h "$mount_point" | tail -1)
         local usage_percent=$(echo "$usage_info" | awk '{print $5}' | sed 's/%//')
         local used=$(echo "$usage_info" | awk '{print $3}')
         local available=$(echo "$usage_info" | awk '{print $4}')
-        
+
         if [[ $usage_percent -ge $critical_threshold ]]; then
             fail "Critical disk usage: $usage_percent% ($used used, $available available)"
             return 1
@@ -206,7 +211,7 @@ version_compare() {
     local version1="$1"
     local operator="$2"
     local version2="$3"
-    
+
     # Simple version comparison (works for most cases)
     case "$operator" in
         ">="|"ge")
@@ -240,21 +245,21 @@ print_summary() {
     echo "Passed: ${#SUMMARY_OK[@]}"
     echo "Warnings: ${#SUMMARY_WARN[@]}"
     echo "Failures: ${#SUMMARY_FAIL[@]}"
-    
+
     if ((${#SUMMARY_FAIL[@]} > 0)); then
         echo -e "\n${RED}Failures:${NC}"
         for failure in "${SUMMARY_FAIL[@]}"; do
             echo "  - $failure"
         done
     fi
-    
+
     if ((${#SUMMARY_WARN[@]} > 0)); then
         echo -e "\n${YELLOW}Warnings:${NC}"
         for warning in "${SUMMARY_WARN[@]}"; do
             echo "  - $warning"
         done
     fi
-    
+
     # Return appropriate exit code
     if ((${#SUMMARY_FAIL[@]} > 0)); then
         return 1
@@ -265,28 +270,28 @@ print_summary() {
     fi
 }
 
-# Utility to run a command and capture success/failure
+# Run a command and record OK/FAIL. The command is an argv list, never a string,
+# so nothing is ever passed through eval.
+# Usage: run_check "description" [--show-output] cmd [args...]
 run_check() {
     local description="$1"
-    local command="$2"
-    local show_output="${3:-false}"
-    
-    if eval "$command" >/dev/null 2>&1; then
+    shift
+    local show_output=false
+    if [[ "${1:-}" == "--show-output" ]]; then
+        show_output=true
+        shift
+    fi
+
+    local output
+    if output=$("$@" 2>&1); then
         ok "$description"
         return 0
-    else
-        if [[ "$show_output" == "true" ]]; then
-            local output
-            output=$(eval "$command" 2>&1 || true)
-            fail "$description"
-            if [[ -n "$output" ]]; then
-                echo "  Output: $output"
-            fi
-        else
-            fail "$description"
-        fi
-        return 1
     fi
+    fail "$description"
+    if $show_output && [[ -n "$output" ]]; then
+        echo "  Output: $output"
+    fi
+    return 1
 }
 
 # Clean up function to reset state for new script

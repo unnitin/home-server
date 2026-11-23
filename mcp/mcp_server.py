@@ -14,21 +14,22 @@ mcp = FastMCP("io.homelab.mcp", host="0.0.0.0", port=8765)
 
 def _description(name):
     descriptions = {
-        "run_all_diagnostics":   "Full health check across all components",
-        "quick_summary":         "Quick summary of server health",
-        "check_prereqs":         "Check prerequisites and dependencies",
-        "check_homebrew":        "Check Homebrew package manager health",
-        "check_raid":            "Check RAID array status and disk health",
-        "check_storage":         "Check storage health across all tiers",
-        "verify_media_paths":    "Verify faststore/warmstore/coldstore mount points",
-        "check_colima_docker":   "Check Colima and Docker runtime health",
-        "check_docker_services": "Check Immich container health",
-        "check_immich":          "Check Immich photo service end-to-end",
-        "check_plex":            "Check Plex Media Server health",
-        "check_tailscale":       "Check Tailscale VPN status",
-        "check_reverse_proxy":   "Check Caddy reverse proxy",
-        "check_launchd":         "Check LaunchD automation services",
-        "collect_logs":          "Collect all logs into a tgz archive",
+        "run_all_diagnostics": "Full health check across all components",
+        "quick_summary": "Quick summary of server health",
+        "check_prereqs": "Check prerequisites and dependencies",
+        "check_homebrew": "Check Homebrew package manager health",
+        "check_raid": "Check RAID array status and disk health",
+        "check_storage": "Check storage health across all tiers",
+        "verify_media_paths": "Verify faststore/warmstore/coldstore mount points",
+        "check_colima_docker": "Check Colima and Docker runtime health",
+        "check_docker_services": "Check each Immich container is running and healthy",
+        "check_immich": "Check Immich photo service end-to-end",
+        "check_plex": "Check Plex Media Server health",
+        "check_jellyfin": "Check Jellyfin process, port 8096 and health endpoint",
+        "check_tailscale": "Check Tailscale VPN status",
+        "check_reverse_proxy": "Check Caddy reverse proxy",
+        "check_launchd": "Check all io.homelab LaunchD jobs and their exit status",
+        "collect_logs": "Collect all logs into a tgz archive",
     }
     return descriptions.get(name, name)
 
@@ -57,10 +58,13 @@ def _tailscale_hostname():
     """Return the machine's Tailscale FQDN, or None if unavailable."""
     import json
     import subprocess
+
     try:
         out = subprocess.run(
             ["tailscale", "status", "--json"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         return json.loads(out.stdout)["Self"]["DNSName"].rstrip(".")
     except Exception:
@@ -69,6 +73,7 @@ def _tailscale_hostname():
 
 if __name__ == "__main__":
     import uvicorn
+
     CERT_DIR = os.path.expanduser("~/.config/tailscale")
     HOSTNAME = _tailscale_hostname()
     ssl_kwargs = {}
