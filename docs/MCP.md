@@ -52,7 +52,8 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 | `check_plex` | `check_plex_native.sh` | Plex process, web interface, LaunchAgent |
 | `check_jellyfin` | `check_jellyfin.sh` | Jellyfin process, port 8096, health endpoint |
 | `check_tailscale` | `check_tailscale.sh` | VPN status, IP, HTTPS config |
-| `check_reverse_proxy` | `check_reverse_proxy.sh` | Caddy health and routing |
+| `check_remote_access` | `check_remote_access.sh` | `tailscale serve` mappings match `config/tailscale_serve.txt`, Funnel off |
+| `check_reverse_proxy` | `check_remote_access.sh` | Deprecated alias of `check_remote_access` (Caddy is no longer used) |
 | `check_launchd` | `check_launchd.sh` | Every `io.homelab.*` job: loaded, running, last exit status |
 | `collect_logs` | `collect_logs.sh` | Gather logs into timestamped `.tgz` |
 | `check_port` | `network_port_check.sh` | Test a specific host:port (takes `host`, `port` args) |

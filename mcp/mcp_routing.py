@@ -24,7 +24,9 @@ TOOL_SCRIPTS = {
     "check_plex": "check_plex_native.sh",
     "check_jellyfin": "check_jellyfin.sh",
     "check_tailscale": "check_tailscale.sh",
-    "check_reverse_proxy": "check_reverse_proxy.sh",
+    "check_remote_access": "check_remote_access.sh",
+    # Deprecated alias: Caddy is gone, remote access is tailscale serve
+    "check_reverse_proxy": "check_remote_access.sh",
     "check_launchd": "check_launchd.sh",
     "collect_logs": "collect_logs.sh",
 }
