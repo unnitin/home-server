@@ -220,9 +220,14 @@ def test_requirements_pin_sdk_below_2():
     assert "<2" in content
 
 
-def test_old_mcp_directory_is_gone():
-    """A top-level mcp/ directory shadows the MCP SDK package."""
-    assert not (REPO_ROOT / "mcp").exists()
+def test_no_python_package_named_mcp_in_repo():
+    """Python source in a top-level mcp/ directory would shadow the MCP SDK.
+
+    A leftover mcp/__pycache__ (ignored by git, so it survives the rename) is
+    harmless: bytecode alone isn't importable.
+    """
+    old_dir = REPO_ROOT / "mcp"
+    assert not list(old_dir.glob("*.py")) if old_dir.exists() else True
 
 
 # ---------------------------------------------------------------------------
