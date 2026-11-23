@@ -26,11 +26,13 @@ tailscale_cli() {
 ts() {
     local bin
     bin=$(tailscale_cli) || { echo "tailscale CLI not found" >&2; return 127; }
-    if "$bin" "$@" 2>/dev/null; then
+    # The Mac app binary acts as a CLI only in a terminal-like environment (TERM,
+    # TERM_PROGRAM or SHLVL set); otherwise it tries to start the GUI and fails.
+    if TERM="${TERM:-dumb}" "$bin" "$@" 2>/dev/null; then
         return 0
     fi
     [[ "${TS_NO_SUDO:-0}" == "1" ]] && return 1
-    sudo -n "$bin" "$@"
+    TERM="${TERM:-dumb}" sudo -n "$bin" "$@"   # TERM is in sudo's default env_keep
 }
 
 # Print the current serve mappings, one "<https port> <backend>" per line.

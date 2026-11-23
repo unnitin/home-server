@@ -10,7 +10,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 |---|---|
 | Bind MCP to `127.0.0.1:18765` and publish it on the tailnet with `tailscale serve --bg --https=8765` (Serve, not Funnel). Drop in-process cert loading. Update `tests/mcp_smoke_test.sh`, `mcp/README.md` and `docs/MCP.md` to the new URL | D7 |
 | Stop serve mappings being wiped. Remove `tailscale serve reset` from `enable_landing.sh`. Add `scripts/infrastructure/apply_tailscale_serve.sh`, which adds any missing mapping (443 landing, 2283 Immich, 32400 Plex, 8096 Jellyfin, 8765 MCP) without touching the others, and adds an app's mapping only once that app answers. The landing LaunchD job runs it, and `configure_https.sh` calls it instead of setting 443 itself. The list moves into the manifest in Phase 1 | D17 |
-| Template `io.homelab.mcp.plist` (`__HOME__`/`__REPO__`, logs → `/Volumes/warmstore/logs/mcp/`), add `mcp` to `configure_launchd.sh` `SERVICES` | D8 |
+| Template `io.homelab.mcp.plist` (`__REPO__`, Homebrew PATH, logs → `/tmp/homelab-mcp.{out,err}` like the other jobs, since warmstore may not be mounted yet at login, see #17), add `mcp` to `configure_launchd.sh` `SERVICES` | D8 |
 | Rename `mcp/` → `homelab_mcp/`, delete stale `__pycache__` | D14 |
 | `check_docker_services.sh`: call `docker compose -p immich ps` directly (standalone, no `scripts/` source) | D1 |
 | `run_all.sh`: `run_diagnostic … \|\| true`; always print summary | D2 |

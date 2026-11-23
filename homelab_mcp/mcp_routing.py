@@ -1,11 +1,17 @@
 """
 Tool routing table and subprocess executor for the MCP health server.
-Kept separate from server.py so it can be imported without the MCP SDK
+Kept separate from mcp_server.py so it can be imported without the MCP SDK
 (useful for testing and for future refactoring).
 """
 
 import os
+import re
 import subprocess
+
+# LaunchD starts the server with PATH=/usr/bin:/bin:/usr/sbin:/sbin, which hides
+# docker, colima and other Homebrew tools from the diagnostics.
+EXTRA_PATH = ["/opt/homebrew/bin", "/usr/local/bin"]
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIAG = os.path.join(BASE, "diagnostics")
@@ -39,9 +45,44 @@ TOOL_TIMEOUTS = {
 DEFAULT_TIMEOUT = 60
 
 
+def _env():
+    env = dict(os.environ)
+    path = env.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin").split(":")
+    env["PATH"] = ":".join(path + [p for p in EXTRA_PATH if p not in path])
+    env["NO_COLOR"] = "1"
+    return env
+
+
+def _text(value):
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", "replace")
+    return ANSI_ESCAPE.sub("", value)
+
+
 def run(cmd, timeout=DEFAULT_TIMEOUT):
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    return result.stdout + result.stderr
+    """Run a diagnostic and return its output, prefixed with an explicit result line.
+
+    The first line is "Result: OK (exit 0)", "Result: FAIL (exit N)",
+    "Result: TIMEOUT after Ns" or "Result: ERROR (...)", so a model never has to
+    guess pass/fail from the text. Output has no terminal color codes.
+    """
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, env=_env()
+        )
+    except subprocess.TimeoutExpired as exc:
+        partial = _text(exc.stdout) + _text(exc.stderr)
+        return "Result: TIMEOUT after {}s (partial output below)\n{}".format(
+            timeout, partial
+        )
+    except OSError as exc:
+        return "Result: ERROR (could not run {}: {})\n".format(cmd[0], exc)
+
+    status = "OK" if result.returncode == 0 else "FAIL"
+    output = _text(result.stdout) + _text(result.stderr)
+    return "Result: {} (exit {})\n{}".format(status, result.returncode, output)
 
 
 def dispatch(name, arguments=None):

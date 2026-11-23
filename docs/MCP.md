@@ -11,9 +11,12 @@ MacBook (Claude Desktop)
         │
         │  npx mcp-remote (stdio ↔ HTTP bridge)
         │
-        │  HTTP via Tailscale mesh VPN
+        │  HTTPS via Tailscale: https://<mini>.<tailnet>.ts.net:8765/mcp
         ▼
-Mac Mini :8765/mcp  ←  MCP server (streamable-http, managed by LaunchD)
+tailscale serve :8765 (tailnet only, TLS by Tailscale)
+        │
+        ▼
+127.0.0.1:18765/mcp  ←  MCP server (streamable-http, managed by LaunchD; loopback only)
         │
         │  subprocess calls
         ▼
@@ -28,9 +31,9 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 
 | File | Purpose |
 |---|---|
-| `mcp/mcp_server.py` | streamable-http server — handles MCP protocol, delegates to mcp_routing.py |
-| `mcp/mcp_routing.py` | Tool-to-script mapping and subprocess executor |
-| `mcp/requirements.txt` | Python deps: `mcp`, `uvicorn`, `starlette` |
+| `homelab_mcp/mcp_server.py` | streamable-http server on 127.0.0.1:18765: MCP protocol, Host check, tools run off the event loop |
+| `homelab_mcp/mcp_routing.py` | Tool-to-script mapping and subprocess executor (result line, no color codes, timeouts) |
+| `homelab_mcp/requirements.txt` | Python deps: `mcp>=1.27,<2`, `uvicorn`, `starlette` |
 | `launchd/io.homelab.mcp.plist` | LaunchD service — starts on boot, restarts on crash |
 
 ---
@@ -62,18 +65,20 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 
 ## Setup
 
-See [mcp/README.md](../mcp/README.md) for full installation and Claude Desktop connection instructions.
+See [homelab_mcp/README.md](../homelab_mcp/README.md) for full installation and Claude Desktop connection instructions.
 
 Quick version:
 
 ```bash
 # Mac Mini — install and start
-pip3 install -r mcp/requirements.txt
-python3 mcp/mcp_server.py
+/opt/homebrew/bin/python3.11 -m pip install -r homelab_mcp/requirements.txt
+/opt/homebrew/bin/python3.11 homelab_mcp/mcp_server.py   # 127.0.0.1:18765
 
-# Mac Mini — install as LaunchD service
-cp launchd/io.homelab.mcp.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/io.homelab.mcp.plist
+# Mac Mini — install as LaunchD service (renders __REPO__, loads every io.homelab job)
+scripts/automation/configure_launchd.sh
+
+# Publish on the tailnet at https://<mini>.<tailnet>.ts.net:8765/mcp
+scripts/infrastructure/apply_tailscale_serve.sh
 ```
 
 Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`) on your MacBook.
@@ -84,7 +89,7 @@ Claude Desktop only supports local stdio processes — use `mcp-remote` as a bri
   "mcpServers": {
     "io.homelab.mcp": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "http://<tailscale-hostname>:8765/mcp"]
+      "args": ["-y", "mcp-remote", "https://<mini>.<tailnet>.ts.net:8765/mcp"]
     }
   }
 }
@@ -113,8 +118,8 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 ## Adding a New Tool
 
 1. Add the diagnostic script to `diagnostics/` following existing conventions
-2. Register it in `mcp/mcp_routing.py` — add an entry to `TOOL_SCRIPTS`
-3. Add a description in `mcp/mcp_server.py` — add an entry to the `_description()` dict
+2. Register it in `homelab_mcp/mcp_routing.py` — add an entry to `TOOL_SCRIPTS`
+3. Add a description in `homelab_mcp/mcp_server.py` — add an entry to the `_description()` dict
 4. The unit test `test_no_unregistered_diagnostic_scripts` will catch scripts that exist on disk but are not registered
 
 ---
@@ -122,6 +127,6 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 ## Constraints
 
 - **Read-only** — observe tools only; no restart or remediation actions
-- **No auth layer** — access controlled entirely by Tailscale ACLs; do not expose port 8765 to the open internet
+- **No auth layer yet** (tokens arrive in Phase 3). The server binds to 127.0.0.1 and is reachable only through `tailscale serve`, so only tailnet devices can call it; never enable Funnel on :8765
 - **Timeouts** — most tools: 60s; `collect_logs`: 120s
 - **No script changes** — diagnostic scripts are called as-is, zero logic added on top
