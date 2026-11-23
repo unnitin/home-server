@@ -168,6 +168,13 @@ Comprehensive Immich service validation.
 
 ### **Application Service Checks**
 
+#### `check_jellyfin.sh` - Jellyfin Media Server
+Process, port 8096, the `/health` endpoint, version, and the `io.homelab.jellyfin` LaunchD job.
+
+```bash
+./diagnostics/check_jellyfin.sh
+```
+
 #### `check_plex_native.sh` - Plex Media Server
 Enhanced Plex monitoring with detailed diagnostics.
 

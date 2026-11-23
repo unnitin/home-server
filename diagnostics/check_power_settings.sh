@@ -12,11 +12,15 @@ EXPECTED_WOMP=1
 EXPECTED_POWERNAP=0
 EXPECTED_STANDBY=0
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Colors for output (off when NO_COLOR is set or stdout isn't a terminal, as in diag_lib.sh)
+if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
+    RED='' GREEN='' YELLOW='' NC=''
+else
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    NC='\033[0m' # No Color
+fi
 
 check_passed=0
 check_failed=0

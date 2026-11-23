@@ -26,6 +26,15 @@ Shows AppleRAID sets, members, and status for all storage arrays.
 
 ---
 
+### **check_jellyfin.sh** - Jellyfin Service
+Confirms Jellyfin is running, port 8096 is open, `/health` reports Healthy, and shows the version and LaunchD job state.
+
+```bash
+./diagnostics/check_jellyfin.sh
+```
+
+---
+
 ### **check_plex_native.sh** - Plex Service
 Confirms whether Plex Media Server is running natively and accessible.
 

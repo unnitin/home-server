@@ -11,6 +11,7 @@ section "Network Port Check - $HOST:$PORT"
 case "$PORT" in
     2283) service_name="Immich Photo Service" ;;
     32400) service_name="Plex Media Server" ;;
+    8096) service_name="Jellyfin Media Server" ;;
     8443) service_name="Caddy Reverse Proxy" ;;
     22) service_name="SSH" ;;
     80) service_name="HTTP" ;;
@@ -30,7 +31,7 @@ fi
 # Test TCP connectivity
 if nc -z "$HOST" "$PORT" 2>/dev/null; then
     ok "Port $PORT is open on $HOST"
-    
+
     # For HTTP services, try a basic HTTP probe
     case "$PORT" in
         2283|32400|8443|80|443)
@@ -59,7 +60,7 @@ if nc -z "$HOST" "$PORT" 2>/dev/null; then
     esac
 else
     fail "Port $PORT is closed or filtered on $HOST"
-    
+
     # Provide helpful suggestions based on port
     case "$PORT" in
         2283)
