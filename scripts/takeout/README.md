@@ -57,7 +57,7 @@ export IMMICH_API_KEY="your-api-key"
 - **~127 albums** recreated in Immich
 - **GPS coordinates** preserved for location-tagged photos
 - **Original timestamps** maintained from photo capture time
-- **Complete processing logs** in `takeout_import.log`
+- **Complete processing logs** in `/Volumes/warmstore/logs/takeout/takeout_import_<timestamp>.log` (falls back to `~/Library/Logs/homelab/takeout/`; override with `--log-file` or `TAKEOUT_LOG_FILE`)
 
 ## ✨ New Features
 

@@ -463,17 +463,17 @@ mv /Volumes/faststore/takeout-downloads/takeout-*-020.zip /tmp/batch1/
 
 ### Log Analysis
 
-The script creates detailed logs in `takeout_import.log`:
+The script creates detailed logs in `/Volumes/warmstore/logs/takeout/takeout_import_<timestamp>.log` (falls back to `~/Library/Logs/homelab/takeout/`; override with `--log-file` or `TAKEOUT_LOG_FILE`):
 
 ```bash
 # Monitor processing in real-time
-tail -f takeout_import.log
+tail -f "$(ls -t /Volumes/warmstore/logs/takeout/*.log | head -1)"
 
 # Search for errors
-grep ERROR takeout_import.log
+grep ERROR /Volumes/warmstore/logs/takeout/*.log
 
 # Count processed files by type
-grep "processed_images\|processed_videos" takeout_import.log
+grep "processed_images\|processed_videos" /Volumes/warmstore/logs/takeout/*.log
 ```
 
 ### Performance Optimization
