@@ -35,6 +35,14 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 **Before deploying** (found 2026-11-23):
 - Fix the boot storage job (D22). Phase 0 re-enables it, so it is a blocker.
 - Rehearse the deploy in a disposable macOS VM (`tests/e2e/vm/`): repo move, `configure_launchd.sh`, a reboot, and every job's exit status.
+  Done 2026-11-23 on `mcp-refactor` at cd65742: **PASS**. After the move and a clean reboot:
+  - Every plist points at `~/home-server`, and every job exits 0. The exceptions are `colima` and `compose.immich` (no Docker in a VM) and the media watcher (D21).
+  - MCP answers `initialize`, and Plex and Jellyfin are up.
+  - Copies of the latest Plex backup and the Jellyfin config restore and load (272 movies; 14 series, setup done).
+  - The Immich database folder stays 0700, and the real data is unchanged.
+  - This passes only because sudo needs a password: the storage job's 12 sudo calls per boot fail. With working sudo, the same job left the database folder at 0755 (D22).
+  - The Plex job's `sudo tailscale serve` calls also fail. That's harmless, because step 3 below sets the mappings without sudo.
+  - The VM can't cover AppleRAID, Docker/Immich or Tailscale, and it can't reproduce D19 itself (SIP is off in the base image). See `tests/e2e/vm/README.md`.
 - Take a `tests/e2e/vm/data_guard.py snapshot` before the deploy and `verify` against a second snapshot afterwards. It proves no photo, backup or database folder changed.
 - warmstore (D21) can be fixed before or after. Until it's back, the media watcher and the Plex and Jellyfin libraries have nothing to read.
 
