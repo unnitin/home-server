@@ -62,7 +62,7 @@ run_diagnostic "check_jellyfin.sh" "Jellyfin Media Server"
 # Network & Remote Access
 section "Network & Remote Access"
 run_diagnostic "check_tailscale.sh" "Tailscale VPN"
-run_diagnostic "check_reverse_proxy.sh" "Reverse Proxy (Caddy)"
+run_diagnostic "check_remote_access.sh" "Remote Access (tailscale serve)"
 
 # System Integration
 section "System Integration"

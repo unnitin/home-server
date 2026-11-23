@@ -202,18 +202,18 @@ Tailscale connection and configuration validation.
 ```
 
 **Checks**:
-- Tailscale installation
+- Tailscale CLI (found on PATH or inside the Tailscale Mac app)
 - Connection status
 - IP assignment
-- HTTPS serving configuration
-- Network connectivity
 
-#### `check_reverse_proxy.sh` - Caddy Proxy
-Reverse proxy health and routing verification.
+#### `check_remote_access.sh` - Tailnet HTTPS (tailscale serve)
+Compares the live `tailscale serve` mappings with `config/tailscale_serve.txt` and checks that Funnel (public internet access) is off. Replaces the old Caddy check; Caddy is no longer part of the setup.
 
 ```bash
-./diagnostics/check_reverse_proxy.sh
+./diagnostics/check_remote_access.sh
 ```
+
+To fix missing or wrong mappings: `scripts/infrastructure/apply_tailscale_serve.sh` (add `--dry-run` to preview).
 
 #### `network_port_check.sh` - Port Connectivity
 Enhanced network connectivity testing.
@@ -224,7 +224,7 @@ Enhanced network connectivity testing.
 # Examples with service detection
 ./diagnostics/network_port_check.sh localhost 2283   # Immich
 ./diagnostics/network_port_check.sh localhost 32400  # Plex
-./diagnostics/network_port_check.sh localhost 8443   # Caddy
+./diagnostics/network_port_check.sh localhost 8096   # Jellyfin
 ```
 
 **Enhanced features**:

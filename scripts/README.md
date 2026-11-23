@@ -56,6 +56,8 @@ scripts/
 | [`infrastructure/compose_wrapper.sh`](infrastructure/README.md#compose_wrappersh) | Docker Compose wrapper | services/deploy_containers.sh, LaunchD |
 | [`infrastructure/install_tailscale.sh`](infrastructure/README.md#install_tailscalesh) | Install VPN service | setup_full.sh, setup_flags.sh |
 | [`infrastructure/configure_https.sh`](infrastructure/README.md#configure_httpssh) | Configure HTTPS serving | setup_full.sh, setup_flags.sh |
+| [`infrastructure/apply_tailscale_serve.sh`](infrastructure/README.md#apply_tailscale_servesh) | Publish services to the tailnet from `config/tailscale_serve.txt` | services/enable_landing.sh, configure_https.sh |
+| [`infrastructure/lib/tailscale.sh`](infrastructure/README.md#libtailscalesh) | Tailscale CLI helpers (finds the Mac app's CLI) | apply_tailscale_serve.sh, configure_https.sh, enable_landing.sh |
 | [`infrastructure/configure_power.sh`](infrastructure/README.md#configure_powersh) | Power management setup | setup_full.sh, setup_flags.sh |
 
 ### **🚀 Services Module**

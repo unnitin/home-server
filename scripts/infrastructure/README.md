@@ -33,6 +33,11 @@ Infrastructure layer managing Docker runtime, networking, VPN, and system config
 **Usage**: Run during setup after Tailscale installation  
 **Features**: Sets up permanent DNS resolution, configures HTTPS serving
 
+#### **apply_tailscale_serve.sh**
+**Purpose**: Publish services to the tailnet over HTTPS from the single list in `config/tailscale_serve.txt` (landing 443, Immich 2283, Plex 32400, Jellyfin 8096, MCP 8765)
+**Usage**: `scripts/infrastructure/apply_tailscale_serve.sh [--dry-run] [--wait SECONDS]`. Run by `services/enable_landing.sh` (LaunchD `io.homelab.landing`) and `configure_https.sh`. `TEST_MODE=1` implies `--dry-run`
+**Behavior**: Adds a missing mapping once its backend answers, repoints wrong ones, never resets, and leaves undeclared mappings alone. Serve only, never Funnel
+
 ### **System Configuration**
 
 #### **configure_power.sh**
@@ -47,6 +52,11 @@ Infrastructure layer managing Docker runtime, networking, VPN, and system config
 **Usage**: `source scripts/infrastructure/lib/compose_helpers.sh`  
 **Key Functions**: Environment validation, compose command abstraction
 
+### **lib/tailscale.sh**
+**Purpose**: Find and run the Tailscale CLI, which the Mac app keeps inside its bundle instead of on PATH
+**Usage**: `source scripts/infrastructure/lib/tailscale.sh`
+**Key Functions**: `tailscale_cli`, `ts` (retries with non-interactive `sudo -n`), `ts_serve_mappings`, `ts_funnel_enabled`, `ts_hostname`
+
 ## 🔗 Module Dependencies
 
 **Depends on**: `core/`, `storage/`  
@@ -57,7 +67,9 @@ Infrastructure layer managing Docker runtime, networking, VPN, and system config
 ```
 scripts/infrastructure/
 ├── lib/
-│   └── compose_helpers.sh   # Docker Compose utilities
+│   ├── compose_helpers.sh   # Docker Compose utilities
+│   └── tailscale.sh         # Tailscale CLI helpers
+├── apply_tailscale_serve.sh # Tailnet HTTPS mappings
 ├── install_docker.sh       # Docker runtime setup
 ├── start_docker.sh         # Docker startup
 ├── compose_wrapper.sh      # Compose command wrapper

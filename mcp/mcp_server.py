@@ -27,7 +27,8 @@ def _description(name):
         "check_plex": "Check Plex Media Server health",
         "check_jellyfin": "Check Jellyfin process, port 8096 and health endpoint",
         "check_tailscale": "Check Tailscale VPN status",
-        "check_reverse_proxy": "Check Caddy reverse proxy",
+        "check_remote_access": "Check tailscale serve mappings and that Funnel is off",
+        "check_reverse_proxy": "Deprecated: use check_remote_access",
         "check_launchd": "Check all io.homelab LaunchD jobs and their exit status",
         "collect_logs": "Collect all logs into a tgz archive",
     }
