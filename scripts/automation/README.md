@@ -10,6 +10,9 @@ Automation layer managing LaunchD services, scheduled tasks, system monitoring, 
 **Purpose**: Install comprehensive recovery automation using LaunchD  
 **Usage**: Run during setup to enable graceful reboot recovery  
 **Features**: Template-based plist installation, dependency-ordered startup
+**Placeholders**: `__REPO__` (this checkout, wherever it lives), `__HOME__`, `__USER__`. A plist with an unfilled placeholder is refused
+**Preview**: `TEST_MODE=1 LAUNCHD_PLIST_DIR=/tmp/plists scripts/automation/configure_launchd.sh` (or `--render-only`) renders without loading anything
+**Note**: Don't run the jobs from a checkout under `~/Documents`. macOS blocks LaunchD jobs from executing scripts there (exit 126); see D19 in `docs/mcp-refactor/01-assessment.md`
 
 ### **System Monitoring**
 

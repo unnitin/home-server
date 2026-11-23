@@ -11,7 +11,7 @@
         <string>mcp/mcp_server.py</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/nitinsrivastava/Documents/home-server</string>
+    <string>__REPO__</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
