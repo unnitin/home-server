@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "$0")/diag_lib.sh"
+# The Tailscale Mac app binary acts as a CLI only when TERM (or SHLVL) is set
+export TERM="${TERM:-dumb}"
 
 section "Tailscale"
 
