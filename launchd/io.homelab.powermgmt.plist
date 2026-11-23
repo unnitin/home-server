@@ -4,27 +4,27 @@
 <dict>
     <key>Label</key>
     <string>io.homelab.powermgmt</string>
-    
+
     <key>ProgramArguments</key>
     <array>
-        <string>__HOME__/Documents/home-server/scripts/core/ensure_power_settings.sh</string>
+        <string>__REPO__/scripts/core/ensure_power_settings.sh</string>
     </array>
-    
+
     <key>RunAtLoad</key>
     <true/>
-    
+
     <key>StartInterval</key>
     <integer>3600</integer>
-    
+
     <key>KeepAlive</key>
     <true/>
-    
+
     <key>StandardOutPath</key>
     <string>/tmp/homelab-powermgmt.out</string>
-  
+
   <key>StandardErrorPath</key>
     <string>/tmp/homelab-powermgmt.err</string>
-    
+
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
