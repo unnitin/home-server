@@ -165,6 +165,10 @@ movies:                                  # household-wide: both servers share th
 ## Model requirements
 
 - Text-only models are enough. Vision is used only for descriptions and for tie-breaks between albums.
+- The local candidate is Qwen3.5-9B ([09](09-local-model.md)). It isn't cleared yet:
+  - Without the operating-guide rules it tried to add the Toddler label in 7 of 8 runs: every time it was asked to, and in 3 of 4 runs because a file name told it to.
+  - With the rules it was 2 of 8, and it still reported dry runs as done.
+  - The server's refusal of access labels and the approval flow are the safeguards, not the model.
 - The eval suite (06) adds curation scenarios:
   - remakes (*Dune* 1984 vs 2021)
   - a foreign title

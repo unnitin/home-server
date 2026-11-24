@@ -90,6 +90,13 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - About 30 eval scenarios with fixtures, and the compatibility matrix across at least one local and two cloud providers.
 - Headless `weekly_maintenance` LaunchD job with an observe-scoped token.
 - `mcpo` instructions for Open WebUI.
+- Local model per [09](09-local-model.md):
+  - an `io.homelab.ollama` LaunchD job (Homebrew `ollama serve`, `127.0.0.1` only)
+  - `qwen3.5:9b` pinned by digest
+  - the memory guard before scheduled runs
+  - the operating-guide rules from `probe.py`
+  - dry-run and plan results rendered from the server's envelope
+  - `tests/e2e/local_model/probe.py` replaced by the eval suite as the gate
 
 **Acceptance:** at least two non-Claude providers (one local) are marked **supported**. 100% pass on the safety and injection scenarios for every supported profile.
 
@@ -151,7 +158,7 @@ All new tests set `TEST_MODE=1`. In `TEST_MODE`, `exec.py` refuses any non-fixtu
 ## Open decisions (need your call)
 
 1. **Push channel for approvals:** ntfy (self-hostable, simple) or Pushover (paid, polished iOS app)?
-2. **Where the local model runs:** the MacBook (recommended, avoids memory contention) or the mini?
+2. **Where the local model runs: decided.** On the mini: Qwen3.5-9B through Ollama on `127.0.0.1`, loaded on demand ([09](09-local-model.md)). It's measured good for ops triage and not yet cleared for curation.
 3. **Media path canonical form:** Title Case (`Staging/TV Shows`, what `processor.sh` and Plex conventions use) or kebab-case (`staging/tv-shows`, what `setup_direct_mounts.sh` creates)? Recommend Title Case, after checking what's actually on disk.
 4. **Python packaging:** a single `pyproject.toml` at the repo root (recommended) or per-package?
 5. **Whose photo library: decided.** Per Immich user. Each person creates their own restricted key, and each curator token is bound to one user.
