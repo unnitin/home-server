@@ -14,6 +14,7 @@
 | [06-harness.md](06-harness.md) | LLM-agnostic agent harness, model profiles, evals |
 | [07-roadmap.md](07-roadmap.md) | Phased delivery, with acceptance criteria per phase |
 | [08-curation.md](08-curation.md) | Agents sorting photos into Immich albums and adding metadata to movies in Plex and Jellyfin |
+| [09-local-model.md](09-local-model.md) | Which local model runs on the mini, how it was measured, and what it's cleared for |
 
 ---
 

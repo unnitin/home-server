@@ -33,8 +33,9 @@ defaults:
   temperature: 0.1
 
 profiles:
-  local:                         # runs fully on the tailnet; private
-    model: ollama_chat/<tool-calling 8–14B instruct model>
+  local:                         # on the mini; private (09)
+    model: ollama_chat/qwen3.5:9b # digest d63f830f28d5…, NVFP4 (09)
+    think: false                  # thinking measured worse (09)
     api_base: http://localhost:11434
     toolset: core                # ~12 tools → fits small context
     tool_calling: native         # or json_react if the model lacks native tools
@@ -42,7 +43,8 @@ profiles:
     context_tokens: 16000
   local-curator:                 # runs ON the mini, nightly, so photos never leave it
     server: http://127.0.0.1:18766/mcp   # local-only listener, the only place thumbnail tools exist
-    model: ollama_chat/<local model that can see images, sized to the mini's memory>
+    model: ollama_chat/qwen3.5:9b # same model; it reads images. Not cleared yet (09)
+    think: false
     api_base: http://localhost:11434
     toolset: curator             # token: scope curator, photo_access thumbnails, one Immich user
     vision: true                 # only for descriptions and tie-breaks (08)
@@ -99,7 +101,9 @@ The toolset is enforced on the **server** through the token's scope (05). The ha
 
 ## Running a local model on the mini
 
-- Ollama on Apple Silicon works, but it competes for memory with Immich ML and Plex transcoding. Default the local profile to run Ollama on the **MacBook** and talk to the mini's MCP over Tailscale. Only run on the mini if it has headroom, and pause during `photos_run_job` or transcoding peaks (the job runner can check).
+- **Decided ([09](09-local-model.md)):** Qwen3.5-9B through Ollama on the mini, on `127.0.0.1` only. It loads on demand and unloads after 5 idle minutes, because 7.7 GB resident would leave Immich and Plex short.
+- Measured, it handles ops triage well, but it isn't cleared for curation: it reports dry runs as done and can be talked into proposing the Toddler label. So the harness shows dry-run and plan results from the server's envelope, never from the model's summary.
+- Scheduled runs check a memory guard first (no Immich ML job or transcode, normal memory pressure, swap free) and defer if it fails.
 - The `core` toolset plus summary-first envelopes is designed for a 16k context window.
 
 ## Evals: making "any LLM" a measured claim
