@@ -12,12 +12,12 @@ section "Storage Mount Points"
 check_mount_point() {
     local mount_point="$1"
     local purpose="$2"
-    
+
     echo -e "\n${YELLOW}Checking $mount_point ($purpose)${NC}"
-    
+
     if [[ -d "$mount_point" ]]; then
         ok "Directory exists: $mount_point"
-        
+
         # Check if it's actually mounted (not just an empty directory)
         if df "$mount_point" >/dev/null 2>&1; then
             # Get mount info
@@ -27,10 +27,10 @@ check_mount_point() {
             used=$(echo "$mount_info" | awk '{print $3}')
             available=$(echo "$mount_info" | awk '{print $4}')
             percent_used=$(echo "$mount_info" | awk '{print $5}')
-            
+
             ok "Mounted: $device"
             ok "Size: $size, Used: $used ($percent_used), Available: $available"
-            
+
             # Check usage levels
             usage_num=$(echo "$percent_used" | sed 's/%//')
             if [[ $usage_num -gt 95 ]]; then
@@ -40,22 +40,24 @@ check_mount_point() {
             elif [[ $usage_num -gt 80 ]]; then
                 warn "Moderate disk usage >80% ($percent_used)"
             fi
-            
+
             # Check write permissions
             if [[ -w "$mount_point" ]]; then
                 ok "Write permissions: OK"
             else
                 warn "No write permissions (may need to fix ownership)"
             fi
-            
+
             # Check if mount point contains expected content
-            item_count=$(find "$mount_point" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')
+            # find exits 1 on an unreadable folder (.Spotlight-V100, .Trashes);
+            # under pipefail that used to end the script (D24).
+            item_count=$( { find "$mount_point" -maxdepth 2 -type f 2>/dev/null || true; } | wc -l | tr -d ' ')
             if [[ $item_count -gt 0 ]]; then
                 ok "Content found: $item_count files"
             else
                 warn "Mount point appears empty (normal for new setup)"
             fi
-            
+
         else
             fail "Directory exists but not properly mounted"
         fi
@@ -68,7 +70,7 @@ check_mount_point() {
 
 # Check each configured mount point
 check_mount_point "$PHOTOS_MOUNT" "Immich Photos - faststore"
-check_mount_point "$MEDIA_MOUNT" "Plex Media - warmstore"  
+check_mount_point "$MEDIA_MOUNT" "Plex Media - warmstore"
 check_mount_point "$ARCHIVE_MOUNT" "Archive Storage - coldstore"
 
 # Summary of storage architecture
