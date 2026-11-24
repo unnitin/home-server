@@ -40,6 +40,21 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 
 ## Available Tools
 
+### Structured tools (use these)
+
+They return the result envelope from [`mcp-refactor/02-architecture.md`](mcp-refactor/02-architecture.md#structured-output-contract): `status`, a summary under 200 characters, `data`, the non-OK `checks`, `hints`, `truncated` and `job_id`. Clients get it as MCP `structuredContent`, with an `outputSchema`, and as JSON text. Secrets are redacted, and a result never exceeds 8 KB.
+
+| Tool | Arguments | What it returns |
+|---|---|---|
+| `system_overview` | `verbose=false` | Every service and storage tier in one call: each component's status, whether each tier is mounted and how full it is, plus the non-OK checks (at most 10) |
+| `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's checks: the non-OK ones by default, every check with `verbose=true` |
+
+Both run the diagnostics in JSON mode (`DIAG_FORMAT=json`, see [`diagnostics/README.md`](../diagnostics/README.md)), in parallel.
+
+### Text tools (deprecated)
+
+These return plain text and stay for existing clients. Each tool's description names the structured tool that replaces it.
+
 | Tool | Script | What It Checks |
 |---|---|---|
 | `run_all_diagnostics` | `run_all.sh` | Full sweep across all components |
@@ -103,14 +118,14 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 
 | Prompt | Tool(s) Called |
 |---|---|
-| "Is everything healthy on hakuna?" | `run_all_diagnostics` |
-| "Quick status check" | `quick_summary` |
-| "Are all my drives mounted?" | `verify_media_paths` + `check_storage` |
-| "Plex stopped responding" | `check_plex` |
-| "Immich feels slow" | `check_immich` + `check_colima_docker` + `check_docker_services` |
-| "Is Tailscale connected?" | `check_tailscale` |
+| "Is everything healthy on hakuna?" | `system_overview` |
+| "Quick status check" | `system_overview` |
+| "Are all my drives mounted?" | `health_check` with component=storage |
+| "Plex stopped responding" | `health_check` with component=plex |
+| "Immich feels slow" | `health_check` with component=immich, then docker |
+| "Is Tailscale connected?" | `health_check` with component=tailscale |
 | "Is port 2283 responding?" | `check_port` with port=2283 |
-| "Which LaunchD jobs are down?" | `check_launchd` |
+| "Which LaunchD jobs are down?" | `health_check` with component=launchd |
 | "Collect logs for support" | `collect_logs` |
 
 ---

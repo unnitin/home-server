@@ -8,9 +8,11 @@ Nothing on the home LAN can reach it.
 
 import os
 import sys
+from typing import Any, Literal, Optional
 from urllib.parse import urlsplit
 
 import anyio
+from pydantic import BaseModel, Field
 
 # Put this directory first so mcp_routing resolves locally while `mcp` still
 # resolves to the SDK (this directory is no longer named mcp/, so no shadowing).
@@ -20,7 +22,13 @@ if SERVER_DIR not in sys.path:
 
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 from mcp.server.transport_security import TransportSecuritySettings  # noqa: E402
-from mcp_routing import TOOL_SCRIPTS, dispatch  # noqa: E402
+from mcp_routing import (  # noqa: E402
+    COMPONENTS,
+    TOOL_SCRIPTS,
+    dispatch,
+)
+from mcp_routing import health_check as run_health_check  # noqa: E402
+from mcp_routing import system_overview as run_system_overview  # noqa: E402
 
 LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 HOST = os.environ.get("HOMELAB_MCP_HOST", "127.0.0.1")
@@ -81,7 +89,60 @@ class HostGuard:
         await send({"type": "http.response.body", "body": body})
 
 
+class Check(BaseModel):
+    """One diagnostic check."""
+
+    id: str
+    status: Literal["ok", "warn", "fail"]
+    message: str
+    component: str
+
+
+class Envelope(BaseModel):
+    """The result every structured tool returns (docs/mcp-refactor/02)."""
+
+    status: Literal["ok", "warn", "fail", "error", "pending", "approval_required"]
+    summary: str = Field(max_length=200)
+    data: dict[str, Any] = Field(default_factory=dict)
+    checks: list[Check] = Field(default_factory=list)
+    hints: list[str] = Field(default_factory=list)
+    truncated: bool = False
+    job_id: Optional[str] = None
+
+
+Component = Literal[tuple(COMPONENTS)]  # type: ignore[valid-type]
+
+# The old text tools stay for existing clients; each says what replaces it.
+REPLACED_BY = {
+    "run_all_diagnostics": "health_check(component='all')",
+    "quick_summary": "system_overview",
+    "check_prereqs": "health_check(component='prereqs')",
+    "check_homebrew": "health_check(component='homebrew')",
+    "check_raid": "health_check(component='raid')",
+    "check_storage": "health_check(component='storage')",
+    "verify_media_paths": "health_check(component='storage')",
+    "check_colima_docker": "health_check(component='docker')",
+    "check_docker_services": "health_check(component='docker')",
+    "check_immich": "health_check(component='immich')",
+    "check_plex": "health_check(component='plex')",
+    "check_jellyfin": "health_check(component='jellyfin')",
+    "check_tailscale": "health_check(component='tailscale')",
+    "check_remote_access": "health_check(component='tailscale')",
+    "check_reverse_proxy": "health_check(component='tailscale')",
+    "check_launchd": "health_check(component='launchd')",
+}
+
+
 def _description(name):
+    text = _base_description(name)
+    if name in REPLACED_BY:
+        return "Deprecated, returns plain text: use {}. {}".format(
+            REPLACED_BY[name], text
+        )
+    return text
+
+
+def _base_description(name):
     descriptions = {
         "run_all_diagnostics": "Full health check across all components",
         "quick_summary": "Quick summary of server health",
@@ -126,6 +187,32 @@ def build_server():
 
     for name in TOOL_SCRIPTS:
         make_tool(name)
+
+    @server.tool(
+        name="system_overview",
+        description=(
+            "One-call snapshot of every service and storage tier. Use first for "
+            "any 'is it OK' question. Returns status, a short summary, tier "
+            "mounts and usage, the non-OK checks and hints."
+        ),
+    )
+    async def system_overview(verbose: bool = False) -> Envelope:
+        result = await anyio.to_thread.run_sync(run_system_overview, verbose)
+        return Envelope(**result)
+
+    @server.tool(
+        name="health_check",
+        description=(
+            "Run the health checks for one component, or all. Use to dig into a "
+            "problem area. Returns status, a short summary, the non-OK checks "
+            "(every check with verbose=true) and hints."
+        ),
+    )
+    async def health_check(
+        component: Component = "all", verbose: bool = False
+    ) -> Envelope:
+        result = await anyio.to_thread.run_sync(run_health_check, component, verbose)
+        return Envelope(**result)
 
     @server.tool(name="check_port", description="Check a specific host:port")
     async def check_port(port: int, host: str = "localhost") -> str:
