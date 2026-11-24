@@ -138,7 +138,7 @@ export IMMICH_SERVER="http://localhost:2283"
 export IMMICH_API_KEY="your-api-key-here"
 
 # Process all 84 zip files
-./scripts/services/enhanced_takeout_import.sh \
+./scripts/takeout/enhanced_takeout_import.sh \
     --takeout-dir /Volumes/faststore/takeout-downloads \
     --output-dir /Volumes/faststore/tmp/full-takeout-processed
 ```

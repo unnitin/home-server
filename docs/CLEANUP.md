@@ -279,7 +279,7 @@ Add a `tests/diagnostics/` directory with a minimal BATS test per script that:
 This doesn't need to be comprehensive — just enough to catch broken scripts before they surface as broken MCP tools.
 
 ```bash
-# tests/diagnostics/test_diagnostics.bats (example)
+# tests/unit/test_diagnostics.bats (example)
 @test "check_tailscale exits cleanly" {
     run bash diagnostics/check_tailscale.sh
     [ "$status" -eq 0 ] || [ "$status" -eq 1 ]  # 1 = not connected, still valid run

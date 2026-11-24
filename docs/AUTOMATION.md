@@ -75,16 +75,16 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 #### **🏥 Health Check & Recovery**
 ```bash
 # Check system status:
-./scripts/post_boot_health_check.sh
+./scripts/core/health_check.sh
 
 # Automatic recovery for any issues:
-./scripts/post_boot_health_check.sh --auto-recover
+./scripts/core/health_check.sh --auto-recover
 ```
 
 #### **👀 What to Expect After Reboot**
 1. **Login to your Mac mini** → LaunchAgents activate automatically
 2. **Wait 2-3 minutes** → All services start in sequence
-3. **Check status**: Run `./scripts/post_boot_health_check.sh`
+3. **Check status**: Run `./scripts/core/health_check.sh`
 4. **Access services**:
    - 📍 **Landing Page**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net
    - 📸 **Immich**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
@@ -93,7 +93,7 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 #### **🔧 If Something Doesn't Start**
 The automation system provides graceful fallback handling:
 - Services that need `sudo` will show manual commands if automation fails
-- Run `./scripts/post_boot_health_check.sh --auto-recover` for automatic fixes
+- Run `./scripts/core/health_check.sh --auto-recover` for automatic fixes
 - Check logs: `tail -f /Volumes/warmstore/logs/{storage,colima,immich,plex,landing}/*.{out,err}`
 
 ---
@@ -311,8 +311,8 @@ cd services/immich && docker compose restart
 
 **Manual execution**:
 ```bash
-./scripts/80_check_updates.sh
-./scripts/80_check_updates.sh --apply  # Apply updates
+./scripts/automation/check_updates.sh
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ---
@@ -354,7 +354,7 @@ sudo tailscale down
 **Management**:
 ```bash
 # Manual execution
-./scripts/ensure_storage_mounts.sh
+./scripts/storage/setup_direct_mounts.sh
 
 # Check mount status
 ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
@@ -373,7 +373,7 @@ ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
 **Management**:
 ```bash
 # Manual safe startup
-./scripts/start_plex_safe.sh
+./scripts/services/start_plex_safe.sh
 
 # Check Plex status
 curl -I http://localhost:32400
@@ -392,7 +392,7 @@ curl -I http://localhost:32400
 **Management**:
 ```bash
 # Manual startup
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 
 # Check server status
 curl -I http://localhost:8080
@@ -411,7 +411,7 @@ curl -I http://localhost:8080
 **Management**:
 ```bash
 # Manual configuration
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 
 # Check serving status
 sudo tailscale serve status
@@ -437,7 +437,7 @@ sudo tailscale serve status
 **Management**:
 ```bash
 # Manual power configuration
-./scripts/92_configure_power.sh
+./scripts/infrastructure/configure_power.sh
 
 # Check current power settings
 pmset -g | grep -E "(sleep|displaysleep|disksleep)"
@@ -467,16 +467,16 @@ tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 **Management**:
 ```bash
 # Check media watcher status
-./scripts/media_watcher.sh status
+./scripts/media/watcher.sh status
 
 # Start/stop media watcher
-./scripts/media_watcher.sh start
-./scripts/media_watcher.sh stop
+./scripts/media/watcher.sh start
+./scripts/media/watcher.sh stop
 
 # Manual processing
-./scripts/media_processor.sh
-./scripts/media_processor.sh --movies-only
-./scripts/media_processor.sh --collections-only
+./scripts/media/processor.sh
+./scripts/media/processor.sh --movies-only
+./scripts/media/processor.sh --collections-only
 
 # View processing logs
 tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
@@ -559,13 +559,13 @@ docker ps > /dev/null 2>&1 && echo "Docker ready"
 **Manual update process**:
 ```bash
 # Check for updates
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Review available updates
 cat /tmp/update-check.log
 
 # Apply updates when ready
-./scripts/80_check_updates.sh --apply
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ### Custom Maintenance Tasks
@@ -579,7 +579,7 @@ cat /tmp/update-check.log
 echo "$(date): Running custom maintenance" >> /tmp/custom_maintenance.log
 
 # Example maintenance tasks (customize as needed)
-./scripts/80_check_updates.sh >> /tmp/custom_maintenance.log
+./scripts/automation/check_updates.sh >> /tmp/custom_maintenance.log
 ./diagnostics/check_raid_status.sh >> /tmp/custom_maintenance.log
 ./diagnostics/check_docker_services.sh >> /tmp/custom_maintenance.log
 ```

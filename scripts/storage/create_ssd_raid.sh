@@ -10,7 +10,8 @@ for d in "${DISKS[@]}"; do
 done
 
 SSD_RAID_NAME="${SSD_RAID_NAME:-warmstore}"
-MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/Media}"
+# diskutil mounts the volume at /Volumes/<name>; the default just says so (D10)
+MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/$SSD_RAID_NAME}"
 
 delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$SSD_RAID_NAME"

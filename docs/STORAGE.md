@@ -81,19 +81,19 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"    # 4-disk RAID10
 **Automated approach**:
 ```bash
 # Create and format all configured arrays
-./scripts/09_rebuild_storage.sh warmstore faststore coldstore
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/rebuild_storage.sh warmstore faststore coldstore
+./scripts/storage/format_and_mount.sh
 ```
 
 **Step-by-step approach**:
 ```bash
 # Create individual arrays
-./scripts/10_create_raid10_ssd.sh       # SSD warmstore
-./scripts/11_create_raid10_nvme.sh      # NVMe faststore
-./scripts/13_create_raid_coldstore.sh   # HDD coldstore
+./scripts/storage/create_ssd_raid.sh       # SSD warmstore
+./scripts/storage/create_nvme_raid.sh      # NVMe faststore
+./scripts/storage/create_hdd_raid.sh   # HDD coldstore
 
 # Format and mount
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 ---
@@ -129,8 +129,8 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"  # Add new disks
 **3. Rebuild array**:
 ```bash
 # This destroys the existing 2-disk array
-./scripts/09_rebuild_storage.sh warmstore
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/rebuild_storage.sh warmstore
+./scripts/storage/format_and_mount.sh
 ```
 
 **4. Restore data**:
@@ -154,8 +154,8 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 export COLD_DISKS="disk8 disk9"
 
 # Create new array (doesn't affect existing)
-./scripts/13_create_raid_coldstore.sh
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/create_hdd_raid.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 ---
@@ -469,8 +469,8 @@ export CLEAN_BEFORE_RAID=1
 export RAID_I_UNDERSTAND_DATA_LOSS=1
 
 # This will completely wipe and repartition disks
-./scripts/09_preclean_disks_for_raid.sh
-./scripts/09_rebuild_storage.sh warmstore
+./scripts/storage/preclean_disks.sh
+./scripts/storage/rebuild_storage.sh warmstore
 ```
 
 ### External Drive Integration

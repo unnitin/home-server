@@ -271,7 +271,7 @@ cd /Users/nitinsrivastava/Documents/home-server
 pip install -r requirements-takeout.txt
 
 # Make script executable
-chmod +x scripts/services/enhanced_takeout_import.sh
+chmod +x scripts/takeout/enhanced_takeout_import.sh
 ```
 
 ### Basic Usage
@@ -279,7 +279,7 @@ chmod +x scripts/services/enhanced_takeout_import.sh
 #### Process Only (No Upload)
 
 ```bash
-./scripts/services/enhanced_takeout_import.sh \
+./scripts/takeout/enhanced_takeout_import.sh \
     --takeout-dir /Volumes/faststore/takeout-downloads \
     --output-dir ./tmp/takeout-processed \
     --skip-upload
@@ -293,7 +293,7 @@ export IMMICH_SERVER="http://localhost:2283"
 export IMMICH_API_KEY="your-api-key-here"
 
 # Run with upload
-./scripts/services/enhanced_takeout_import.sh \
+./scripts/takeout/enhanced_takeout_import.sh \
     --takeout-dir /Volumes/faststore/takeout-downloads \
     --output-dir ./tmp/takeout-processed
 ```
@@ -301,7 +301,7 @@ export IMMICH_API_KEY="your-api-key-here"
 #### Custom Configuration
 
 ```bash
-./scripts/services/enhanced_takeout_import.sh \
+./scripts/takeout/enhanced_takeout_import.sh \
     --takeout-dir /Volumes/faststore/takeout-downloads \
     --output-dir /path/to/custom/output \
     --immich-server http://your-immich-server:2283 \
@@ -312,7 +312,7 @@ export IMMICH_API_KEY="your-api-key-here"
 ### Python Script Direct Usage
 
 ```bash
-python3 scripts/services/enhanced_takeout_import.py \
+python3 scripts/takeout/enhanced_takeout_import.py \
     --takeout-dir /Volumes/faststore/takeout-downloads \
     --output-dir ./tmp/takeout-processed \
     --immich-server http://localhost:2283 \
@@ -458,7 +458,7 @@ mv /Volumes/faststore/takeout-downloads/takeout-*-00[1-9].zip /tmp/batch1/
 mv /Volumes/faststore/takeout-downloads/takeout-*-01[0-9].zip /tmp/batch1/
 mv /Volumes/faststore/takeout-downloads/takeout-*-020.zip /tmp/batch1/
 
-./scripts/services/enhanced_takeout_import.sh --takeout-dir /tmp/batch1
+./scripts/takeout/enhanced_takeout_import.sh --takeout-dir /tmp/batch1
 ```
 
 ### Log Analysis
@@ -520,7 +520,7 @@ for user_dir in /Volumes/faststore/users/*/takeout-downloads; do
     user=$(basename $(dirname $user_dir))
     echo "Processing user: $user"
     
-    ./scripts/services/enhanced_takeout_import.sh \
+    ./scripts/takeout/enhanced_takeout_import.sh \
         --takeout-dir "$user_dir" \
         --output-dir "./tmp/$user-processed" \
         --skip-upload
@@ -533,7 +533,7 @@ The enhanced import can be integrated with existing home server automation:
 
 ```bash
 # Add to existing media processing pipeline
-./scripts/services/enhanced_takeout_import.sh && \
+./scripts/takeout/enhanced_takeout_import.sh && \
 ./scripts/media/process_collection.sh && \
 ./scripts/core/health_check.sh
 ```

@@ -94,11 +94,11 @@ Monitors Staging directories for new media files and automatically processes the
 **Management**:
 ```bash
 # Check watcher status
-./scripts/media_watcher.sh status
+./scripts/media/watcher.sh status
 
 # Start/stop watcher manually
-./scripts/media_watcher.sh start
-./scripts/media_watcher.sh stop
+./scripts/media/watcher.sh start
+./scripts/media/watcher.sh stop
 
 # View processing logs
 tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
@@ -144,7 +144,7 @@ sudo log show --predicate 'messageType == 16' --last 1h
 
 ### Automated Installation
 ```bash
-sudo ./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 ```
 
 ### Manual Installation

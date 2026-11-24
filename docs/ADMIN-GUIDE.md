@@ -522,7 +522,7 @@ sudo tailscale down && sudo tailscale up --accept-dns=true
 
 ```bash
 # Check for updates
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Update Homebrew packages
 brew update && brew upgrade
@@ -718,7 +718,7 @@ sudo tailscale up --accept-dns=true
 # Factory reset (DESTRUCTIVE - backup first!)
 # This is for complete rebuilds only
 export RAID_I_UNDERSTAND_DATA_LOSS=1
-./scripts/09_rebuild_storage.sh warmstore
+./scripts/storage/rebuild_storage.sh warmstore
 ```
 
 ---

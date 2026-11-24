@@ -18,7 +18,7 @@ Tailscale creates a secure, encrypted mesh network that lets you access your hom
 
 ### Automated Installation
 ```bash
-./scripts/90_install_tailscale.sh
+./scripts/infrastructure/install_tailscale.sh
 ```
 
 ### What Gets Installed
@@ -88,23 +88,17 @@ sudo tailscale serve --https=32400 http://localhost:32400
 - **Port**: 32400 (Plex standard)
 - **Mobile apps**: Use this URL without `https://`
 
-### With Reverse Proxy (Optional)
+### All mappings, and the landing page
 
-**Enable reverse proxy first**:
-```bash
-./scripts/37_enable_simple_landing.sh
-```
+Every mapping is listed once in `config/tailscale_serve.txt`, and `./scripts/infrastructure/apply_tailscale_serve.sh` adds whatever is missing without touching the rest. There is no reverse proxy (Caddy was removed): each service has its own port.
 
-**Then serve Caddy instead**:
-```bash
-# Replace direct Immich serving
-sudo tailscale serve --https=443 http://localhost:8443
-```
-
-**Access URLs**:
-- **Landing page**: `https://your-macmini.your-tailnet.ts.net`
-- **Immich**: `https://your-macmini.your-tailnet.ts.net/photos`
-- **Plex**: `https://your-macmini.your-tailnet.ts.net/plex`
+| URL | Service |
+|---|---|
+| `https://your-macmini.your-tailnet.ts.net` | Landing page with links (`scripts/services/enable_landing.sh`) |
+| `https://your-macmini.your-tailnet.ts.net:2283` | Immich |
+| `https://your-macmini.your-tailnet.ts.net:32400` | Plex |
+| `https://your-macmini.your-tailnet.ts.net:8096` | Jellyfin |
+| `https://your-macmini.your-tailnet.ts.net:8765/mcp` | MCP server |
 
 ---
 

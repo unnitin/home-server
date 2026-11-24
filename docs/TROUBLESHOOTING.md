@@ -93,10 +93,10 @@ colima delete
 colima start
 
 # 3. Redeploy services
-./scripts/30_deploy_services.sh
+./scripts/services/deploy_containers.sh
 
 # 4. Restart system services
-sudo ./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 ```
 
 ---
@@ -227,8 +227,8 @@ export SSD_DISKS="disk4 disk5"
 rsync -av --progress /Volumes/warmstore/ /Volumes/Backup/MediaBackup/
 
 # Rebuild
-./scripts/09_rebuild_storage.sh warmstore
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/rebuild_storage.sh warmstore
+./scripts/storage/format_and_mount.sh
 
 # Restore
 rsync -av --progress /Volumes/Backup/MediaBackup/ /Volumes/warmstore/
@@ -493,7 +493,7 @@ ps aux | grep "python3 -m http.server 8080"
 lsof -i :8080
 
 # Restart landing page
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 ```
 
 ### HTTPS Access Not Working

@@ -263,7 +263,7 @@ Enhanced log collection for troubleshooting support.
 
 **Improved features**:
 - **System information**: Hardware, OS version, processes
-- **Service logs**: Docker, Plex, Tailscale, Caddy
+- **Service logs**: Docker, Plex, Tailscale (including `tailscale serve` mappings)
 - **Configuration files**: Sanitized for privacy
 - **Recent error logs**: System and application errors
 - **Performance data**: Resource usage and metrics

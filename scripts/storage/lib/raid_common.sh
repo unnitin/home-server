@@ -84,15 +84,18 @@ create_stripe_of_mirrors(){
 format_and_mount(){
   local dev="$1" volname="$2" mount="$3"
   [[ -n "$dev" ]] || { echo "No device to format"; exit 4; }
-  
+
   # Safety check for destructive operation
   if [[ "${RAID_I_UNDERSTAND_DATA_LOSS:-0}" != "1" ]]; then
     echo "⚠️  WARNING: This will erase all data on $dev"
     echo "Set RAID_I_UNDERSTAND_DATA_LOSS=1 to confirm you understand data loss"
     exit 1
   fi
-  
+
   sudo diskutil eraseVolume APFS "$volname" "$dev"
-  sudo mkdir -p "$mount"
+  # No mkdir: diskutil creates the mount point. A root-owned folder made in
+  # advance stays behind whenever the volume is offline, and anything written
+  # there lands on the internal disk (D22). $mount is only reported.
   sudo diskutil mount "$dev" || true
+  echo "Mounted $volname (expected at $mount)"
 }
