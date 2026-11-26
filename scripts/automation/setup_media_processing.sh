@@ -1,180 +1,71 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Media Processing Setup - Configures automated media processing for Plex
-# Sets up Staging directories, installs dependencies, and configures automation
+# Media processing setup: the staging folders, the optional tools, and the media
+# watcher's LaunchD job. Folders and paths come from the manifest
+# (config/homelab.yaml); the work is done by the scripts that own it:
+#   scripts/storage/setup_direct_mounts.sh   the folders (mounted tiers only, no sudo)
+#   scripts/automation/configure_launchd.sh  the job (rendered from its template)
+#
+# Usage: ./scripts/automation/setup_media_processing.sh
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Configuration
-WARMSTORE="/Volumes/warmstore"
-STAGING_DIR="$WARMSTORE/Staging"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "$SCRIPT_DIR/../core/environment.sh"
 
 echo "=== Media Processing Setup ==="
 echo
 
-# Check prerequisites
-echo "🔍 Checking prerequisites..."
-
-# Check if warmstore exists
-if [[ ! -d "$WARMSTORE" ]]; then
-    echo "❌ Warmstore directory not found: $WARMSTORE"
-    echo "💡 Make sure your RAID storage is mounted"
+# The media tier must really be mounted: an empty mount-point folder isn't (D22),
+# and staging folders made in one would land on the internal disk
+echo "🔍 Checking that the media tier is mounted..."
+if ! homelab_is_mounted "$HOMELAB_MEDIA_ROOT"; then
+    echo "❌ $HOMELAB_MEDIA_ROOT is not mounted. Check the storage first: diskutil appleRAID list"
     exit 1
 fi
-
-# Check if we have write permissions
-if [[ ! -w "$WARMSTORE" ]]; then
-    echo "❌ No write permissions to warmstore: $WARMSTORE"
-    echo "💡 Run: sudo chown -R $(whoami):staff $WARMSTORE"
-    exit 1
-fi
-
-echo "✅ Prerequisites check passed"
+echo "✅ $HOMELAB_MEDIA_ROOT is mounted"
 echo
 
-# Create staging directories
-echo "📁 Setting up Staging directories..."
-mkdir -p "$STAGING_DIR"/{Movies,TV\ Shows,Collections,logs,failed}
-
-# Create centralized logging directories
-echo "📁 Setting up centralized logging..."
-mkdir -p "$WARMSTORE/logs"/{immich,colima,tailscale,updatecheck,media-watcher,powermgmt,storage,plex,landing}
-
-# Set proper permissions
-chown -R $(whoami):staff "$STAGING_DIR" "$WARMSTORE/logs" 2>/dev/null || true
-chmod -R 755 "$STAGING_DIR" "$WARMSTORE/logs"
-
-echo "✅ Created Staging structure:"
-echo "   📂 $STAGING_DIR/Movies"
-echo "   📂 $STAGING_DIR/TV Shows"
-echo "   📂 $STAGING_DIR/Collections"
-echo "   📂 $STAGING_DIR/logs"
-echo "   📂 $STAGING_DIR/failed"
-echo
-echo "✅ Created centralized logging:"
-echo "   📂 $WARMSTORE/logs/immich"
-echo "   📂 $WARMSTORE/logs/colima"
-echo "   📂 $WARMSTORE/logs/tailscale"
-echo "   📂 $WARMSTORE/logs/media-watcher"
-echo "   📂 $WARMSTORE/logs/... (and others)"
+echo "📁 Creating the media folders..."
+"$HOMELAB_REPO/scripts/storage/setup_direct_mounts.sh"
 echo
 
-# Check for optional dependencies
-echo "🔧 Checking optional dependencies..."
-
-# Check for fswatch (for real-time monitoring)
+echo "🔧 Checking optional tools..."
 if command -v fswatch >/dev/null 2>&1; then
-    echo "✅ fswatch found - real-time monitoring available"
+    echo "✅ fswatch found - real-time monitoring"
     FSWATCH_AVAILABLE=true
 else
-    echo "⚠️  fswatch not found - will use polling mode"
-    echo "💡 Install with: brew install fswatch"
+    echo "⚠️  fswatch not found - the watcher will poll (brew install fswatch)"
     FSWATCH_AVAILABLE=false
 fi
-
-# Check for mediainfo (for advanced media analysis)
-if command -v mediainfo >/dev/null 2>&1; then
-    echo "✅ mediainfo found - enhanced media analysis available"
-else
-    echo "⚠️  mediainfo not found - basic processing only"
-    echo "💡 Install with: brew install mediainfo"
-fi
-
-# Check for ffprobe (for media information)
-if command -v ffprobe >/dev/null 2>&1; then
-    echo "✅ ffprobe found - media validation available"
-else
-    echo "⚠️  ffprobe not found - limited media validation"
-    echo "💡 Install with: brew install ffmpeg"
-fi
-
+command -v mediainfo >/dev/null 2>&1 && echo "✅ mediainfo found" ||
+    echo "⚠️  mediainfo not found - basic processing only (brew install mediainfo)"
+command -v ffprobe >/dev/null 2>&1 && echo "✅ ffprobe found" ||
+    echo "⚠️  ffprobe not found - limited media validation (brew install ffmpeg)"
 echo
 
-# Test the media processor
-echo "🧪 Testing media processor..."
-if "$SCRIPT_DIR/media_processor.sh" --cleanup-only; then
-    echo "✅ Media processor test passed"
-else
-    echo "❌ Media processor test failed"
-    exit 1
-fi
+echo "🚀 Installing the media watcher's LaunchD job..."
+"$HOMELAB_REPO/scripts/automation/configure_launchd.sh" media.watcher
 echo
 
-# Install LaunchD service for automatic monitoring
-echo "🚀 Setting up automation..."
-
-# Copy and configure the LaunchD plist
-PLIST_SOURCE="$REPO_ROOT/launchd/io.homelab.media.watcher.plist"
-PLIST_TARGET="$HOME/Library/LaunchAgents/io.homelab.media.watcher.plist"
-
-if [[ -f "$PLIST_SOURCE" ]]; then
-    # Replace __HOME__ placeholder with actual home directory
-    sed "s|__HOME__|$HOME|g" "$PLIST_SOURCE" > "$PLIST_TARGET"
-    
-    # Load the service
-    launchctl unload "$PLIST_TARGET" 2>/dev/null || true
-    if launchctl load "$PLIST_TARGET"; then
-        echo "✅ Media watcher LaunchD service installed and loaded"
-    else
-        echo "❌ Failed to load LaunchD service"
-        exit 1
-    fi
-else
-    echo "❌ LaunchD plist not found: $PLIST_SOURCE"
-    exit 1
-fi
-
-echo
-
-# Show usage information
 echo "🎉 Media Processing Setup Complete!"
 echo
-echo "📋 USAGE:"
-echo
-echo "1. 📥 DROP FILES:"
-echo "   • Movies: $STAGING_DIR/Movies/"
-echo "   • TV Shows: $STAGING_DIR/TV Shows/"
-echo "   • Collections: $STAGING_DIR/Collections/"
-echo
-echo "2. 🔄 AUTOMATIC PROCESSING:"
-if [[ "$FSWATCH_AVAILABLE" == "true" ]]; then
-    echo "   • Files are processed automatically when detected"
-    echo "   • Real-time monitoring with fswatch"
+echo "📥 Drop files in:"
+echo "   • Movies:      $HOMELAB_MEDIA_MOVIES_STAGING/"
+echo "   • TV Shows:    $HOMELAB_MEDIA_TV_STAGING/"
+echo "   • Collections: $HOMELAB_MEDIA_COLLECTIONS_STAGING/"
+if $FSWATCH_AVAILABLE; then
+    echo "   Files are processed as soon as they're detected (fswatch)."
 else
-    echo "   • Files are checked every 60 seconds"
-    echo "   • Polling mode (install fswatch for real-time)"
+    echo "   Files are checked every 60 seconds (polling; install fswatch for real time)."
 fi
 echo
-echo "3. 📊 MONITORING:"
-echo "   • Media processing logs: $WARMSTORE/logs/media-watcher/"
-echo "   • Service logs: $WARMSTORE/logs/{immich,colima,tailscale,etc}/"
-echo "   • Failed files: $STAGING_DIR/failed/"
-echo "   • Service status: scripts/media_watcher.sh status"
+echo "📊 Monitoring:"
+echo "   • Processing logs: $HOMELAB_LOG_ROOT/media-watcher/"
+echo "   • Failed files:    $HOMELAB_MEDIA_FAILED/"
+echo "   • Watcher status:  ./scripts/media/watcher.sh status"
 echo
-echo "4. 🎯 PLEX NAMING CONVENTIONS:"
-echo "   Movies: Movie Name (Year)/Movie Name (Year).ext"
-echo "   TV Shows: Show Name (Year)/Season XX/Show Name - sXXeYY.ext"
-echo "   Collections: Preserves original folder structure and naming"
-echo
-echo "📖 MANUAL COMMANDS:"
-echo "   • Process now: scripts/media_processor.sh"
-echo "   • Movies only: scripts/media_processor.sh --movies-only"
-echo "   • TV only: scripts/media_processor.sh --tv-only"
-echo "   • Collections only: scripts/media_processor.sh --collections-only"
-echo "   • Start watcher: scripts/media_watcher.sh start"
-echo "   • Stop watcher: scripts/media_watcher.sh stop"
-echo "   • Watcher status: scripts/media_watcher.sh status"
-echo
-echo "🔧 The media watcher service will start automatically on login."
-echo "📁 Drop your media files in the Staging directories and they'll be"
-echo "   automatically organized according to Plex naming conventions!"
-echo
-echo "🧹 AUTOMATIC CLEANUP:"
-echo "   • Processed files are moved to target directories"
-echo "   • Empty subdirectories are removed"
-echo "   • System files (.DS_Store, Thumbs.db) are cleaned up"
-echo "   • Main staging directories are preserved for future use"
-echo "   • Failed files are moved to Staging/failed/ for review"
-echo "   • Logs are kept for 30 days, failed files for 7 days"
+echo "📖 By hand:"
+echo "   • Process now:       ./scripts/media/processor.sh"
+echo "   • One kind only:     ./scripts/media/processor.sh --movies-only | --tv-only | --collections-only"
+echo "   • Start/stop watcher: ./scripts/media/watcher.sh start | stop"

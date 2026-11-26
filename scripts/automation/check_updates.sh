@@ -9,7 +9,7 @@ set -euo pipefail
 # upgrade (what --apply used to do) is how a photo library gets broken.
 #
 # Usage: check_updates.sh
-#   IMMICH_SERVER (default http://localhost:2283)
+#   IMMICH_SERVER (default http://localhost:<the manifest's Immich port>)
 
 log_info()  { echo "[INFO]  $(date '+%H:%M:%S') $*"; }
 log_warn()  { echo "[WARN]  $(date '+%H:%M:%S') $*" >&2; }
@@ -26,7 +26,11 @@ for dir in /opt/homebrew/bin /usr/local/bin; do
     case ":$PATH:" in *":$dir:"*) ;; *) PATH="$PATH:$dir" ;; esac
 done
 export PATH
-IMMICH_SERVER="${IMMICH_SERVER:-http://localhost:2283}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "$SCRIPT_DIR/../core/environment.sh"
+IMMICH_SERVER="${IMMICH_SERVER:-http://localhost:${HOMELAB_SVC_IMMICH_PORTS%% *}}"
 
 log_info "Update check (report only)"
 
