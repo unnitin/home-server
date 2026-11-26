@@ -74,9 +74,9 @@ run_diagnostic "check_power_settings.sh" "Power Management Settings"
 # Network Connectivity Tests
 section "Network Connectivity"
 echo "Testing critical service ports..."
-"$SCRIPT_DIR/network_port_check.sh" localhost 2283 || true   # Immich
-"$SCRIPT_DIR/network_port_check.sh" localhost 32400 || true  # Plex
-"$SCRIPT_DIR/network_port_check.sh" localhost 8096 || true   # Jellyfin
+"$SCRIPT_DIR/network_port_check.sh" localhost "${HOMELAB_SVC_IMMICH_PORTS:-2283}" || true     # Immich
+"$SCRIPT_DIR/network_port_check.sh" localhost "${HOMELAB_SVC_PLEX_PORTS:-32400}" || true      # Plex
+"$SCRIPT_DIR/network_port_check.sh" localhost "${HOMELAB_SVC_JELLYFIN_PORTS:-8096}" || true   # Jellyfin
 
 # Final Summary
 echo -e "\n${YELLOW}📊 DIAGNOSTIC SUMMARY${NC}"

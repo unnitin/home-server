@@ -3,23 +3,32 @@ set -euo pipefail
 source "$(dirname "$0")/diag_lib.sh"
 
 # Get mount points from environment or use defaults
-MEDIA_MOUNT="${MEDIA_MOUNT:-/Volumes/warmstore}"
-PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/faststore}"
-ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-/Volumes/Archive}"
+MEDIA_MOUNT="${MEDIA_MOUNT:-$(diag_tier_mount warmstore /Volumes/warmstore)}"
+PHOTOS_MOUNT="${PHOTOS_MOUNT:-$(diag_tier_mount faststore /Volumes/faststore)}"
+ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-$(diag_tier_mount coldstore /Volumes/coldstore)}"
 
 section "Storage Mount Points"
 
+# check_mount_point MOUNT PURPOSE TIER [optional]
+#   Thresholds are the tier's own (manifest: warn_pct, crit_pct). An optional
+#   tier that isn't there is a warning, not a failure (coldstore: no service needs it).
 check_mount_point() {
     local mount_point="$1"
     local purpose="$2"
+    local tier="${3:-}" optional="${4:-}"
+    local upper warn_var crit_var warn_pct crit_pct
+    upper=$(printf '%s' "$tier" | tr '[:lower:]' '[:upper:]')
+    warn_var="HOMELAB_TIER_${upper}_WARN_PCT"; crit_var="HOMELAB_TIER_${upper}_CRIT_PCT"
+    warn_pct="${!warn_var:-80}"; crit_pct="${!crit_var:-95}"
 
     echo -e "\n${YELLOW}Checking $mount_point ($purpose)${NC}"
 
     if [[ -d "$mount_point" ]]; then
         ok "Directory exists: $mount_point"
 
-        # Check if it's actually mounted (not just an empty directory)
-        if df "$mount_point" >/dev/null 2>&1; then
+        # Actually mounted, by diskutil's account: df on an empty mount-point
+        # folder reports the internal disk (D22)
+        if diag_is_mounted "$mount_point"; then
             # Get mount info
             mount_info=$(df -h "$mount_point" | tail -1)
             device=$(echo "$mount_info" | awk '{print $1}')
@@ -33,12 +42,10 @@ check_mount_point() {
 
             # Check usage levels
             usage_num=$(echo "$percent_used" | sed 's/%//')
-            if [[ $usage_num -gt 95 ]]; then
-                fail "Critical: Disk usage >95% ($percent_used)"
-            elif [[ $usage_num -gt 90 ]]; then
-                warn "High disk usage >90% ($percent_used)"
-            elif [[ $usage_num -gt 80 ]]; then
-                warn "Moderate disk usage >80% ($percent_used)"
+            if [[ $usage_num -ge $crit_pct ]]; then
+                fail "Critical: disk usage at or above ${crit_pct}% ($percent_used)"
+            elif [[ $usage_num -ge $warn_pct ]]; then
+                warn "High disk usage: at or above ${warn_pct}% ($percent_used)"
             fi
 
             # Check write permissions
@@ -58,9 +65,13 @@ check_mount_point() {
                 warn "Mount point appears empty (normal for new setup)"
             fi
 
+        elif [[ "$optional" == optional ]]; then
+            warn "Not mounted (an empty mount-point folder): $mount_point"
         else
-            fail "Directory exists but not properly mounted"
+            fail "Not mounted: the folder is an empty mount point, not the volume"
         fi
+    elif [[ "$optional" == optional ]]; then
+        warn "Not attached: $mount_point"
     else
         fail "Directory does not exist: $mount_point"
         echo "  💡 This may be normal if storage arrays haven't been created yet"
@@ -69,9 +80,9 @@ check_mount_point() {
 }
 
 # Check each configured mount point
-check_mount_point "$PHOTOS_MOUNT" "Immich Photos - faststore"
-check_mount_point "$MEDIA_MOUNT" "Plex Media - warmstore"
-check_mount_point "$ARCHIVE_MOUNT" "Archive Storage - coldstore"
+check_mount_point "$PHOTOS_MOUNT" "Immich Photos - faststore" faststore
+check_mount_point "$MEDIA_MOUNT" "Plex Media - warmstore" warmstore
+check_mount_point "$ARCHIVE_MOUNT" "Archive Storage - coldstore" coldstore optional
 
 # Summary of storage architecture
 echo -e "\n${YELLOW}Storage Architecture Summary${NC}"

@@ -270,3 +270,41 @@ def test_health_check_returns_structured_content(server, fake_diagnostics):
     content, structured = result if isinstance(result, tuple) else (result, None)
     assert structured is not None and structured["status"] == "ok"
     assert json.loads(content[0].text)["summary"] == "All 1 checks passed"
+
+
+# --- the manifest, read without PyYAML ---------------------------------------
+
+
+def test_read_manifest_env_unescapes_and_expands_home(tmp_path, monkeypatch):
+    env = tmp_path / "homelab.env"
+    env.write_text(
+        "# comment\n"
+        'HOMELAB_A="plain"\n'
+        'HOMELAB_B="a \\"q\\" \\$x \\`c\\` \\\\ end"\n'
+        'HOMELAB_C="$HOME/Library/x"\n'
+        'NOT_OURS="skip"\n'
+    )
+    monkeypatch.setenv("HOME", str(tmp_path))
+    values = mcp_routing.read_manifest_env(str(env))
+    assert values == {
+        "HOMELAB_A": "plain",
+        "HOMELAB_B": 'a "q" $x `c` \\ end',
+        "HOMELAB_C": str(tmp_path / "Library" / "x"),
+    }
+
+
+def test_read_manifest_env_missing_file_is_empty(tmp_path):
+    assert mcp_routing.read_manifest_env(str(tmp_path / "none.env")) == {}
+
+
+def test_tiers_come_from_the_manifest_with_coldstore_renamed():
+    assert mcp_routing.TIERS == {
+        "faststore": "faststore",
+        "warmstore": "warmstore",
+        "coldstore": "coldstore",  # was Archive until 2026-11-26 (D25)
+    }
+
+
+def test_network_checks_use_the_manifests_ports():
+    ports = [args[1] for _, args in mcp_routing.COMPONENT_SCRIPTS["network"]]
+    assert ports == ["2283", "32400", "8096"]
