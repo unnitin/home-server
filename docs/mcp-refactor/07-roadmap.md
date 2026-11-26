@@ -54,7 +54,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 4. Point the Claude Desktop entry at `https://<mini>.<tailnet>.ts.net:8765/mcp`.
 5. Run `bash diagnostics/run_all.sh`, and check that every job in `launchctl list | grep io.homelab` shows exit status 0.
 
-**Deployed 2026-11-26** from `mcp-refactor` at `4ba19a6`, the same tree as the rehearsed `e9c2c66`. `main` follows when #28 merges.
+**Deployed 2026-11-26** from `mcp-refactor` at `4ba19a6`, the same tree as the rehearsed `e9c2c66`, then the D28 fixes (#29, #30). The deployed commit is tagged `deploy-2026-11-26`, and the mini's checkout sits on a local `deployed` branch, so merges into `mcp-refactor` change nothing there until the next deploy. `mcp-refactor` stays the integration branch; draft #28 merges it into `main` when you decide.
 - The repo is at `~/home-server`. Every plist is rendered from there, and none names `~/Documents`.
 - Loaded: `mcp`, `storage`, `powermgmt`, `plex`, `jellyfin`, `landing`, `updatecheck`.
 - Held with `launchctl disable`, which survives reboots: `colima` and `compose.immich` (Immich already runs from a manual start, and container work waits for its own phase), and `media.watcher` (D21, D26). To release one: `launchctl enable gui/$(id -u)/io.homelab.<job>`, then `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.homelab.<job>.plist`.
