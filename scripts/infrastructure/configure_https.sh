@@ -10,6 +10,8 @@ banner() { echo; echo "=== $* ==="; }
 banner "Configuring Tailscale HTTPS with DNS Fix"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "$SCRIPT_DIR/../core/environment.sh"
 # shellcheck source=lib/tailscale.sh
 source "$SCRIPT_DIR/lib/tailscale.sh"
 
@@ -93,14 +95,15 @@ echo "Current Tailscale serve configuration:"
 ts serve status || true
 
 echo
-echo "SECURE HTTPS URLS (tailnet only):"
-echo "Landing page:    https://$TAILSCALE_HOSTNAME"
-echo "Immich (Photos): https://$TAILSCALE_HOSTNAME:2283"
-echo "Plex (Media):    https://$TAILSCALE_HOSTNAME:32400"
-echo "Jellyfin:        https://$TAILSCALE_HOSTNAME:8096"
-echo
-echo "Mobile Apps:"
-echo "Immich Server: https://$TAILSCALE_HOSTNAME:2283"
+echo "SECURE HTTPS URLS (tailnet only, from config/tailscale_serve.txt):"
+while read -r port _ service _; do
+    [[ -z "${port:-}" || "$port" == \#* ]] && continue
+    if [[ "$port" == 443 ]]; then
+        printf '  %-9s https://%s\n' "$service" "$TAILSCALE_HOSTNAME"
+    else
+        printf '  %-9s https://%s:%s\n' "$service" "$TAILSCALE_HOSTNAME" "$port"
+    fi
+done <"$HOMELAB_REPO/config/tailscale_serve.txt"
 
 # Test connectivity
 if curl -s -I "https://$TAILSCALE_HOSTNAME" | grep -q "HTTP/2"; then

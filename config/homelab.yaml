@@ -36,6 +36,7 @@ services:
     kind: runtime
     launchd: io.homelab.colima
     health: { cmd: [docker, info] }
+    resources: { cpu: 4, memory_gb: 6, disk_gb: 60 }   # the VM's size today; the disk is only ever grown
   immich:
     kind: compose
     compose_dir: services/immich
