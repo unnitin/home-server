@@ -94,6 +94,14 @@ class Health(Strict):
         return self
 
 
+class Resources(Strict):
+    """A VM's size, e.g. the Colima VM that runs Docker."""
+
+    cpu: int = Field(ge=1)
+    memory_gb: int = Field(ge=1)
+    disk_gb: int = Field(ge=10)
+
+
 class Service(Strict):
     kind: Literal["job", "runtime", "compose", "native_app", "process", "daemon"]
     launchd: str
@@ -105,6 +113,7 @@ class Service(Strict):
     version_env: Optional[str] = None
     listen: Optional[str] = None
     optional: bool = False
+    resources: Optional[Resources] = None
 
     @field_validator("launchd")
     @classmethod
@@ -325,6 +334,12 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
             items += [
                 (env_key("svc", name, "health", "url"), svc.health.http),
                 (env_key("svc", name, "health", "expect"), str(svc.health.expect)),
+            ]
+        if svc.resources:
+            items += [
+                (env_key("svc", name, "cpu"), str(svc.resources.cpu)),
+                (env_key("svc", name, "memory", "gb"), str(svc.resources.memory_gb)),
+                (env_key("svc", name, "disk", "gb"), str(svc.resources.disk_gb)),
             ]
         for field in ("app", "compose_dir", "version_env", "listen"):
             value = getattr(svc, field)

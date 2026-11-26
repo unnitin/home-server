@@ -14,7 +14,7 @@ Infrastructure layer managing Docker runtime, networking, VPN, and system config
 #### **start_docker.sh**
 **Purpose**: Start Colima Docker runtime with proper configuration  
 **Usage**: Run during setup and boot automation  
-**Features**: Detects existing instances, handles upgrades
+**Features**: Sizes a new VM from the manifest (`services.colima.resources`: 4 CPUs, 6 GB, 60 GB disk; `COLIMA_CPU`/`COLIMA_MEM`/`COLIMA_DISK` override). Starts an existing VM as it is; only ever grows the disk
 
 #### **compose_wrapper.sh**
 **Purpose**: Standardized Docker Compose command wrapper  
@@ -48,9 +48,9 @@ Infrastructure layer managing Docker runtime, networking, VPN, and system config
 ## 📁 Library
 
 ### **lib/compose_helpers.sh**
-**Purpose**: Docker Compose utility functions and environment setup  
-**Usage**: `source scripts/infrastructure/lib/compose_helpers.sh`  
-**Key Functions**: Environment validation, compose command abstraction
+**Purpose**: Compose shim for Immich: runs `compose_wrapper.sh` in the folder the manifest names (`services.immich.compose_dir`), from any working folder  
+**Usage**: `source scripts/infrastructure/lib/compose_helpers.sh && compose ps`  
+**Key Functions**: `compose ARGS...`
 
 ### **lib/tailscale.sh**
 **Purpose**: Find and run the Tailscale CLI, which the Mac app keeps inside its bundle instead of on PATH
