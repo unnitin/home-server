@@ -48,7 +48,7 @@ echo ""
 # Check storage mounts
 echo "💾 Storage Mount Status:"
 MEDIA_OK=false; [[ -d "/Volumes/Media" ]] && MEDIA_OK=true
-PHOTOS_OK=false; [[ -L "/Volumes/Photos" ]] && PHOTOS_OK=true  
+PHOTOS_OK=false; [[ -L "/Volumes/Photos" ]] && PHOTOS_OK=true
 ARCHIVE_OK=false; [[ -d "/Volumes/Archive" ]] && ARCHIVE_OK=true
 
 echo "  Media:   $($MEDIA_OK && echo "✅ Available" || echo "❌ Missing") - /Volumes/Media"
@@ -170,7 +170,7 @@ if ! $NEED_RECOVERY; then
     echo "🔗 Access URLs:"
     hostname=$(tailscale status --json 2>/dev/null | grep '"DNSName"' | head -1 | cut -d'"' -f4 | sed 's/\.$//' || echo "your-device.your-tailnet.ts.net")
     echo "  Landing: https://$hostname"
-    echo "  Immich:  https://$hostname:2283" 
+    echo "  Immich:  https://$hostname:2283"
     echo "  Plex:    https://$hostname:32400"
 else
     echo "🚨 RECOVERY COMMANDS SUMMARY:"
@@ -185,7 +185,7 @@ else
     echo "  launchctl start io.homelab.colima"
     echo ""
     echo "💾 Storage Issues:"
-    echo "  sudo ./scripts/storage/setup_direct_mounts.sh"
+    echo "  ./scripts/storage/setup_direct_mounts.sh   # no sudo needed"
     echo "  ./scripts/storage/wait_for_storage.sh"
     echo ""
     echo "⚠️  RECOVERY NEEDED - Run the commands above to fix issues"
