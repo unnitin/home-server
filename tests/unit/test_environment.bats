@@ -83,3 +83,11 @@ setup() {
     [ "$status" -eq 1 ]
     [[ "$output" == *"unknown tier 'archive'"* ]] || false
 }
+
+@test "log_* follow the CLAUDE.md format, and a script's own versions win" {
+    run bash -c 'source "$1"; log_info hello; log_error oops 2>&1' _ "$ENVSH"
+    [[ "${lines[0]}" =~ ^\[INFO\]\ \ [0-9:]{8}\ hello$ ]] || false
+    [[ "${lines[1]}" =~ ^\[ERROR\]\ [0-9:]{8}\ oops$ ]] || false
+    run bash -c 'log_info() { echo "mine: $*"; }; source "$1"; log_info hi' _ "$ENVSH"
+    [ "$output" = "mine: hi" ]
+}
