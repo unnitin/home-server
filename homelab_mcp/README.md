@@ -61,7 +61,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop, then try "Is everything healthy on the server?" (`run_all_diagnostics`).
+Restart Claude Desktop, then try "Is everything healthy on the server?" (`system_overview`).
 
 ---
 

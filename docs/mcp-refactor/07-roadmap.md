@@ -73,6 +73,11 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - Doc hygiene pass: remove Caddy, `/Volumes/Media`, `scripts/NN_*` references. Add a test that every script path referenced in `docs/` exists.
 - Update CLAUDE.md with the new modules in the dependency graph, Python conventions extended to `homelab/`, `homelab_mcp/` and `agent/`, and the manifest-first rule ("never hardcode a port, path or label; read the manifest").
 
+**Progress** (2026-11-24):
+- Built: the diagnostics JSON mode (`feature/p1-diag-json`), which also fixed D24.
+- Built: `system_overview`, `health_check(component)` and the result envelope, with the old tools kept as deprecated text tools (`feature/p1-mcp-envelope`).
+- Next: the manifest, `environment.sh`, the doc hygiene pass and the CLAUDE.md update.
+
 **Acceptance:** `grep -rn "/Volumes/Media\|/Volumes/Photos" scripts diagnostics` returns nothing. Every diagnostic emits valid JSON in JSON mode (schema test). `system_overview` returns under 2 KB on a healthy box.
 
 ## Phase 2 — Control plane and full read-only surface
