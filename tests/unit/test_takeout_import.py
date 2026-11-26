@@ -84,3 +84,25 @@ def test_processes_takeout_with_metadata_and_logs_where_told(takeout, tmp_path):
     taken = exif["Exif"][piexif.ExifIFD.DateTimeOriginal].decode()
     assert taken == "2023:12:28 12:00:00"
     assert exif["GPS"][piexif.GPSIFD.GPSLatitudeRef] == b"N"
+
+
+def test_default_log_file_skips_a_log_root_whose_volume_isnt_mounted(
+    monkeypatch, tmp_path
+):
+    """An empty mount-point folder isn't the volume (D22): use ~/Library/Logs."""
+    module = importlib.import_module("enhanced_takeout_import")
+    monkeypatch.delenv("TAKEOUT_LOG_FILE", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("HOMELAB_LOG_ROOT", "/Volumes/warmstore/logs")
+    monkeypatch.setattr(module.os.path, "ismount", lambda p: False)
+    monkeypatch.setattr(module.os, "access", lambda *a: True)
+    path = module.default_log_file()
+    assert path.parent == tmp_path / "Library" / "Logs" / "homelab" / "takeout"
+
+
+def test_default_log_file_uses_the_manifests_log_root(monkeypatch, tmp_path):
+    module = importlib.import_module("enhanced_takeout_import")
+    monkeypatch.delenv("TAKEOUT_LOG_FILE", raising=False)
+    (tmp_path / "logs").mkdir()
+    monkeypatch.setenv("HOMELAB_LOG_ROOT", str(tmp_path / "logs"))
+    assert module.default_log_file().parent == tmp_path / "logs" / "takeout"
