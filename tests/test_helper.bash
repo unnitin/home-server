@@ -19,7 +19,7 @@ mock_command() {
     local cmd="$1"
     local mock_output="$2"
     local mock_exit_code="${3:-0}"
-    
+
     # Create mock script in test temp dir
     cat > "$TEST_TEMP_DIR/mock_$cmd" << EOF
 #!/bin/bash
@@ -27,10 +27,10 @@ echo "$mock_output"
 exit $mock_exit_code
 EOF
     chmod +x "$TEST_TEMP_DIR/mock_$cmd"
-    
+
     # Add to PATH
     export PATH="$TEST_TEMP_DIR:$PATH"
-    
+
     # Create alias
     alias "$cmd"="$TEST_TEMP_DIR/mock_$cmd"
 }
@@ -68,7 +68,7 @@ create_fake_storage() {
     mkdir -p "$TEST_TEMP_DIR/Volumes/warmstore"
     mkdir -p "$TEST_TEMP_DIR/Volumes/coldstore"
     mkdir -p "$TEST_TEMP_DIR/Volumes/Media"
-    
+
     # Create fake mount points
     export WARMSTORE="$TEST_TEMP_DIR/Volumes/warmstore"
     export COLDSTORE="$TEST_TEMP_DIR/Volumes/coldstore"
@@ -78,7 +78,7 @@ create_fake_storage() {
 assert_log_contains() {
     local log_file="$1"
     local expected_content="$2"
-    
+
     [[ -f "$log_file" ]] || fail "Log file not found: $log_file"
     grep -q "$expected_content" "$log_file" || fail "Log file does not contain: $expected_content"
 }
@@ -88,7 +88,7 @@ assert_directory_structure() {
     local base_dir="$1"
     shift
     local expected_dirs=("$@")
-    
+
     for dir in "${expected_dirs[@]}"; do
         [[ -d "$base_dir/$dir" ]] || fail "Directory not found: $base_dir/$dir"
     done
@@ -99,7 +99,7 @@ run_with_timeout() {
     local timeout_seconds="$1"
     shift
     local cmd=("$@")
-    
+
     timeout "$timeout_seconds" "${cmd[@]}"
 }
 
@@ -107,7 +107,7 @@ run_with_timeout() {
 assert_service_plist_valid() {
     local plist_path="$1"
     [[ -f "$plist_path" ]] || fail "Plist not found: $plist_path"
-    
+
     # Check basic XML syntax
     plutil -lint "$plist_path" || fail "Invalid plist syntax: $plist_path"
 }
@@ -130,4 +130,19 @@ skip_if_not_full_system() {
 fail() {
     echo "$1" >&2
     return 1
+}
+
+# Point every /Volumes path in the manifest (tiers, media, photos, log root) at
+# DIR instead, as exported HOMELAB_* overrides that environment.sh keeps. A
+# tier override alone doesn't move the paths derived from it.
+#   homelab_volumes_at "$BATS_TEST_TMPDIR/Volumes"
+homelab_volumes_at() {
+    local root="$1" repo line value
+    repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    while IFS= read -r line; do
+        [[ "$line" == HOMELAB_*=\"/Volumes/* ]] || continue
+        value="${line#*=\"}"
+        value="${value%\"}"
+        export "${line%%=*}=$root/${value#/Volumes/}"
+    done <"$repo/config/homelab.env"
 }

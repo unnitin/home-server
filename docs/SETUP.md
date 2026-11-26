@@ -130,7 +130,7 @@ export COLD_DISKS="disk6"               # 1 HDD for archive (coldstore)
 |------------|-------|------|-------------|---------|
 | `faststore` | NVMe | 2=mirror, 4=RAID10 | `/Volumes/faststore` | Immich photos & Plex metadata (fast) |
 | `warmstore` | SSD | 2=mirror, 4=RAID10 | `/Volumes/warmstore` | Plex media & system logs (good speed) |  
-| `coldstore` | HDD | 2=mirror, 4=RAID10 | `/Volumes/Archive` | Archive (capacity) |
+| `coldstore` | HDD | 2=mirror, 4=RAID10 | `/Volumes/coldstore` | Archive (capacity) |
 
 ### Verification
 ```bash

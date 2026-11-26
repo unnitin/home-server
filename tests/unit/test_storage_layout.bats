@@ -12,7 +12,11 @@ setup() {
     VOL="$BATS_TEST_TMPDIR/Volumes"
     STUBS="$BATS_TEST_TMPDIR/stubs"
     mkdir -p "$VOL" "$STUBS"
-    export HOMELAB_VOLUMES_ROOT="$VOL" FAKE_MOUNTS="" TEST_MODE=1
+    # Every manifest path under /Volumes (tiers, media, photos, logs) moves to $VOL
+    load ../test_helper
+    unset $(compgen -v | grep '^HOMELAB_' || true)
+    homelab_volumes_at "$VOL"
+    export FAKE_MOUNTS="" TEST_MODE=1
     export CALLS="$BATS_TEST_TMPDIR/calls"
     : >"$CALLS"
     # diskutil info -plist PATH: a mounted volume reports itself as the mount
@@ -145,4 +149,23 @@ mode_of() { stat -f '%Lp' "$1"; }
     [[ "$output" == *"warmstore not mounted"* ]] || false
     run "$WAIT" nvme
     [ "$status" -eq 2 ]
+}
+
+@test "the layout follows the manifest: kebab-case media, staging/failed, module log folders" {
+    mount_tier faststore
+    mount_tier warmstore
+    run "$SETUP"
+    [ "$status" -eq 0 ]
+    for d in movies tv-shows collections staging/movies staging/tv-shows staging/collections staging/failed logs/media-watcher logs/takeout; do
+        [ -d "$VOL/warmstore/$d" ] || { echo "missing $d"; false; }
+    done
+    # exact names: the test disk may be case-insensitive, faststore is not
+    ! ls "$VOL/warmstore" | grep -qx Staging || false
+    [ ! -e "$VOL/faststore/immich/logs" ]
+}
+
+@test "coldstore is the tier at the manifest's mount, not Archive" {
+    source "$ROOT/scripts/storage/lib/mount_common.sh"
+    [ "$(tier_path coldstore)" = "$VOL/coldstore" ]
+    ! tier_path archive || false
 }

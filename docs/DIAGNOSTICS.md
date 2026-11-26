@@ -304,11 +304,11 @@ docker stats --no-stream
 **Storage performance testing**:
 ```bash
 # Write speed test
-dd if=/dev/zero of=/Volumes/Photos/test_file bs=1m count=1000
-rm /Volumes/Photos/test_file
+dd if=/dev/zero of=/Volumes/faststore/test_file bs=1m count=1000
+rm /Volumes/faststore/test_file
 
 # Read speed test (use existing large file)
-dd if=/Volumes/Photos/large_file of=/dev/null bs=1m
+dd if=/Volumes/faststore/large_file of=/dev/null bs=1m
 ```
 
 ### Automated Monitoring
@@ -364,7 +364,7 @@ done
 ```bash
 # Disk usage across all storage tiers
 echo "Storage Usage:"
-df -h /Volumes/* 2>/dev/null | grep -E "(Media|Photos|Archive)" | while read line; do
+df -h /Volumes/* 2>/dev/null | grep -E "(faststore|warmstore|coldstore)" | while read line; do
     echo "  $line"
 done
 

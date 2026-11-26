@@ -42,7 +42,7 @@ ls -la /Volumes/
 # Verify mount points
 ls -la /Volumes/warmstore/Movies/
 ls -la /Volumes/faststore/
-ls -la /Volumes/Archive/
+ls -la /Volumes/coldstore/
 ```
 
 #### **Docker/Immich Not Starting**

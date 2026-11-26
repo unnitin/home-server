@@ -25,9 +25,9 @@ Storage layer managing RAID creation, disk preparation, mounting, and storage de
 **Dependencies**: `lib/raid_common.sh`
 
 #### **format_and_mount.sh**
-**Purpose**: Format and mount all created RAID volumes  
-**Usage**: Run after RAID creation to make volumes available  
-**Dependencies**: `diskutil`, AppleRAID volumes
+**Purpose**: Mount each tier's RAID set where the manifest says. Never erases a set that holds a file system (D29); formats a blank set as APFS only with `RAID_I_UNDERSTAND_DATA_LOSS=1`; never creates a mount-point folder. `TEST_MODE=1` prints the mount and erase commands instead  
+**Usage**: `./scripts/storage/format_and_mount.sh` (exit 0 = every present set mounted where the manifest says)  
+**Dependencies**: `environment.sh` (the manifest), `diskutil`, `plutil`, AppleRAID sets
 
 ### **Maintenance & Utilities**
 
@@ -49,7 +49,7 @@ Storage layer managing RAID creation, disk preparation, mounting, and storage de
 ### **Mount & Dependency Management**
 
 #### **setup_direct_mounts.sh**
-**Purpose**: Create the expected folder layout on each storage tier, without symlinks  
+**Purpose**: Create the expected folder layout on each storage tier, without symlinks. The media layout, photo library and log root come from the manifest (`config/homelab.yaml`)  
 **Usage**: `./scripts/storage/setup_direct_mounts.sh [--dry-run]`, also run at login by LaunchD `io.homelab.storage` and by `setup_full.sh`. No sudo needed  
 **Safety (D22)**: Only touches a volume that `diskutil` reports as mounted, so an empty mount-point folder is skipped. Creates missing folders only: never deletes, never changes the owner or mode of anything that exists. A new Immich database folder is created 0700
 
@@ -63,7 +63,7 @@ Storage layer managing RAID creation, disk preparation, mounting, and storage de
 ### **lib/mount_common.sh**
 **Purpose**: Mount checks shared by the storage scripts  
 **Usage**: `source "$SCRIPT_DIR/lib/mount_common.sh"`  
-**Key Functions**: `is_mount_point PATH` (asks `diskutil` whether a volume is mounted exactly there), `tier_path TIER`
+**Key Functions**: `is_mount_point PATH` (asks `diskutil` whether a volume is mounted exactly there), `tier_path TIER` (the tier's mount point from the manifest; coldstore is `/Volumes/coldstore`)
 
 ### **lib/raid_common.sh**
 **Purpose**: Shared RAID creation and management utilities  

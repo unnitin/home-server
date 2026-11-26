@@ -97,7 +97,7 @@ Checks that storage volumes are mounted and accessible with disk usage.
 **Checks**:
 - `/Volumes/warmstore` (warmstore)
 - `/Volumes/faststore` (faststore)  
-- `/Volumes/Archive` (coldstore)
+- `/Volumes/coldstore` (coldstore)
 - Mount permissions and disk usage
 
 ---

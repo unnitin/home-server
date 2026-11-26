@@ -141,9 +141,8 @@ Test from another device:
 If auto-recovery shows manual commands needed:
 
 ```bash
-# Storage fixes (if needed):
-sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos
-sudo mkdir -p /Volumes/Archive
+# Storage: nothing to create by hand. Mount points come from diskutil
+# (see docs/STORAGE.md); check with: diskutil appleRAID list
 
 # HTTPS fixes (if needed):
 sudo tailscale serve --bg --https=443 http://localhost:8080

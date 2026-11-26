@@ -87,7 +87,7 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"  # 4 disks = RAID10
 export NVME_DISKS="disk2 disk3"             # 2 disks = mirror
 export NVME_DISKS="disk2 disk3 disk8 disk9" # 4 disks = RAID10
 
-# HDD Array (coldstore) - for archive at /Volumes/Archive
+# HDD Array (coldstore) - for archive at /Volumes/coldstore
 export COLD_DISKS="disk6"                   # Single disk
 export COLD_DISKS="disk6 disk7"             # 2 disks = mirror
 ```
@@ -98,7 +98,7 @@ export COLD_DISKS="disk6 disk7"             # 2 disks = mirror
 |------------|---------------|---------|---------------|
 | `faststore` | `/Volumes/faststore` | Immich photos (high-speed) | `NVME_DISKS` |
 | `warmstore` | `/Volumes/warmstore` | Plex media (good speed) | `SSD_DISKS` |
-| `coldstore` | `/Volumes/Archive` | Archive storage (capacity) | `COLD_DISKS` |
+| `coldstore` | `/Volumes/coldstore` | Archive storage (capacity) | `COLD_DISKS` |
 
 **Custom names/mounts** *(advanced)*:
 ```bash
