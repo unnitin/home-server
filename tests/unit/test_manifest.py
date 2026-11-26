@@ -100,12 +100,13 @@ def test_every_launchd_template_is_a_service_and_back():
     assert labels == templates
 
 
-def test_configure_launchd_installs_jobs_in_boot_order():
+def test_configure_launchd_takes_its_jobs_from_the_manifest():
+    """The order itself is checked in test_automation_manifest.bats."""
     text = (REPO / "scripts/automation/configure_launchd.sh").read_text()
-    block = re.search(r"^SERVICES=\((.*?)^\)", text, re.S | re.M).group(1)
-    listed = re.findall(r'^\s*"([^"]+)"', block, re.M)
-    env = dict(config.env_items(config.load(local=False)))
-    assert listed == env["HOMELAB_LAUNCHD_SERVICES"].split()
+    assert "HOMELAB_LAUNCHD_SERVICES" in text
+    assert not re.search(
+        r"^SERVICES=\(\s*$", text, re.M
+    ), "a hardcoded job list is back"
 
 
 def test_compose_dirs_exist():
