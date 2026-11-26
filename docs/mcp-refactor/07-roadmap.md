@@ -77,7 +77,8 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - Built: the diagnostics JSON mode (`feature/p1-diag-json`), which also fixed D24.
 - Built: `system_overview`, `health_check(component)` and the result envelope, with the old tools kept as deprecated text tools (`feature/p1-mcp-envelope`).
 - Built: the doc hygiene pass (`feature/p1-doc-hygiene`). It retired Caddy, `/Volumes/Media`, `/Volumes/Photos` and the numbered script names, added a test that every script path in the docs exists, and fixed D25. Three calls in code to numbered scripts that no longer exist (`health_check.sh --auto-recover`, `ensure_power_settings.sh`) now print the command or restart the LaunchD job, and a test keeps numbered names out of code.
-- Next: the manifest, `environment.sh` and the CLAUDE.md update. Two decisions are needed first: the media path form and the Python packaging.
+- Built: the manifest (`feature/p1-manifest`). `config/homelab.yaml` with the decided names (kebab-case media folders, coldstore at `/Volumes/coldstore`), `homelab/config.py` (pydantic, strict), `python3 -m homelab config validate|render|get`, and one `pyproject.toml` at the repo root. `config/homelab.env` and `config/tailscale_serve.txt` are generated from it and committed; a test fails while they're stale, and another checks the manifest against the LaunchD templates and `configure_launchd.sh`.
+- Next: `environment.sh`, then each module moved onto it in module order, then the CLAUDE.md update.
 
 **Acceptance:** `grep -rn "/Volumes/Media\|/Volumes/Photos" scripts diagnostics` returns nothing. Every diagnostic emits valid JSON in JSON mode (schema test). `system_overview` returns under 2 KB on a healthy box.
 
@@ -176,8 +177,9 @@ All new tests set `TEST_MODE=1`. In `TEST_MODE`, `exec.py` refuses any non-fixtu
 
 1. **Push channel for approvals:** ntfy (self-hostable, simple) or Pushover (paid, polished iOS app)?
 2. **Where the local model runs: decided.** On the mini: Qwen3.5-9B through Ollama on `127.0.0.1`, loaded on demand ([09](09-local-model.md)). It's measured good for ops triage and not yet cleared for curation.
-3. **Media path canonical form:** Title Case (`Staging/TV Shows`, what `processor.sh` and Plex conventions use) or kebab-case (`staging/tv-shows`, what `setup_direct_mounts.sh` creates)? Recommend Title Case, after checking what's actually on disk.
-4. **Python packaging:** a single `pyproject.toml` at the repo root (recommended) or per-package?
+3. **Media path canonical form: decided** (2026-11-26). kebab-case (`movies`, `tv-shows`, `staging/...`): Plex's and Jellyfin's libraries already read those folders, and `setup_direct_mounts.sh` creates them.
+4. **Python packaging: decided** (2026-11-26). One `pyproject.toml` at the repo root.
 5. **Whose photo library: decided.** Per Immich user. Each person creates their own restricted key, and each curator token is bound to one user.
 6. **Thumbnails to cloud models: decided.** Local only. Photos never leave the mini.
 7. **Parental controls: decided.** A fail-closed `Toddler` allow-list for the 2-year-old's profile: G / TV-Y only, with a parent approving every addition (08).
+8. **Coldstore volume name: decided** (2026-11-26). `coldstore`, mounted at `/Volumes/coldstore`, as `create_hdd_raid.sh` already names it (D25). The disk is renamed when it is next attached.

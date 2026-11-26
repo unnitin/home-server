@@ -12,6 +12,7 @@ requests>=2.31.0
 
 # Configuration and data handling
 PyYAML>=6.0.1
+pydantic>=2.5,<3      # homelab/config.py (the manifest)
 python-dotenv>=1.0.0
 
 # macOS system integration

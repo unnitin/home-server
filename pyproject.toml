@@ -1,0 +1,30 @@
+# One pyproject.toml for the repo's Python (decided 2026-11-26): the control
+# plane (homelab/) now, the harness (agent/) later. homelab_mcp/ still runs as
+# a script from its folder (launchd/io.homelab.mcp.plist); its dependencies
+# are the `mcp` extra.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "homelab"
+version = "0.1.0"
+description = "Control plane and MCP server for the home server"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.5,<3",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.27,<2", "uvicorn", "starlette"]
+dev = ["pytest>=7.4", "black>=23.7", "flake8>=6.0"]
+
+[project.scripts]
+homelab = "homelab.cli:main"
+
+[tool.setuptools]
+packages = ["homelab"]
+
+[tool.black]
+line-length = 88

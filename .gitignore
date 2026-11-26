@@ -38,6 +38,10 @@ data/
 # Homebrew temp
 brew*.lock
 
+# Per-machine manifest overrides (config/homelab.yaml is the committed base)
+config/homelab.local.yaml
+config/homelab.local.env
+
 # User override env files
 .env.local
 .env.development.local
@@ -70,4 +74,3 @@ test_temp_*
 # Never commit .key files (private key). .crt is public but machine-specific.
 *.crt
 *.key
-
