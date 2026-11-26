@@ -114,6 +114,13 @@ class Service(Strict):
     listen: Optional[str] = None
     optional: bool = False
     resources: Optional[Resources] = None
+    data_tier: Optional[str] = None  # the tier that holds the app's own data
+    data_dir: Optional[str] = None  # that data's folder on the tier
+
+    @field_validator("data_dir")
+    @classmethod
+    def data_dir_relative(cls, value: Optional[str]) -> Optional[str]:
+        return None if value is None else relative_dir(value)
 
     @field_validator("launchd")
     @classmethod
@@ -140,6 +147,8 @@ class Service(Strict):
             raise ValueError("a compose service needs compose_dir")
         if self.kind == "native_app" and not self.app:
             raise ValueError("a native_app service needs app")
+        if (self.data_tier is None) != (self.data_dir is None):
+            raise ValueError("data_tier and data_dir go together")
         return self
 
     def all_ports(self) -> list[int]:
@@ -220,6 +229,8 @@ class Manifest(Strict):
         if sorted(self.boot_order) != sorted(services):
             raise ValueError("boot_order must list every service exactly once")
         for name, svc in services.items():
+            if svc.data_tier is not None and svc.data_tier not in tiers:
+                raise ValueError(f"{name}.data_tier is not a storage tier")
             for dep in svc.depends_on:
                 if dep not in services and dep not in tiers:
                     raise ValueError(f"{name} depends on unknown {dep!r}")
@@ -340,6 +351,12 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
                 (env_key("svc", name, "cpu"), str(svc.resources.cpu)),
                 (env_key("svc", name, "memory", "gb"), str(svc.resources.memory_gb)),
                 (env_key("svc", name, "disk", "gb"), str(svc.resources.disk_gb)),
+            ]
+        if svc.data_tier and svc.data_dir:
+            data = f"{m.storage.tiers[svc.data_tier].mount}/{svc.data_dir}"
+            items += [
+                (env_key("svc", name, "data", "tier"), svc.data_tier),
+                (env_key("svc", name, "data", "dir"), data),
             ]
         for field in ("app", "compose_dir", "version_env", "listen"):
             value = getattr(svc, field)

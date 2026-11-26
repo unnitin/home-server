@@ -68,7 +68,7 @@ for d in library upload thumbs encoded-video database; do
     want "$HOMELAB_PHOTOS_LIBRARY/$d"
 done
 for d in metadata transcoding processing logs; do
-    want "$(tier_path faststore)/plex/$d"
+    want "$HOMELAB_SVC_PLEX_DATA_DIR/$d"   # Plex's own folders, where the manifest keeps its data
 done
 for lib in $HOMELAB_MEDIA_LIBRARIES; do
     dir_var="HOMELAB_MEDIA_$(upper "$lib")_DIR"
