@@ -34,6 +34,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 
 **Before deploying** (found 2026-11-23):
 - Fix the boot storage job (D22). Phase 0 re-enables it, so it is a blocker.
+  **Done** in `feature/d22-safe-storage` (2026-11-23). The rehearsal passed again on it (0393e19), and running the storage script as root through sudo in the VM changed no mode or owner under `immich/` or `plex/`. The Immich job now waits for faststore only.
 - Rehearse the deploy in a disposable macOS VM (`tests/e2e/vm/`): repo move, `configure_launchd.sh`, a reboot, and every job's exit status.
   Done 2026-11-23 on `mcp-refactor` at cd65742: **PASS**. After the move and a clean reboot:
   - Every plist points at `~/home-server`, and every job exits 0. The exceptions are `colima` and `compose.immich` (no Docker in a VM) and the media watcher (D21).

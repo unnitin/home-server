@@ -173,7 +173,7 @@ else
     echo "  launchctl start io.homelab.colima"
     echo ""
     echo "💾 Storage Issues:"
-    echo "  sudo ./scripts/storage/setup_direct_mounts.sh"
+    echo "  ./scripts/storage/setup_direct_mounts.sh   # no sudo needed"
     echo "  ./scripts/storage/wait_for_storage.sh"
     echo ""
     echo "⚠️  RECOVERY NEEDED - Run the commands above to fix issues"
