@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start the landing page and publish services to the tailnet.
 #
-# The landing page is served on 127.0.0.1:8080. Tailnet HTTPS for it and every
+# The landing page is served on 127.0.0.1, on the manifest's landing port (8080). Tailnet HTTPS for it and every
 # other service comes from scripts/infrastructure/apply_tailscale_serve.sh, which
 # applies config/tailscale_serve.txt. This script used to run `tailscale serve reset`,
 # which wiped every other mapping (Jellyfin's, and any MCP mapping) at each boot.
@@ -10,8 +10,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=../core/environment.sh
+source "$REPO_ROOT/scripts/core/environment.sh"
 # shellcheck source=../infrastructure/lib/tailscale.sh
 source "$REPO_ROOT/scripts/infrastructure/lib/tailscale.sh"
+PORT="${HOMELAB_SVC_LANDING_PORTS%% *}"
 
 banner() { echo; echo "=== $* ==="; }
 
@@ -37,20 +40,20 @@ TAILSCALE_HOSTNAME=$(ts_hostname)
 TAILSCALE_HOSTNAME="${TAILSCALE_HOSTNAME:-your-device.your-tailnet.ts.net}"
 echo "Tailscale hostname: $TAILSCALE_HOSTNAME"
 
-echo "Restarting landing page server on 127.0.0.1:8080..."
-# Stop the landing server already listening on :8080, whatever its interpreter is
-# called (a server started by hand may show as ".../Python -m http.server 8080").
+echo "Restarting landing page server on 127.0.0.1:$PORT..."
+# Stop the landing server already listening on its port, whatever its interpreter is
+# called (a server started by hand may show as ".../Python -m http.server <port>").
 # Only the listener is considered: a pattern match on command lines would also
 # kill any shell or editor that merely mentions it (D28).
-for pid in $(lsof -nP -tiTCP:8080 -sTCP:LISTEN 2>/dev/null || true); do
-    if ps -o command= -p "$pid" 2>/dev/null | grep -q -- "-m http[.]server 8080"; then
+for pid in $(lsof -nP -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null || true); do
+    if ps -o command= -p "$pid" 2>/dev/null | grep -q -- "-m http[.]server $PORT"; then
         echo "Stopping the previous landing server (PID $pid)"
         kill "$pid" 2>/dev/null || true
         sleep 1
     fi
 done
 cd "$REPO_ROOT/web"
-nohup python3 -m http.server 8080 --bind 127.0.0.1 > /dev/null 2>&1 &
+nohup python3 -m http.server "$PORT" --bind 127.0.0.1 > /dev/null 2>&1 &
 SERVER_PID=$!
 echo "✅ Started landing page server (PID: $SERVER_PID)"
 sleep 2

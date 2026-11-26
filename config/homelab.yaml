@@ -48,6 +48,8 @@ services:
   plex:
     kind: native_app
     app: Plex Media Server
+    data_tier: faststore                 # its own data: needed to start it
+    data_dir: plex
     ports: [32400]
     health: { http: "http://localhost:32400/identity", expect: 200 }
     depends_on: [faststore, warmstore]
@@ -55,6 +57,8 @@ services:
   jellyfin:
     kind: native_app
     app: Jellyfin
+    data_tier: faststore                 # its own data: needed to start it
+    data_dir: jellyfin
     ports: [8096]
     health: { http: "http://localhost:8096/health", expect: 200 }
     depends_on: [faststore, warmstore]
