@@ -25,14 +25,30 @@ import ffmpeg
 logger = logging.getLogger(__name__)
 
 
+def volume_mounted(path: Path) -> bool:
+    """True when the /Volumes/<name> volume holding path is mounted.
+
+    An empty mount-point folder left behind while a volume is offline is not:
+    writing there lands on the internal disk (D22).
+    """
+    parts = path.parts
+    if len(parts) >= 3 and parts[1] == "Volumes":
+        return os.path.ismount(Path("/", "Volumes", parts[2]))
+    return True
+
+
 def default_log_file() -> Path:
-    """$TAKEOUT_LOG_FILE, else warmstore's log tree, else ~/Library/Logs."""
+    """$TAKEOUT_LOG_FILE, else <log root>/takeout, else ~/Library/Logs.
+
+    The log root is the manifest's (HOMELAB_LOG_ROOT, exported by environment.sh),
+    used only when its volume is mounted and it's writable.
+    """
     if os.environ.get("TAKEOUT_LOG_FILE"):
         return Path(os.environ["TAKEOUT_LOG_FILE"])
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    warm_logs = Path("/Volumes/warmstore/logs")
-    if warm_logs.is_dir() and os.access(warm_logs, os.W_OK):
-        base = warm_logs / "takeout"
+    log_root = Path(os.environ.get("HOMELAB_LOG_ROOT", "/Volumes/warmstore/logs"))
+    if volume_mounted(log_root) and log_root.is_dir() and os.access(log_root, os.W_OK):
+        base = log_root / "takeout"
     else:
         base = Path.home() / "Library" / "Logs" / "homelab" / "takeout"
     return base / f"takeout_import_{stamp}.log"
