@@ -303,6 +303,7 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
             (env_key("tier", name, "raid"), tier.raid),
             (env_key("tier", name, "warn", "pct"), str(tier.warn_pct)),
             (env_key("tier", name, "crit", "pct"), str(tier.crit_pct)),
+            (env_key("tier", name, "use"), tier.use),
         ]
     items += [
         (env_key("services"), " ".join(m.boot_order)),
@@ -321,7 +322,10 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
             (env_key("svc", name, "ports"), " ".join(map(str, svc.ports))),
         ]
         if svc.health and svc.health.http:
-            items.append((env_key("svc", name, "health", "url"), svc.health.http))
+            items += [
+                (env_key("svc", name, "health", "url"), svc.health.http),
+                (env_key("svc", name, "health", "expect"), str(svc.health.expect)),
+            ]
         for field in ("app", "compose_dir", "version_env", "listen"):
             value = getattr(svc, field)
             if value is not None:

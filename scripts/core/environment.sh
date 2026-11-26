@@ -63,3 +63,19 @@ homelab_tier_mount() {
     fi
     printf '%s\n' "${!var}"
 }
+
+# True when a volume is mounted exactly at PATH. A folder under /Volumes is not
+# proof: macOS leaves empty mount-point folders behind, and anything written to
+# one lands on the internal disk (D22). Only diskutil knows.
+homelab_is_mounted() {
+    local mount_point
+    mount_point=$(diskutil info -plist "${1:-}" 2>/dev/null |
+        plutil -extract MountPoint raw -o - - 2>/dev/null) || return 1
+    [[ -n "$mount_point" && "$mount_point" == "${1:-}" ]]
+}
+
+# The CLAUDE.md log format, for scripts that don't define their own (a script's
+# own log_* functions, defined before or after sourcing this, win).
+declare -F log_info >/dev/null || log_info() { echo "[INFO]  $(date '+%H:%M:%S') $*"; }
+declare -F log_warn >/dev/null || log_warn() { echo "[WARN]  $(date '+%H:%M:%S') $*" >&2; }
+declare -F log_error >/dev/null || log_error() { echo "[ERROR] $(date '+%H:%M:%S') $*" >&2; }

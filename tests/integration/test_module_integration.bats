@@ -11,8 +11,9 @@ teardown() {
 }
 
 @test "core module scripts can be sourced by other modules" {
-    # Test that core utilities are accessible to other modules
-    run bash -c "source scripts/core/health_check.sh && type -t log_info"
+    # Core utilities are reachable through the shared core library. (Sourcing
+    # health_check.sh, as this used to, runs the whole health check.)
+    run bash -c "source scripts/core/environment.sh && type -t log_info && type -t homelab_tier_mount"
     [ "$status" -eq 0 ]
 }
 
@@ -26,7 +27,7 @@ teardown() {
     # Test cross-module dependencies work correctly
     assert_script_exists "scripts/infrastructure/compose_wrapper.sh"
     assert_script_exists "scripts/storage/wait_for_storage.sh"
-    
+
     # Verify infrastructure scripts don't have circular dependencies
     run bash -n scripts/infrastructure/compose_wrapper.sh
     [ "$status" -eq 0 ]
@@ -38,7 +39,7 @@ teardown() {
         "scripts/services/deploy_containers.sh"
         "scripts/services/start_plex_safe.sh"
     )
-    
+
     for script in "${service_scripts[@]}"; do
         run bash -n "$script"
         [ "$status" -eq 0 ] || fail "Service script $script has syntax errors"
@@ -49,7 +50,7 @@ teardown() {
     # Test that automation scripts can reference all modules
     run grep -r "scripts/" scripts/automation/
     [ "$status" -eq 0 ]
-    
+
     # Verify configure_launchd.sh references all service types
     run grep -E "(storage|infrastructure|services|media)" scripts/automation/configure_launchd.sh
     [ "$status" -eq 0 ]
@@ -59,7 +60,7 @@ teardown() {
     # Test media processing can work with Plex service
     assert_script_exists "scripts/media/processor.sh"
     assert_script_exists "scripts/services/start_plex_safe.sh"
-    
+
     # Verify media scripts reference correct target directories
     run grep "/Volumes/Media\|/Volumes/warmstore" scripts/media/processor.sh
     [ "$status" -eq 0 ]

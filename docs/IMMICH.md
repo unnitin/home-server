@@ -374,10 +374,9 @@ Total: 1.9TB (faststore capacity)
 
 **Storage Monitoring Script**:
 A monitoring script is available at `scripts/core/check_storage_usage.sh` that:
-- Checks faststore and warmstore usage
-- Provides color-coded status (OK/Warning/Critical)
-- Shows detailed storage breakdown
-- Can be run manually or scheduled
+- Checks every storage tier in `config/homelab.yaml`, using only volumes that are actually mounted
+- Reports OK, WARNING or CRITICAL against each tier's thresholds (faststore warns at 80%)
+- Exits 1 when any tier is at or above its warn threshold, so it can be scheduled
 
 **Future Considerations**:
 - Per-user quotas may be added in future Immich versions
