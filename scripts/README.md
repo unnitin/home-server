@@ -37,6 +37,7 @@ scripts/
 | Script | Purpose | Used By |
 |--------|---------|---------|
 | [`storage/lib/raid_common.sh`](storage/README.md#libraidcommonsh) | RAID utilities library | All RAID creation scripts |
+| [`storage/lib/mount_common.sh`](storage/README.md#libmountcommonsh) | Mount checks via diskutil (D22) | storage/setup_direct_mounts.sh, storage/wait_for_storage.sh |
 | [`storage/create_ssd_raid.sh`](storage/README.md#create_ssd_raidsh) | Create SSD RAID mirror | setup_full.sh, setup_flags.sh |
 | [`storage/create_nvme_raid.sh`](storage/README.md#create_nvme_raidsh) | Create NVMe RAID mirror | setup_full.sh, setup_flags.sh |
 | [`storage/create_hdd_raid.sh`](storage/README.md#create_hdd_raidsh) | Create HDD RAID mirror | setup_full.sh, setup_flags.sh |
@@ -44,8 +45,8 @@ scripts/
 | [`storage/cleanup_disks.sh`](storage/README.md#cleanup_diskssh) | Prepare disks for RAID | storage/preclean_disks.sh |
 | [`storage/preclean_disks.sh`](storage/README.md#preclean_diskssh) | Pre-RAID cleanup | setup_full.sh, setup_flags.sh |
 | [`storage/rebuild_storage.sh`](storage/README.md#rebuild_storagesh) | Manual RAID rebuild | Manual use only |
-| [`storage/setup_direct_mounts.sh`](storage/README.md#setup_direct_mountssh) | Direct mount directory structure | LaunchD io.homelab.storage |
-| [`storage/wait_for_storage.sh`](storage/README.md#wait_for_storagesh) | Storage dependency check | LaunchD io.homelab.compose.immich |
+| [`storage/setup_direct_mounts.sh`](storage/README.md#setup_direct_mountssh) | Create missing tier folders on mounted volumes only | LaunchD io.homelab.storage, setup_full.sh |
+| [`storage/wait_for_storage.sh`](storage/README.md#wait_for_storagesh) | Wait for the tiers a service needs to be mounted | LaunchD io.homelab.compose.immich (faststore) |
 
 ### **🏗️ Infrastructure Module**
 | Script | Purpose | Used By |
