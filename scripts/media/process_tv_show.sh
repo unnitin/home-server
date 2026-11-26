@@ -22,13 +22,13 @@ log() {
 extract_tv_info() {
     local filename="$1"
     local basename=$(basename "$filename" | sed 's/\.[^.]*$//')  # Remove extension
-    
+
     local show_name=""
     local year=""
     local season=""
     local episode=""
     local episode_title=""
-    
+
     # Pattern 1: Current format - Show (Year) sXeXX - Episode Title
     if [[ "$basename" =~ ^(.+)\ \(([0-9]{4})\)\ s([0-9]+)e([0-9]+)\ -\ (.+)$ ]]; then
         show_name="${BASH_REMATCH[1]}"
@@ -51,6 +51,12 @@ extract_tv_info() {
         show_name="${BASH_REMATCH[1]//./ }"  # Replace dots with spaces
         season="${BASH_REMATCH[2]}"
         episode="${BASH_REMATCH[3]}"
+    # Pattern 4b: Show.Name.S01E02 (the usual release name): any of . _ - or space
+    # before SxxEyy, either case
+    elif [[ "$basename" =~ ^(.+)[._\ -][Ss]([0-9]{1,2})[Ee]([0-9]{1,3})([^0-9].*)?$ ]]; then
+        show_name="${BASH_REMATCH[1]}"
+        season="${BASH_REMATCH[2]}"
+        episode="${BASH_REMATCH[3]}"
     # Pattern 5: Show - Season X Episode Y format
     elif [[ "$basename" =~ ^(.+)\ -\ Season\ ([0-9]+)\ Episode\ ([0-9]+).*$ ]]; then
         show_name="${BASH_REMATCH[1]}"
@@ -65,17 +71,17 @@ extract_tv_info() {
         log "WARN" "Could not parse TV show format: $basename"
         return 1
     fi
-    
+
     # Clean up show name
     show_name=$(echo "$show_name" | sed 's/[._-]/ /g' | sed 's/^ *//;s/ *$//' | sed 's/  */ /g')
-    
+
     # Remove quality indicators from show name
     show_name=$(echo "$show_name" | sed -E 's/\b(720p|1080p|4K|BluRay|BRrip|DVDrip|WEBrip|HDTV|x264|x265|HEVC|AAC|AC3|DTS)\b//gi' | sed 's/^ *//;s/ *$//' | sed 's/  */ /g')
-    
+
     # Pad season and episode with zeros
     season=$(printf "%02d" "$season")
     episode=$(printf "%02d" "$episode")
-    
+
     echo "$show_name|$year|$season|$episode|$episode_title"
 }
 
@@ -97,15 +103,15 @@ process_subtitles() {
     local tv_file="$1"
     local target_episode_dir="$2"
     local episode_basename="$3"
-    
+
     local source_dir=$(dirname "$tv_file")
     local source_basename=$(basename "$tv_file" | sed 's/\.[^.]*$//')
-    
+
     # Look for subtitle files with same basename
     find "$source_dir" -maxdepth 1 -name "${source_basename}.*" -type f \( -name "*.srt" -o -name "*.ass" -o -name "*.ssa" -o -name "*.vtt" \) | while read -r subtitle_file; do
         local sub_ext=$(get_extension "$subtitle_file")
         local target_subtitle="$target_episode_dir/$episode_basename.$sub_ext"
-        
+
         if mv "$subtitle_file" "$target_subtitle" 2>/dev/null; then
             log "INFO" "Moved subtitle: $(basename "$subtitle_file") -> $(basename "$target_subtitle")"
         else
@@ -119,7 +125,7 @@ detect_show_year() {
     local show_name="$1"
     local target_base_dir="$2"
     local filename="$3"
-    
+
     # First, check if there's already a directory with this show name and year
     local existing_dir=$(find "$target_base_dir" -maxdepth 1 -type d -name "${show_name}*" | head -1)
     if [[ -n "$existing_dir" ]]; then
@@ -129,13 +135,13 @@ detect_show_year() {
             return 0
         fi
     fi
-    
+
     # Try to extract year from filename
     if [[ "$filename" =~ ([0-9]{4}) ]]; then
         echo "${BASH_REMATCH[1]}"
         return 0
     fi
-    
+
     # No year found
     echo ""
 }
@@ -144,41 +150,41 @@ detect_show_year() {
 process_tv_show() {
     local tv_file="$1"
     local target_base_dir="$2"
-    
+
     if [[ ! -f "$tv_file" ]]; then
         log "ERROR" "TV file does not exist: $tv_file"
         return 1
     fi
-    
+
     log "INFO" "Processing TV episode: $(basename "$tv_file")"
-    
+
     # Extract TV show information
     local tv_info
     if ! tv_info=$(extract_tv_info "$tv_file"); then
         log "ERROR" "Failed to extract TV show information from: $(basename "$tv_file")"
         return 1
     fi
-    
+
     local show_name=$(echo "$tv_info" | cut -d'|' -f1)
     local year=$(echo "$tv_info" | cut -d'|' -f2)
     local season=$(echo "$tv_info" | cut -d'|' -f3)
     local episode=$(echo "$tv_info" | cut -d'|' -f4)
     local episode_title=$(echo "$tv_info" | cut -d'|' -f5)
     local extension=$(get_extension "$tv_file")
-    
+
     # Sanitize show name
     show_name=$(sanitize_filename "$show_name")
-    
+
     if [[ -z "$show_name" || -z "$season" || -z "$episode" ]]; then
         log "ERROR" "Missing required information - Show: '$show_name', Season: '$season', Episode: '$episode'"
         return 1
     fi
-    
+
     # Try to detect year if not found
     if [[ -z "$year" ]]; then
         year=$(detect_show_year "$show_name" "$target_base_dir" "$(basename "$tv_file")")
     fi
-    
+
     # Create show directory name
     local show_dir_name
     if [[ -n "$year" ]]; then
@@ -187,20 +193,20 @@ process_tv_show() {
         show_dir_name="$show_name"
         log "WARN" "No year found for show: $show_name"
     fi
-    
+
     # Create target directory structure
     local target_show_dir="$target_base_dir/$show_dir_name"
     local target_season_dir="$target_show_dir/Season $season"
-    
+
     if ! mkdir -p "$target_season_dir"; then
         log "ERROR" "Failed to create directory: $target_season_dir"
         return 1
     fi
-    
+
     # Create target filename in Plex format: Show Name - sXXeYY.ext
     local target_filename="$show_name - s${season}e${episode}.$extension"
     local target_path="$target_season_dir/$target_filename"
-    
+
     # Check if target already exists
     if [[ -f "$target_path" ]]; then
         log "WARN" "Target file already exists: $target_path"
@@ -210,14 +216,14 @@ process_tv_show() {
         target_path="$target_season_dir/$target_filename"
         log "INFO" "Using alternative filename: $target_filename"
     fi
-    
+
     # Move the TV file
     if mv "$tv_file" "$target_path"; then
         log "SUCCESS" "Moved episode: $(basename "$tv_file") -> $target_path"
-        
+
         # Process any associated subtitle files
         process_subtitles "$tv_file" "$target_season_dir" "${target_filename%.*}"
-        
+
         return 0
     else
         log "ERROR" "Failed to move TV file: $tv_file -> $target_path"

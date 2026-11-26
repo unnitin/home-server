@@ -364,6 +364,7 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
                 items.append((env_key("svc", name, field), value))
     root = m.storage.tiers[m.media.tier].mount
     items += [
+        (env_key("media", "tier"), m.media.tier),
         (env_key("media", "root"), root),
         (env_key("media", "staging"), f"{root}/{m.media.staging}"),
         (env_key("media", "failed"), f"{root}/{m.media.failed}"),

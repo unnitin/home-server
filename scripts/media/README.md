@@ -8,17 +8,18 @@ Media layer providing automated file organization, Plex naming conventions, and 
 
 #### **processor.sh**
 **Purpose**: Main orchestrator for processing media files according to Plex naming conventions  
-**Usage**: `./scripts/media/processor.sh [--movies-only|--tv-only|--collections-only|--cleanup-only]`  
+**Usage**: `./scripts/media/processor.sh --all | --movies-only | --tv-only | --collections-only | --cleanup-only` (with no option it prints usage)  
 **Features**: 
 - Processes Movies: `Movie Name (Year)/Movie Name (Year).ext`
 - Processes TV Shows: `Show Name (Year)/Season XX/Show Name - sXXeYY.ext`  
 - Processes Collections: Preserves exact folder structure
-- Comprehensive error handling and logging
+- Folders come from the manifest (`movies`, `tv-shows`, `collections`, `staging/...`); refuses to run unless the media tier is really mounted
+- A file it can't name goes to `staging/failed/<date>/` and the run carries on
 
 #### **watcher.sh**
-**Purpose**: Monitors Staging directories for new files and triggers automatic processing  
+**Purpose**: Monitors the staging folders for new files and runs `processor.sh --all`  
 **Usage**: `./scripts/media/watcher.sh {start|stop|status|restart}`  
-**Features**: Real-time monitoring, delay for file transfers, lock files, automatic restart
+**Features**: Waits for the media tier to be mounted before writing anything (D26); real-time monitoring, delay for file transfers, lock files, automatic restart
 
 ### **File Type Processors**
 
@@ -43,7 +44,7 @@ Media layer providing automated file organization, Plex naming conventions, and 
 
 ## 📁 Processing Workflow
 
-1. **Detection**: `watcher.sh` monitors `/Volumes/warmstore/Staging/`
+1. **Detection**: `watcher.sh` monitors `/Volumes/warmstore/staging/{movies,tv-shows,collections}/` (the manifest's layout), once warmstore is mounted
 2. **Classification**: Files sorted by directory (Movies, TV Shows, Collections)
 3. **Processing**: Appropriate processor script handles file organization
 4. **Validation**: Files moved to target locations with Plex naming

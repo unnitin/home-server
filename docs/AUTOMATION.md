@@ -449,7 +449,7 @@ tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 **Purpose**: Monitors Staging directories for new media files and automatically processes them according to Plex naming conventions
 
 **Features**:
-- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Real-time monitoring of `/Volumes/warmstore/staging/{movies,tv-shows,collections}/`
 - Automatic file organization using Plex naming standards
 - Preserves folder structure for Collections
 - Graceful error handling with failed files moved to staging/failed/
@@ -480,7 +480,7 @@ tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
 
 # Check failed files
-ls -la /Volumes/warmstore/Staging/failed/
+ls -la /Volumes/warmstore/staging/failed/
 ```
 
 **Automatic cleanup**:

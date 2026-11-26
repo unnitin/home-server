@@ -61,7 +61,8 @@ teardown() {
     assert_script_exists "scripts/media/processor.sh"
     assert_script_exists "scripts/services/start_plex_safe.sh"
 
-    # Verify media scripts reference correct target directories
-    run grep "/Volumes/Media\|/Volumes/warmstore" scripts/media/processor.sh
-    [ "$status" -eq 0 ]
+    # The processor's targets come from the manifest, which puts media on warmstore
+    grep -q 'MOVIES_TARGET="$HOMELAB_MEDIA_MOVIES_DIR"' scripts/media/processor.sh
+    run bash -c 'source scripts/core/environment.sh; echo "$HOMELAB_MEDIA_MOVIES_DIR"'
+    [ "$output" = "/Volumes/warmstore/movies" ]
 }
