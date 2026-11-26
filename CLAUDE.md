@@ -48,7 +48,7 @@ Always use these exact names — they are hardcoded across LaunchD plists, diagn
 |------|--------|-------------|-----|
 | `faststore` | NVMe RAID | `/Volumes/faststore` | Photo library (Immich) |
 | `warmstore` | SSD RAID | `/Volumes/warmstore` | Media library (Plex/Jellyfin), logs |
-| `coldstore` | HDD RAID | `/Volumes/Archive` | Cold archive storage (volume label is `Archive` for historical reasons) |
+| `coldstore` | HDD RAID | `/Volumes/coldstore` | Cold archive storage (named `coldstore` since 2026-11-26; a disk still named `Archive` is renamed with `diskutil rename Archive coldstore`) |
 
 Log directory: `/Volumes/warmstore/logs/{module}/`
 

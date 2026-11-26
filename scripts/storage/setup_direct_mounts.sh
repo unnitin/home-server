@@ -41,71 +41,84 @@ case "${1:-}" in
         ;;
 esac
 
-# Parents before children: each folder is created without -p.
-FASTSTORE_DIRS=(
-    immich
-    immich/library
-    immich/upload
-    immich/thumbs
-    immich/encoded-video
-    immich/database
-    immich/logs
-    plex
-    plex/metadata
-    plex/transcoding
-    plex/processing
-    plex/logs
-)
-WARMSTORE_DIRS=(
-    movies
-    tv-shows
-    music
-    collections
-    staging
-    staging/movies
-    staging/tv-shows
-    staging/collections
-    logs
-    logs/system
-    logs/media-processing
-    logs/web
-)
+# Every folder to create, as absolute paths, parents before children: each is
+# created without -p, so every mode is chosen here. The media layout, the photo
+# library and the log root come from the manifest; Immich's and Plex's own
+# folders are theirs.
+WANT=()
+have() {
+    local x
+    for x in ${WANT[@]+"${WANT[@]}"}; do [[ "$x" == "$1" ]] && return 0; done
+    return 1
+}
+is_tier_root() {
+    local t
+    for t in $HOMELAB_TIERS; do [[ "$1" == "$(tier_path "$t")" ]] && return 0; done
+    return 1
+}
+want() {  # want PATH: adds PATH, after any parent below its tier's mount point
+    local parent
+    parent="$(dirname "$1")"
+    if [[ "$parent" != / ]] && ! is_tier_root "$parent"; then want "$parent"; fi
+    have "$1" || WANT+=("$1")
+}
+upper() { printf '%s' "$1" | tr '[:lower:]' '[:upper:]'; }
+
+for d in library upload thumbs encoded-video database; do
+    want "$HOMELAB_PHOTOS_LIBRARY/$d"
+done
+for d in metadata transcoding processing logs; do
+    want "$(tier_path faststore)/plex/$d"
+done
+for lib in $HOMELAB_MEDIA_LIBRARIES; do
+    dir_var="HOMELAB_MEDIA_$(upper "$lib")_DIR"
+    want "${!dir_var}"
+done
+for lib in $HOMELAB_MEDIA_LIBRARIES; do
+    staging_var="HOMELAB_MEDIA_$(upper "$lib")_STAGING"
+    want "${!staging_var}"
+done
+want "$HOMELAB_MEDIA_FAILED"
+want "$HOMELAB_MEDIA_ROOT/music"      # optional Plex/Jellyfin library
+for module in media-watcher takeout; do
+    want "$HOMELAB_LOG_ROOT/$module"
+done
 
 failures=0
 created=0
 
-# ensure_layout TIER DIR...
+# ensure_layout TIER: create the wanted folders that live on that tier
 ensure_layout() {
-    local tier="$1" base dir mode
-    shift
+    local tier="$1" base path mode
     base="$(tier_path "$tier")"
     if ! is_mount_point "$base"; then
         log_warn "$tier is not mounted at $base; skipping it (nothing created)"
         return 0
     fi
-    for dir in "$@"; do
-        [[ -e "$base/$dir" ]] && continue
+    for path in "${WANT[@]}"; do
+        [[ "$path" == "$base"/* && ! -e "$path" ]] || continue
         mode=755
-        [[ "$dir" == immich/database ]] && mode=700
+        [[ "$path" == "$HOMELAB_PHOTOS_LIBRARY/database" ]] && mode=700
         if ((DRY_RUN)); then
-            log_info "Would create $base/$dir (mode $mode)"
+            log_info "Would create $path (mode $mode)"
             continue
         fi
-        if mkdir -m "$mode" "$base/$dir"; then
+        if mkdir -m "$mode" "$path"; then
             if [[ $EUID -eq 0 && -n "${SUDO_USER:-}" ]]; then
-                chown "$SUDO_USER" "$base/$dir"
+                chown "$SUDO_USER" "$path"
             fi
-            log_info "Created $base/$dir (mode $mode)"
+            log_info "Created $path (mode $mode)"
             created=$((created + 1))
         else
-            log_error "Could not create $base/$dir"
+            log_error "Could not create $path"
             failures=$((failures + 1))
         fi
     done
 }
 
-ensure_layout faststore "${FASTSTORE_DIRS[@]}"
-ensure_layout warmstore "${WARMSTORE_DIRS[@]}"
+for tier in $HOMELAB_TIERS; do
+    ensure_layout "$tier"
+done
 
 if ((DRY_RUN)); then
     log_info "Dry run: nothing was changed"

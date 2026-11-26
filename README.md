@@ -24,7 +24,7 @@ A complete, batteries-included setup for a Mac mini home server featuring **Nati
 ### Storage Architecture
 - **⚡ faststore** (NVMe): High-speed storage for photos → `/Volumes/faststore`
 - **💾 warmstore** (SSD): Media library storage → `/Volumes/warmstore`  
-- **🗄️ coldstore** (HDD): Archive storage → `/Volumes/Archive`
+- **🗄️ coldstore** (HDD): Archive storage → `/Volumes/coldstore`
 
 **Storage Scaling**: 2 disks = mirror, 4 disks = RAID10. Rebuild scripts handle growth.
 

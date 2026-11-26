@@ -135,7 +135,7 @@ For single-URL access in browsers:
 ### Plex Setup
 1. Open http://localhost:32400/web
 2. Sign in with your Plex account
-3. Add media libraries pointing to `/Volumes/Media`
+3. Add media libraries pointing to `/Volumes/warmstore/movies` and `/Volumes/warmstore/tv-shows`
 4. Enable hardware transcoding in Settings → Transcoder
 
 > 📖 **Detailed Guide**: [Plex Setup & Usage](PLEX.md)

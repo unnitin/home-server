@@ -2,11 +2,11 @@
 # Wait until the storage a service needs is mounted, then exit 0.
 # Used by LaunchD jobs before they start a service.
 #
-#   wait_for_storage.sh [TIER...]     TIER: faststore, warmstore (default: both)
+#   wait_for_storage.sh [TIER...]     TIER: a tier in the manifest (default: faststore warmstore)
 #
 # A tier counts as ready only when diskutil reports a volume mounted at it; an
-# empty mount-point folder is not enough (D22). faststore also needs its
-# immich folder. Waits up to WAIT_TIMEOUT seconds (default 300), then exits 1.
+# empty mount-point folder is not enough (D22). The photos tier also needs its
+# photo library folder. Waits up to WAIT_TIMEOUT seconds (default 300), then exits 1.
 
 set -euo pipefail
 
@@ -23,13 +23,13 @@ ready() {
     local tier="$1" path
     path="$(tier_path "$tier")" || return 2
     is_mount_point "$path" || return 1
-    [[ "$tier" != faststore || -d "$path/immich" ]]
+    [[ "$HOMELAB_PHOTOS_LIBRARY" != "$path"/* || -d "$HOMELAB_PHOTOS_LIBRARY" ]]
 }
 
 echo "$(date): Waiting for storage: ${tiers[*]}"
 for tier in "${tiers[@]}"; do
     if ! tier_path "$tier" >/dev/null; then
-        echo "ERROR: unknown storage tier '$tier' (use faststore or warmstore)" >&2
+        echo "ERROR: unknown storage tier '$tier' (known: $HOMELAB_TIERS)" >&2
         exit 2
     fi
     waited=0

@@ -87,3 +87,17 @@ def test_no_numbered_script_calls_in_code():
             if numbered.search(line):
                 hits.append(f"{f}:{n}")
     assert not hits, "calls to retired scripts/NN_*.sh names: " + ", ".join(hits)
+
+
+def test_no_retired_volume_names_in_the_docs():
+    """faststore, warmstore and coldstore only (coldstore was Archive until 2026)."""
+    retired = re.compile(r"/Volumes/(Media|Photos|Archive)\b")
+    hits = []
+    for f in markdown_files():
+        if f == "docs/CLEANUP.md":  # the cleanup spec quotes the old names
+            continue
+        text = (REPO / f).read_text(encoding="utf-8", errors="replace")
+        for n, line in enumerate(text.splitlines(), 1):
+            if retired.search(line):
+                hits.append(f"{f}:{n}")
+    assert not hits, "retired volume names in the docs: " + ", ".join(hits)

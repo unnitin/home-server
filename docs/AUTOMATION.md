@@ -14,7 +14,7 @@ Your home server has **secure automation** installed and active. The system atte
 When your Mac mini reboots, the following happens automatically:
 
 **Immediate (0-30s after login):**
-- 🔧 **Storage service** checks and creates mount points (`/Volumes/warmstore`, `/Volumes/faststore`, `/Volumes/Archive`)
+- 🔧 **Storage service** creates the folder layout on the tiers that are mounted (`/Volumes/faststore`, `/Volumes/warmstore`, `/Volumes/coldstore`); it never creates a mount point
 - 🌐 **Tailscale service** maintains VPN connectivity  
 - 📊 **Update check service** monitors for system updates
 - ⚡ **Power management service** monitors and maintains server power settings
@@ -342,14 +342,12 @@ sudo tailscale down
 
 ### **io.homelab.storage.plist** - Storage Mount Management
 
-**Purpose**: Ensures proper mount point structure for interim configuration
+**Purpose**: Creates the expected folder layout on each mounted storage tier
 
-**What it does**:
-- Waits for `/Volumes/warmstore` to be available
-- Creates `/Volumes/warmstore/Movies` → `/Volumes/warmstore/Movies` symlink
-- Creates `/Volumes/warmstore/TV` → `/Volumes/warmstore/TV Shows` symlink  
-- Creates `/Volumes/faststore` → `/Volumes/warmstore/Photos` symlink
-- Creates `/Volumes/Archive` placeholder directory
+**What it does** (`scripts/storage/setup_direct_mounts.sh`):
+- Works only on tiers that `diskutil` reports as mounted; an empty mount-point folder is skipped (D22)
+- Creates missing folders only, from the manifest's media layout (`movies`, `tv-shows`, `staging/...`) and Immich's and Plex's own folders
+- Never creates a mount point, never uses sudo, and never changes the owner or mode of existing files
 
 **Management**:
 ```bash
@@ -357,7 +355,7 @@ sudo tailscale down
 ./scripts/storage/setup_direct_mounts.sh
 
 # Check mount status
-ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
+ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/coldstore
 ```
 
 ### **io.homelab.plex.plist** - Native Plex Service

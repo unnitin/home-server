@@ -10,23 +10,27 @@ Comprehensive guide for managing storage arrays, expansion, backups, and optimiz
 |------|---------|------------|-------------|------------|---------|
 | **🚀 Faststore** | Photos/high-speed | NVMe RAID | `/Volumes/faststore` | `faststore` | ✅ **Active** |
 | **💾 Warmstore** | Media/good-speed | SSD RAID | `/Volumes/warmstore` | `warmstore` | ✅ **Active** |
-| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/Archive` | `coldstore` | 🟡 *Placeholder directory* |
+| **🗄️ Coldstore** | Archive/capacity | HDD RAID | `/Volumes/coldstore` | `coldstore` | ⚪ Not attached |
 
 ### Current Direct Mount Configuration
 
 **Mount Structure** (no symlinks, direct access):
 ```bash
-/Volumes/faststore/          # NVMe RAID array for photos
-├── photos/                  # Immich photo storage
-├── import/                  # Photo import staging
-└── backup/                  # Photo backups
+/Volumes/faststore/          # NVMe RAID array (case-sensitive APFS)
+├── immich/                  # Immich: library, upload, thumbs, encoded-video, database (0700), backups
+├── plex/                    # Plex metadata, transcoding
+├── jellyfin/                # Jellyfin config
+└── takeout-downloads/       # Google Takeout zips
 
 /Volumes/warmstore/          # SSD RAID array for media (2.0TB)
 ├── movies/                  # 10 folders, ~320GB (Plex Movies)
 ├── tv-shows/               # 25 folders, ~554GB (Plex TV Shows)
-└── music/                  # Plex music library
+├── collections/
+├── music/                  # Plex music library
+├── staging/{movies,tv-shows,collections,failed}/   # the media watcher's inbox
+└── logs/{media-watcher,takeout}/
 
-/Volumes/Archive/            # Archive directory (placeholder)
+/Volumes/coldstore/          # HDD RAID array (not attached yet)
 ```
 
 **Direct Access Benefits**:
@@ -34,6 +38,18 @@ Comprehensive guide for managing storage arrays, expansion, backups, and optimiz
 - **Better mobile app compatibility** - Immich mobile app works properly
 - **Improved performance** - eliminates symlink overhead
 - **Simplified permissions** - no symlink permission issues
+
+### Where the layout comes from
+
+Tier mount points and the media layout live in the manifest, `config/homelab.yaml`. `scripts/storage/setup_direct_mounts.sh` (run at login by `io.homelab.storage`) creates missing folders on mounted tiers only; it never creates a mount point and never changes existing files' owner or mode (D22).
+
+### Renaming coldstore (from `Archive`)
+
+The HDD volume was once named `Archive`. Since 2026-11-26 the tier is `coldstore`, mounted at `/Volumes/coldstore`, as `create_hdd_raid.sh` names it. A disk still named `Archive` mounts under that name, not at `/Volumes/coldstore`, so rename it once it's attached. Renaming keeps the data:
+
+```bash
+diskutil rename Archive coldstore
+```
 
 ### RAID Configurations
 - **2 disks**: Mirror (RAID1) - 50% capacity, 1-disk fault tolerance
@@ -414,7 +430,7 @@ rsync -av --progress /Volumes/faststore/ /Volumes/Backup/PhotoBackup_Q$(date +%q
 /Volumes/faststore/          # Current photos (NVMe)
 /Volumes/warmstore/Current/   # Recently added media (SSD)
 /Volumes/warmstore/Archive/   # Older media (consider moving to coldstore)
-/Volumes/Archive/         # Long-term storage (HDD)
+/Volumes/coldstore/         # Long-term storage (HDD)
 ```
 
 ### Capacity Planning
@@ -458,7 +474,7 @@ export COLD_RAID_NAME="archive_depot"
 # Custom mount points
 export MEDIA_MOUNT="/Volumes/warmstoreServer"
 export PHOTOS_MOUNT="/Volumes/PhotoVault"
-export ARCHIVE_MOUNT="/Volumes/ArchiveDepot"
+export ARCHIVE_MOUNT="/Volumes/coldstoreDepot"
 ```
 
 ### Pre-cleaning Disks
@@ -480,10 +496,9 @@ export RAID_I_UNDERSTAND_DATA_LOSS=1
 # Use external drive as coldstore without RAID
 export COLD_DISKS=""  # Empty to skip RAID creation
 
-# Mount external drive manually
-sudo diskutil mount /dev/disk6s1
-sudo mkdir -p /Volumes/Archive
-sudo mount_apfs /dev/disk6s1 /Volumes/Archive
+# Mount it: diskutil mounts a volume at /Volumes/<its name>, so name it coldstore
+diskutil rename /dev/disk6s1 coldstore   # only if it has another name; keeps the data
+diskutil mount /dev/disk6s1
 ```
 
 ---
