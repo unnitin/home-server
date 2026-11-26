@@ -54,6 +54,16 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 4. Point the Claude Desktop entry at `https://<mini>.<tailnet>.ts.net:8765/mcp`.
 5. Run `bash diagnostics/run_all.sh`, and check that every job in `launchctl list | grep io.homelab` shows exit status 0.
 
+**Deployed 2026-11-26** from `mcp-refactor` at `4ba19a6`, the same tree as the rehearsed `e9c2c66`. `main` follows when #28 merges.
+- The repo is at `~/home-server`. Every plist is rendered from there, and none names `~/Documents`.
+- Loaded: `mcp`, `storage`, `powermgmt`, `plex`, `jellyfin`, `landing`, `updatecheck`.
+- Held with `launchctl disable`, which survives reboots: `colima` and `compose.immich` (Immich already runs from a manual start, and container work waits for its own phase), and `media.watcher` (D21, D26). To release one: `launchctl enable gui/$(id -u)/io.homelab.<job>`, then `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.homelab.<job>.plist`.
+- MCP: `https://<mini>.<tailnet>.ts.net:8765/mcp` answers the MCP client over the tailnet. From the LAN, ports 8765 and 18765 refuse connections. All five serve mappings are tailnet only, and Funnel is off.
+- `run_all.sh`: 11 passed, 3 failed, all known: mounts (D21, coldstore not attached), LaunchD (the storage job exits 1, D27), power (D24, fixed in Phase 1).
+- `data_guard.py verify`: no unexpected changes. The only changes are Jellyfin's live database journal files.
+- Found: D26, D27, D28.
+- Still to do: the reboot check from the acceptance list, and pointing MCP clients at the new URL.
+
 ## Phase 1 — Manifest and structured output
 
 - Add `config/homelab.yaml`, `homelab/config.py` (pydantic validation) and `homelab config render-env` → `config/homelab.env`.
