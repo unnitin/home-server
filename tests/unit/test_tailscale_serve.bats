@@ -116,3 +116,64 @@ EOF
     ! grep -qE "^[^#]*serve reset" "$ROOT/scripts/services/enable_landing.sh" || false
     grep -q "apply_tailscale_serve.sh" "$ROOT/scripts/services/enable_landing.sh"
 }
+
+# enable_landing.sh with a fake landing server (python3) and a fake pkill, so the
+# real landing page on this machine is never touched (D28).
+landing_stubs() {
+    # Only the landing server is faked; the tailscale helpers parse JSON with python3.
+    REAL_PYTHON3=$(PATH="${PATH#"$STUBS:"}" command -v python3)
+    cat > "$STUBS/python3" <<EOS
+#!/usr/bin/env bash
+if [[ "\$1 \$2" == "-m http.server" ]]; then
+    sleep "\${FAKE_SERVER_SECS:-1}"
+    exit "\${FAKE_SERVER_RC:-0}"
+fi
+exec "$REAL_PYTHON3" "\$@"
+EOS
+    printf '#!/usr/bin/env bash\necho "$*" >> "$TS_CALLS.pkill"\nexit 1\n' > "$STUBS/pkill"
+    chmod +x "$STUBS/python3" "$STUBS/pkill"
+    write_state
+    export TEST_MODE=1
+}
+
+@test "enable_landing --foreground stays up until the landing server exits (D28)" {
+    landing_stubs
+    export FAKE_SERVER_SECS=4 FAKE_SERVER_RC=3
+    start=$SECONDS
+    run bash "$ROOT/scripts/services/enable_landing.sh" --foreground
+    [ "$status" -eq 3 ]
+    [ $((SECONDS - start)) -ge 4 ]
+    [[ "$output" == *"landing page server exited (3)"* ]] || false
+}
+
+@test "enable_landing without --foreground returns once the server is started" {
+    landing_stubs
+    export FAKE_SERVER_SECS=8
+    start=$SECONDS
+    # 3>&-: the background server must not hold BATS's fd 3 open
+    run bash -c 'bash "$1" 3>&-' _ "$ROOT/scripts/services/enable_landing.sh"
+    [ "$status" -eq 0 ]
+    [ $((SECONDS - start)) -lt 8 ]
+    [[ "$output" != *"Serving in the foreground"* ]] || false
+}
+
+@test "enable_landing rejects an unknown option" {
+    landing_stubs
+    run bash "$ROOT/scripts/services/enable_landing.sh" --bogus
+    [ "$status" -eq 2 ]
+}
+
+@test "the landing LaunchD job runs enable_landing in the foreground (KeepAlive)" {
+    plist="$ROOT/launchd/io.homelab.landing.plist"
+    [ "$(plutil -extract KeepAlive raw -o - "$plist")" = "true" ]
+    grep -q "enable_landing.sh --foreground" "$plist"
+}
+
+@test "enable_landing stops an old landing server whatever the interpreter is called" {
+    landing_stubs
+    run bash "$ROOT/scripts/services/enable_landing.sh" --foreground
+    pattern=$(sed 's/^-f //' "$TS_CALLS.pkill")
+    echo "python3 -m http.server 8080 --bind 127.0.0.1" | grep -qE "$pattern"
+    echo "/Library/Frameworks/Python.app/Contents/MacOS/Python -m http.server 8080 --bind 127.0.0.1" | grep -qE "$pattern"
+    ! echo "python3 -m http.server 8081" | grep -qE "$pattern" || false
+}
