@@ -45,15 +45,22 @@ for service in "${services[@]}"; do
 done
 echo ""
 
-# Check storage mounts
+# Check storage mounts. A tier counts only when a volume is mounted there: an
+# empty mount-point folder is not storage, and writing to it fills the
+# internal disk (D22). Inline, not storage/lib: core/ depends on nothing.
+is_mounted() {
+    local mp
+    mp=$(diskutil info -plist "$1" 2>/dev/null | plutil -extract MountPoint raw -o - - 2>/dev/null) || return 1
+    [[ "$mp" == "$1" ]]
+}
 echo "💾 Storage Mount Status:"
-MEDIA_OK=false; [[ -d "/Volumes/Media" ]] && MEDIA_OK=true
-PHOTOS_OK=false; [[ -L "/Volumes/Photos" ]] && PHOTOS_OK=true
-ARCHIVE_OK=false; [[ -d "/Volumes/Archive" ]] && ARCHIVE_OK=true
+FASTSTORE_OK=false; is_mounted /Volumes/faststore && FASTSTORE_OK=true
+WARMSTORE_OK=false; is_mounted /Volumes/warmstore && WARMSTORE_OK=true
+ARCHIVE_OK=false; is_mounted /Volumes/Archive && ARCHIVE_OK=true
 
-echo "  Media:   $($MEDIA_OK && echo "✅ Available" || echo "❌ Missing") - /Volumes/Media"
-echo "  Photos:  $($PHOTOS_OK && echo "✅ Available" || echo "❌ Missing") - /Volumes/Photos"
-echo "  Archive: $($ARCHIVE_OK && echo "✅ Available" || echo "❌ Missing") - /Volumes/Archive"
+echo "  faststore: $($FASTSTORE_OK && echo "✅ Mounted" || echo "❌ Not mounted") - /Volumes/faststore (photos, Plex metadata)"
+echo "  warmstore: $($WARMSTORE_OK && echo "✅ Mounted" || echo "❌ Not mounted") - /Volumes/warmstore (movies, TV)"
+echo "  Archive:   $($ARCHIVE_OK && echo "✅ Mounted" || echo "❌ Not mounted") - /Volumes/Archive (coldstore)"
 echo ""
 
 # Check running services
@@ -69,35 +76,16 @@ echo "  Plex:    $($PLEX_OK && echo "✅ Running" || echo "❌ Stopped")"
 echo "  Landing: $($LANDING_OK && echo "✅ Running" || echo "❌ Stopped")"
 echo ""
 
-# Storage Recovery (Automated or Manual)
+# Storage recovery. Never automatic: nothing is created where a volume should
+# be. A tier that isn't mounted needs a person to look at the disks.
 NEED_RECOVERY=false
-STORAGE_FIXED=false
 
-if ! $PHOTOS_OK || ! $ARCHIVE_OK; then
+if ! $FASTSTORE_OK || ! $WARMSTORE_OK || ! $ARCHIVE_OK; then
     NEED_RECOVERY=true
-    if $AUTO_RECOVER; then
-        echo "🔧 EXECUTING STORAGE RECOVERY:"
-        if ! $PHOTOS_OK; then
-            if sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos 2>/dev/null; then
-                echo "  ✅ Photos symlink created"
-                STORAGE_FIXED=true
-            else
-                echo "  ❌ Photos symlink failed (manual required): sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos"
-            fi
-        fi
-        if ! $ARCHIVE_OK; then
-            if sudo mkdir -p /Volumes/Archive 2>/dev/null; then
-                echo "  ✅ Archive directory created"
-                STORAGE_FIXED=true
-            else
-                echo "  ❌ Archive directory failed (manual required): sudo mkdir -p /Volumes/Archive"
-            fi
-        fi
-    else
-        echo "🔧 STORAGE RECOVERY COMMANDS:"
-        ! $PHOTOS_OK && echo "  sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos"
-        ! $ARCHIVE_OK && echo "  sudo mkdir -p /Volumes/Archive"
-    fi
+    echo "🔧 STORAGE: a tier is not mounted (no automatic fix, by design):"
+    echo "  diskutil appleRAID list            # is the RAID set online?"
+    echo "  ./diagnostics/check_raid_status.sh"
+    echo "  See docs/RECOVERY.md and docs/STORAGE.md"
     echo ""
 fi
 
@@ -114,18 +102,14 @@ if ! $COLIMA_OK || ! $DOCKER_OK; then
                 echo "  ❌ Colima start failed (manual required): colima start"
             fi
         fi
-        if docker ps >/dev/null 2>&1; then
-            echo "  🔄 Deploying Docker services..."
-            if "$(dirname "$0")/30_deploy_services.sh" >/dev/null 2>&1; then
-                echo "  ✅ Docker services deployed"
-            else
-                echo "  ❌ Service deployment failed (manual required): ./scripts/services/deploy_containers.sh"
-            fi
-        fi
+        # Containers are never deployed from here: core/ doesn't call services/,
+        # and the old call named a script that no longer exists.
+        echo "  Containers with restart: unless-stopped come back with Docker. Otherwise:"
+        echo "  ./scripts/services/deploy_containers.sh"
     else
         echo "🐳 DOCKER RECOVERY COMMANDS:"
         echo "  colima start"
-        echo "  cd ~/Documents/home-server && ./scripts/services/deploy_containers.sh"
+        echo "  ./scripts/services/deploy_containers.sh"
     fi
     echo ""
 fi
@@ -151,15 +135,16 @@ if ! $LANDING_OK; then
     NEED_RECOVERY=true
     if $AUTO_RECOVER; then
         echo "🌐 EXECUTING LANDING PAGE RECOVERY:"
-        echo "  🔄 Starting landing page and HTTPS..."
-        if "$(dirname "$0")/37_enable_simple_landing.sh" >/dev/null 2>&1; then
-            echo "  ✅ Landing page recovery completed"
+        echo "  🔄 Restarting the io.homelab.landing job..."
+        # Through LaunchD, not services/ (core/ depends on nothing)
+        if launchctl kickstart -k "gui/$(id -u)/io.homelab.landing" 2>/dev/null; then
+            echo "  ✅ Landing job restarted (the page is back in about 2.5 minutes)"
         else
-            echo "  ❌ Landing page failed (manual required): ./scripts/services/enable_landing.sh"
+            echo "  ❌ Landing job restart failed (manual required): ./scripts/services/enable_landing.sh"
         fi
     else
         echo "🌐 LANDING PAGE RECOVERY COMMANDS:"
-        echo "  cd ~/Documents/home-server && ./scripts/services/enable_landing.sh"
+        echo "  ./scripts/services/enable_landing.sh"
     fi
     echo ""
 fi

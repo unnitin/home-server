@@ -9,7 +9,8 @@ for d in "${DISKS[@]}"; do
 done
 
 NVME_RAID_NAME="${NVME_RAID_NAME:-faststore}"
-PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/Photos}"
+# diskutil mounts the volume at /Volumes/<name>; the default just says so (D10)
+PHOTOS_MOUNT="${PHOTOS_MOUNT:-/Volumes/$NVME_RAID_NAME}"
 
 delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$NVME_RAID_NAME"

@@ -12,7 +12,8 @@ case "$PORT" in
     2283) service_name="Immich Photo Service" ;;
     32400) service_name="Plex Media Server" ;;
     8096) service_name="Jellyfin Media Server" ;;
-    8443) service_name="Caddy Reverse Proxy" ;;
+    8765) service_name="MCP server (tailnet, via tailscale serve)" ;;
+    18765) service_name="MCP server (loopback)" ;;
     22) service_name="SSH" ;;
     80) service_name="HTTP" ;;
     443) service_name="HTTPS" ;;
@@ -34,7 +35,7 @@ if nc -z "$HOST" "$PORT" 2>/dev/null; then
 
     # For HTTP services, try a basic HTTP probe
     case "$PORT" in
-        2283|32400|8443|80|443)
+        2283|32400|8096|80|443)
             if [[ "$HOST" == "localhost" || "$HOST" == "127.0.0.1" ]]; then
                 if [[ "$PORT" == "443" ]]; then
                     # HTTPS port
@@ -73,10 +74,10 @@ else
             echo "     - Check if Plex is running: ./diagnostics/check_plex_native.sh"
             echo "     - Start Plex: open -a 'Plex Media Server'"
             ;;
-        8443)
+        8096)
             echo "  💡 Suggestions:"
-            echo "     - Check if Caddy is running: brew services list | grep caddy"
-            echo "     - Start Caddy: brew services start caddy"
+            echo "     - Check Jellyfin: ./diagnostics/check_jellyfin.sh"
+            echo "     - Start Jellyfin: ./scripts/services/start_jellyfin_safe.sh"
             ;;
     esac
 fi

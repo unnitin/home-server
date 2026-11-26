@@ -54,7 +54,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 4. Point the Claude Desktop entry at `https://<mini>.<tailnet>.ts.net:8765/mcp`.
 5. Run `bash diagnostics/run_all.sh`, and check that every job in `launchctl list | grep io.homelab` shows exit status 0.
 
-**Deployed 2026-11-26** from `mcp-refactor` at `4ba19a6`, the same tree as the rehearsed `e9c2c66`. `main` follows when #28 merges.
+**Deployed 2026-11-26** from `mcp-refactor` at `4ba19a6`, the same tree as the rehearsed `e9c2c66`, then the D28 fixes (#29, #30). The deployed commit is tagged `deploy-2026-11-26`, and the mini's checkout sits on a local `deployed` branch, so merges into `mcp-refactor` change nothing there until the next deploy. `mcp-refactor` stays the integration branch; draft #28 merges it into `main` when you decide.
 - The repo is at `~/home-server`. Every plist is rendered from there, and none names `~/Documents`.
 - Loaded: `mcp`, `storage`, `powermgmt`, `plex`, `jellyfin`, `landing`, `updatecheck`.
 - Held with `launchctl disable`, which survives reboots: `colima` and `compose.immich` (Immich already runs from a manual start, and container work waits for its own phase), and `media.watcher` (D21, D26). To release one: `launchctl enable gui/$(id -u)/io.homelab.<job>`, then `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.homelab.<job>.plist`.
@@ -76,7 +76,8 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 **Progress** (2026-11-24):
 - Built: the diagnostics JSON mode (`feature/p1-diag-json`), which also fixed D24.
 - Built: `system_overview`, `health_check(component)` and the result envelope, with the old tools kept as deprecated text tools (`feature/p1-mcp-envelope`).
-- Next: the manifest, `environment.sh`, the doc hygiene pass and the CLAUDE.md update.
+- Built: the doc hygiene pass (`feature/p1-doc-hygiene`). It retired Caddy, `/Volumes/Media`, `/Volumes/Photos` and the numbered script names, added a test that every script path in the docs exists, and fixed D25. Three calls in code to numbered scripts that no longer exist (`health_check.sh --auto-recover`, `ensure_power_settings.sh`) now print the command or restart the LaunchD job, and a test keeps numbered names out of code.
+- Next: the manifest, `environment.sh` and the CLAUDE.md update. Two decisions are needed first: the media path form and the Python packaging.
 
 **Acceptance:** `grep -rn "/Volumes/Media\|/Volumes/Photos" scripts diagnostics` returns nothing. Every diagnostic emits valid JSON in JSON mode (schema test). `system_overview` returns under 2 KB on a healthy box.
 

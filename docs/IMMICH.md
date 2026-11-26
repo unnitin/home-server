@@ -24,7 +24,7 @@ cp .env.example .env
 ${EDITOR:-nano} .env
 
 # Deploy all services
-./scripts/30_deploy_services.sh
+./scripts/services/deploy_containers.sh
 ```
 
 ### What Gets Deployed
@@ -170,7 +170,7 @@ export IMMICH_API_KEY=your_api_key_here
 
 **Basic import** (extract only):
 ```bash
-./scripts/70_takeout_to_immich.sh ~/Downloads/takeout-photos.zip
+./scripts/takeout/enhanced_takeout_import.sh ~/Downloads/takeout-photos.zip
 ```
 
 **Full import** (extract + upload):
@@ -179,7 +179,7 @@ export IMMICH_API_KEY=your_api_key_here
 export IMMICH_SERVER=http://localhost:2283
 export IMMICH_API_KEY=your_api_key_here
 
-./scripts/70_takeout_to_immich.sh ~/Downloads/takeout-photos.zip
+./scripts/takeout/enhanced_takeout_import.sh ~/Downloads/takeout-photos.zip
 ```
 
 ### Import Process Details
@@ -207,8 +207,8 @@ export IMMICH_API_KEY=your_api_key_here
 **Multiple archives**:
 ```bash
 # Process each archive separately
-./scripts/70_takeout_to_immich.sh ~/Downloads/takeout-001.zip
-./scripts/70_takeout_to_immich.sh ~/Downloads/takeout-002.zip
+./scripts/takeout/enhanced_takeout_import.sh ~/Downloads/takeout-001.zip
+./scripts/takeout/enhanced_takeout_import.sh ~/Downloads/takeout-002.zip
 ```
 
 **Monitor progress**:

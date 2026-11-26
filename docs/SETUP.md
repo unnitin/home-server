@@ -81,18 +81,18 @@ export COLD_DISKS="disk6"               # 1 HDD for archive (coldstore)
 **Rebuild specific arrays**:
 ```bash
 # Rebuild warmstore (SSD array for media)
-./scripts/09_rebuild_storage.sh warmstore
+./scripts/storage/rebuild_storage.sh warmstore
 
 # Rebuild faststore (NVMe array for photos)  
-./scripts/09_rebuild_storage.sh faststore
+./scripts/storage/rebuild_storage.sh faststore
 
 # Rebuild coldstore (HDD array for archive)
-./scripts/09_rebuild_storage.sh coldstore
+./scripts/storage/rebuild_storage.sh coldstore
 ```
 
 **Format and mount all arrays**:
 ```bash
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 ### Option B: Manual Step-by-Step
@@ -100,28 +100,28 @@ export COLD_DISKS="disk6"               # 1 HDD for archive (coldstore)
 **For SSD array (warmstore)**:
 ```bash
 # Create RAID array
-./scripts/10_create_raid10_ssd.sh
+./scripts/storage/create_ssd_raid.sh
 
 # Format and mount
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 **For NVMe array (faststore)**:
 ```bash
 # Create RAID array
-./scripts/11_create_raid10_nvme.sh
+./scripts/storage/create_nvme_raid.sh
 
 # Format and mount  
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 **For HDD array (coldstore)**:
 ```bash
 # Create RAID array
-./scripts/13_create_raid_coldstore.sh
+./scripts/storage/create_hdd_raid.sh
 
 # Format and mount
-./scripts/12_format_and_mount_raids.sh
+./scripts/storage/format_and_mount.sh
 ```
 
 ### What Gets Created
@@ -161,12 +161,12 @@ Installs and configures Colima (lightweight Docker Desktop alternative) to run I
 
 **Install Colima and Docker**:
 ```bash
-./scripts/20_install_colima_docker.sh
+./scripts/infrastructure/install_docker.sh
 ```
 
 **Start Colima VM**:
 ```bash
-./scripts/21_start_colima.sh
+./scripts/infrastructure/start_docker.sh
 ```
 
 ### What Gets Installed
@@ -224,7 +224,7 @@ IMMICH_DB_PASSWORD=your_secure_password_here
 
 **Deploy all Immich services**:
 ```bash
-./scripts/30_deploy_services.sh
+./scripts/services/deploy_containers.sh
 ```
 
 ### What Gets Deployed
@@ -277,7 +277,7 @@ Installs Plex Media Server natively (not in Docker) for optimal performance and 
 
 **Install Plex**:
 ```bash
-./scripts/31_install_native_plex.sh
+./scripts/services/install_plex.sh
 ```
 
 ### What Gets Installed
@@ -382,7 +382,7 @@ Sets up Tailscale mesh VPN for secure remote access to your services from anywhe
 
 **Install Tailscale**:
 ```bash
-./scripts/90_install_tailscale.sh
+./scripts/infrastructure/install_tailscale.sh
 ```
 
 **Connect to your network**:
@@ -446,7 +446,7 @@ Sets up simple landing page with direct HTTPS access to all services.
 
 **Enable simple landing page**:
 ```bash
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 ```
 
 ### What Gets Configured
@@ -528,7 +528,7 @@ pgrep -f "Plex Media Server" | xargs ps -p
 ### Regular Health Checks
 ```bash
 # Weekly (automated via LaunchD)
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Monthly
 ./diagnostics/collect_logs.sh
@@ -538,10 +538,10 @@ pgrep -f "Plex Media Server" | xargs ps -p
 ### Manual Updates
 ```bash
 # Check for updates
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Apply updates when ready
-./scripts/80_check_updates.sh --apply
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ### Backup Procedures

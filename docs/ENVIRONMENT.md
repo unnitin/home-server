@@ -145,15 +145,11 @@ sudo tailscale up --accept-dns=true
 sudo tailscale up --accept-dns=true --advertise-exit-node --ssh
 ```
 
-**HTTPS serving** (after setup):
+**HTTPS serving** (after setup): every tailnet mapping is listed once in `config/tailscale_serve.txt` (443 landing page, 2283 Immich, 32400 Plex, 8096 Jellyfin, 8765 MCP). Apply it, adding whatever is missing without touching the rest:
 ```bash
-# Direct service access
-sudo tailscale serve --https=443   http://localhost:2283    # Immich
-sudo tailscale serve --https=32400 http://localhost:32400   # Plex
-
-# With reverse proxy (replaces direct Immich access)
-sudo tailscale serve --https=443   http://localhost:8443    # Caddy proxy
+./scripts/infrastructure/apply_tailscale_serve.sh
 ```
+There is no reverse proxy: each service has its own HTTPS port on the tailnet.
 
 ---
 

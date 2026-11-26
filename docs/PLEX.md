@@ -12,7 +12,7 @@ Plex Media Server runs **natively** on macOS (not in Docker) for optimal perform
 
 ### Automated Installation
 ```bash
-./scripts/31_install_native_plex.sh
+./scripts/services/install_plex.sh
 ```
 
 ### What Gets Installed
@@ -124,11 +124,7 @@ sudo tailscale serve --https=32400 http://localhost:32400
 - **Web**: `https://your-macmini.your-tailnet.ts.net:32400`
 - **Mobile apps**: Use server IP `your-macmini.your-tailnet.ts.net:32400`
 
-### Reverse Proxy Access
-
-**With Caddy reverse proxy enabled**:
-- **Web**: `https://your-macmini.your-tailnet.ts.net/plex`
-- **Direct link**: `https://your-macmini.your-tailnet.ts.net/plex/web`
+There is no reverse proxy (Caddy was removed): Plex has its own tailnet port, set in `config/tailscale_serve.txt` and applied by `scripts/infrastructure/apply_tailscale_serve.sh`.
 
 ### Plex Relay (Fallback)
 
