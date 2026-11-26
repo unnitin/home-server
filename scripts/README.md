@@ -10,7 +10,7 @@ The scripts are organized into 6 functional modules with layered dependencies:
 
 ```
 scripts/
-├── core/           # 🔧 System bootstrap & environment (4 scripts)
+├── core/           # 🔧 System bootstrap & environment (5 scripts)
 ├── storage/        # 💾 RAID & storage management (10 scripts + lib)
 ├── infrastructure/ # 🏗️ Docker, networking, VPN (7 scripts + lib)
 ├── services/       # 🚀 Application deployment (10 scripts)
@@ -28,6 +28,7 @@ scripts/
 ### **🔧 Core Module**
 | Script | Purpose | Used By |
 |--------|---------|---------|
+| [`core/environment.sh`](core/README.md#environmentsh) | Shared configuration: every `HOMELAB_*` value from the manifest | Sourced by every module |
 | [`core/fix_permissions.sh`](core/README.md#fix_permissionssh) | Fix script permissions | Manual maintenance |
 | [`core/ensure_power_settings.sh`](core/README.md#ensure_power_settingssh) | Monitor power settings | LaunchD io.homelab.powermgmt |
 | [`core/health_check.sh`](core/README.md#health_checksh) | System health validation | Manual troubleshooting |

@@ -1,7 +1,8 @@
-# Tailnet HTTPS mappings (tailscale serve). The single list of what this machine
-# publishes to the tailnet, applied by scripts/infrastructure/apply_tailscale_serve.sh
-# and verified by diagnostics/check_remote_access.sh. Moves into config/homelab.yaml
-# in Phase 1 (docs/mcp-refactor/02-architecture.md).
+# Tailnet HTTPS mappings (tailscale serve). Generated from config/homelab.yaml
+# (remote_access.tailscale_serve) by `python3 -m homelab config render`: edit
+# the manifest, not this file. Applied by
+# scripts/infrastructure/apply_tailscale_serve.sh and verified by
+# diagnostics/check_remote_access.sh.
 #
 # Serve only, never Funnel: these are reachable from tailnet devices, not the internet.
 #

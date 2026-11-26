@@ -1,0 +1,108 @@
+# The home server's single source of truth: storage tiers, services, ports,
+# LaunchD labels, health endpoints, tailnet mappings and media paths.
+# Design: docs/mcp-refactor/02-architecture.md ("The manifest").
+#
+# No secrets here. Per-machine overrides go in config/homelab.local.yaml
+# (gitignored), merged over this file.
+#
+# After editing, regenerate the files bash reads and commit them with it:
+#     python3 -m homelab config render
+# That rewrites config/homelab.env and config/tailscale_serve.txt (and
+# config/homelab.local.env when overrides exist). A test fails while they're stale.
+
+host:
+  name: mini                 # display name only
+  repo_root: auto            # wherever this checkout lives; never a /Users/... literal
+
+storage:
+  state_dir: "~/Library/Application Support/homelab"   # internal disk, survives a RAID failure
+  log_root: /Volumes/warmstore/logs                     # module logs: <log_root>/<module>/
+  launchd_log_dir: /tmp                                 # LaunchD job output, readable before warmstore mounts
+  tiers:
+    faststore: { mount: /Volumes/faststore, media: nvme, raid: mirror, warn_pct: 80, crit_pct: 90, use: "Photos (Immich), Plex and Jellyfin data" }
+    warmstore: { mount: /Volumes/warmstore, media: ssd, raid: mirror, warn_pct: 85, crit_pct: 95, use: "Movies and TV, logs" }
+    coldstore: { mount: /Volumes/coldstore, media: hdd, raid: mirror, use: "Cold archive" }
+
+# One entry per LaunchD job or app. boot_order (below) is the order the jobs are
+# installed and started in.
+services:
+  storage:
+    kind: job
+    launchd: io.homelab.storage
+  powermgmt:
+    kind: job
+    launchd: io.homelab.powermgmt
+  colima:
+    kind: runtime
+    launchd: io.homelab.colima
+    health: { cmd: [docker, info] }
+  immich:
+    kind: compose
+    compose_dir: services/immich
+    version_env: IMMICH_VERSION          # pinned in services/immich/.env
+    ports: [2283]
+    health: { http: "http://localhost:2283/api/server/ping", expect: 200 }
+    depends_on: [colima, faststore]
+    launchd: io.homelab.compose.immich
+  plex:
+    kind: native_app
+    app: Plex Media Server
+    ports: [32400]
+    health: { http: "http://localhost:32400/identity", expect: 200 }
+    depends_on: [faststore, warmstore]
+    launchd: io.homelab.plex
+  jellyfin:
+    kind: native_app
+    app: Jellyfin
+    ports: [8096]
+    health: { http: "http://localhost:8096/health", expect: 200 }
+    depends_on: [faststore, warmstore]
+    launchd: io.homelab.jellyfin
+  landing:
+    kind: process
+    ports: [8080]
+    health: { http: "http://127.0.0.1:8080/", expect: 200 }
+    launchd: io.homelab.landing
+  media_watcher:
+    kind: process
+    depends_on: [warmstore]
+    launchd: io.homelab.media.watcher
+  tailscale:
+    kind: daemon
+    optional: true                       # only with Homebrew tailscaled; the Tailscale app runs its own
+    launchd: io.homelab.tailscale
+  updatecheck:
+    kind: job
+    launchd: io.homelab.updatecheck
+  mcp:
+    kind: process
+    listen: "127.0.0.1:18765"            # loopback only; the tailnet reaches it on :8765 (remote_access)
+    launchd: io.homelab.mcp
+
+boot_order: [storage, powermgmt, colima, immich, plex, jellyfin, landing, media_watcher, tailscale, updatecheck, mcp]
+
+remote_access:
+  # The ONLY list of tailnet mappings (D17). Serve, never Funnel: reachable from
+  # tailnet devices, not the internet.
+  tailscale_serve:
+    - { https: 443,   target: "http://localhost:8080",  service: landing }
+    - { https: 2283,  target: "http://localhost:2283",  service: immich }
+    - { https: 32400, target: "http://localhost:32400", service: plex }
+    - { https: 8096,  target: "http://localhost:8096",  service: jellyfin }
+    - { https: 8765,  target: "http://127.0.0.1:18765", service: mcp }
+
+# ONE layout for media (D10): kebab-case, the folders Plex and Jellyfin read.
+media:
+  tier: warmstore
+  staging: staging
+  failed: staging/failed
+  libraries:
+    movies:      { dir: movies,      staging: movies }
+    tv:          { dir: tv-shows,    staging: tv-shows }
+    collections: { dir: collections, staging: collections }
+
+photos:
+  tier: faststore
+  library: immich                        # Immich's upload location
+  takeout_downloads: takeout-downloads   # Google Takeout zips
+  takeout_work_dir: tmp/takeout-processed
