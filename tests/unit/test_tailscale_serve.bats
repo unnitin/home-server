@@ -130,8 +130,17 @@ if [[ "\$1 \$2" == "-m http.server" ]]; then
 fi
 exec "$REAL_PYTHON3" "\$@"
 EOS
-    printf '#!/usr/bin/env bash\necho "$*" >> "$TS_CALLS.pkill"\nexit 1\n' > "$STUBS/pkill"
-    chmod +x "$STUBS/python3" "$STUBS/pkill"
+    # lsof reports $FAKE_LISTENER_PID (if set) on :8080; ps reports $FAKE_LISTENER_CMD for it
+    cat > "$STUBS/lsof" <<'EOS'
+#!/usr/bin/env bash
+[[ -n "${FAKE_LISTENER_PID:-}" ]] && echo "$FAKE_LISTENER_PID"
+exit 0
+EOS
+    cat > "$STUBS/ps" <<'EOS'
+#!/usr/bin/env bash
+echo "${FAKE_LISTENER_CMD:-}"
+EOS
+    chmod +x "$STUBS/python3" "$STUBS/lsof" "$STUBS/ps"
     write_state
     export TEST_MODE=1
 }
@@ -169,11 +178,29 @@ EOS
     grep -q "enable_landing.sh --foreground" "$plist"
 }
 
-@test "enable_landing stops an old landing server whatever the interpreter is called" {
+@test "enable_landing stops the landing server listening on :8080, whatever the interpreter (D28)" {
     landing_stubs
-    run bash "$ROOT/scripts/services/enable_landing.sh" --foreground
-    pattern=$(sed 's/^-f //' "$TS_CALLS.pkill")
-    echo "python3 -m http.server 8080 --bind 127.0.0.1" | grep -qE "$pattern"
-    echo "/Library/Frameworks/Python.app/Contents/MacOS/Python -m http.server 8080 --bind 127.0.0.1" | grep -qE "$pattern"
-    ! echo "python3 -m http.server 8081" | grep -qE "$pattern" || false
+    sleep 30 &
+    export FAKE_LISTENER_PID=$! \
+        FAKE_LISTENER_CMD="/Library/Frameworks/Python.app/Contents/MacOS/Python -m http.server 8080 --bind 127.0.0.1"
+    run bash -c 'bash "$1" 3>&-' _ "$ROOT/scripts/services/enable_landing.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Stopping the previous landing server (PID $FAKE_LISTENER_PID)"* ]] || false
+    ! kill -0 "$FAKE_LISTENER_PID" 2>/dev/null || false
+}
+
+@test "enable_landing leaves a different program on :8080 alone" {
+    landing_stubs
+    sleep 30 &
+    export FAKE_LISTENER_PID=$! FAKE_LISTENER_CMD="/opt/homebrew/bin/nginx -g daemon off;"
+    run bash -c 'bash "$1" 3>&-' _ "$ROOT/scripts/services/enable_landing.sh"
+    kill -0 "$FAKE_LISTENER_PID"
+    kill "$FAKE_LISTENER_PID"
+    wait "$FAKE_LISTENER_PID" 2>/dev/null || true
+    [[ "$output" != *"Stopping the previous landing server"* ]] || false
+}
+
+@test "enable_landing never matches command lines that only mention the server" {
+    ! grep -qE "^[^#]*pkill" "$ROOT/scripts/services/enable_landing.sh" || false
+    grep -q "sTCP:LISTEN" "$ROOT/scripts/services/enable_landing.sh"
 }

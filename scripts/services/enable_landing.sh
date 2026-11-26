@@ -38,9 +38,17 @@ TAILSCALE_HOSTNAME="${TAILSCALE_HOSTNAME:-your-device.your-tailnet.ts.net}"
 echo "Tailscale hostname: $TAILSCALE_HOSTNAME"
 
 echo "Restarting landing page server on 127.0.0.1:8080..."
-# Match any interpreter: a server started by hand may show as ".../Python -m
-# http.server 8080", which a "python3 -m ..." pattern misses (D28).
-pkill -f "http[.]server 8080" 2>/dev/null || true
+# Stop the landing server already listening on :8080, whatever its interpreter is
+# called (a server started by hand may show as ".../Python -m http.server 8080").
+# Only the listener is considered: a pattern match on command lines would also
+# kill any shell or editor that merely mentions it (D28).
+for pid in $(lsof -nP -tiTCP:8080 -sTCP:LISTEN 2>/dev/null || true); do
+    if ps -o command= -p "$pid" 2>/dev/null | grep -q -- "-m http[.]server 8080"; then
+        echo "Stopping the previous landing server (PID $pid)"
+        kill "$pid" 2>/dev/null || true
+        sleep 1
+    fi
+done
 cd "$REPO_ROOT/web"
 nohup python3 -m http.server 8080 --bind 127.0.0.1 > /dev/null 2>&1 &
 SERVER_PID=$!
