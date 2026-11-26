@@ -72,3 +72,18 @@ def test_the_path_pattern_finds_paths():
         "scripts/core/health_check.sh",
         "diagnostics/run_all.sh",
     ]
+
+
+def test_no_numbered_script_calls_in_code():
+    """Scripts lost their NN_ prefixes; a call to an old name fails at run time."""
+    numbered = re.compile(r"\b[0-9]{2}_[a-z_]+\.sh\b")
+    hits = []
+    code = tracked("scripts/*", "diagnostics/*", "launchd/*", "homelab_mcp/*")
+    for f in code:
+        if f == "setup/setup_flags.sh":  # deprecated; never touched
+            continue
+        text = (REPO / f).read_text(encoding="utf-8", errors="replace")
+        for n, line in enumerate(text.splitlines(), 1):
+            if numbered.search(line):
+                hits.append(f"{f}:{n}")
+    assert not hits, "calls to retired scripts/NN_*.sh names: " + ", ".join(hits)

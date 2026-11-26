@@ -102,18 +102,14 @@ if ! $COLIMA_OK || ! $DOCKER_OK; then
                 echo "  ❌ Colima start failed (manual required): colima start"
             fi
         fi
-        if docker ps >/dev/null 2>&1; then
-            echo "  🔄 Deploying Docker services..."
-            if "$(dirname "$0")/30_deploy_services.sh" >/dev/null 2>&1; then
-                echo "  ✅ Docker services deployed"
-            else
-                echo "  ❌ Service deployment failed (manual required): ./scripts/services/deploy_containers.sh"
-            fi
-        fi
+        # Containers are never deployed from here: core/ doesn't call services/,
+        # and the old call named a script that no longer exists.
+        echo "  Containers with restart: unless-stopped come back with Docker. Otherwise:"
+        echo "  ./scripts/services/deploy_containers.sh"
     else
         echo "🐳 DOCKER RECOVERY COMMANDS:"
         echo "  colima start"
-        echo "  cd ~/Documents/home-server && ./scripts/services/deploy_containers.sh"
+        echo "  ./scripts/services/deploy_containers.sh"
     fi
     echo ""
 fi
@@ -139,15 +135,16 @@ if ! $LANDING_OK; then
     NEED_RECOVERY=true
     if $AUTO_RECOVER; then
         echo "🌐 EXECUTING LANDING PAGE RECOVERY:"
-        echo "  🔄 Starting landing page and HTTPS..."
-        if "$(dirname "$0")/37_enable_simple_landing.sh" >/dev/null 2>&1; then
-            echo "  ✅ Landing page recovery completed"
+        echo "  🔄 Restarting the io.homelab.landing job..."
+        # Through LaunchD, not services/ (core/ depends on nothing)
+        if launchctl kickstart -k "gui/$(id -u)/io.homelab.landing" 2>/dev/null; then
+            echo "  ✅ Landing job restarted (the page is back in about 2.5 minutes)"
         else
-            echo "  ❌ Landing page failed (manual required): ./scripts/services/enable_landing.sh"
+            echo "  ❌ Landing job restart failed (manual required): ./scripts/services/enable_landing.sh"
         fi
     else
         echo "🌐 LANDING PAGE RECOVERY COMMANDS:"
-        echo "  cd ~/Documents/home-server && ./scripts/services/enable_landing.sh"
+        echo "  ./scripts/services/enable_landing.sh"
     fi
     echo ""
 fi

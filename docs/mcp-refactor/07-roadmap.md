@@ -66,7 +66,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 **Progress** (2026-11-24):
 - Built: the diagnostics JSON mode (`feature/p1-diag-json`), which also fixed D24.
 - Built: `system_overview`, `health_check(component)` and the result envelope, with the old tools kept as deprecated text tools (`feature/p1-mcp-envelope`).
-- Built: the doc hygiene pass (`feature/p1-doc-hygiene`). It retired Caddy, `/Volumes/Media`, `/Volumes/Photos` and the numbered script names, added a test that every script path in the docs exists, and fixed D25.
+- Built: the doc hygiene pass (`feature/p1-doc-hygiene`). It retired Caddy, `/Volumes/Media`, `/Volumes/Photos` and the numbered script names, added a test that every script path in the docs exists, and fixed D25. Three calls in code to numbered scripts that no longer exist (`health_check.sh --auto-recover`, `ensure_power_settings.sh`) now print the command or restart the LaunchD job, and a test keeps numbered names out of code.
 - Next: the manifest, `environment.sh` and the CLAUDE.md update. Two decisions are needed first: the media path form and the Python packaging.
 
 **Acceptance:** `grep -rn "/Volumes/Media\|/Volumes/Photos" scripts diagnostics` returns nothing. Every diagnostic emits valid JSON in JSON mode (schema test). `system_overview` returns under 2 KB on a healthy box.
