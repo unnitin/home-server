@@ -4,6 +4,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=diag_lib.sh
+source "$SCRIPT_DIR/diag_lib.sh" # for DIAG_FORMAT=json; this script keeps its own text format
+
 # Expected values for headless server operation
 EXPECTED_SLEEP=0
 EXPECTED_DISPLAYSLEEP=1
@@ -30,24 +34,31 @@ print_status() {
     local status=$1
     local message=$2
     case $status in
+        # Counters use $((...)): ((n++)) on 0 returns 1, and under set -e that
+        # ended the script after its first PASS (D24).
         "PASS")
             echo -e "${GREEN}✅ PASS${NC} - $message"
-            ((check_passed++))
+            check_passed=$((check_passed + 1))
+            diag_record ok "$message"
             ;;
         "FAIL")
             echo -e "${RED}❌ FAIL${NC} - $message"
-            ((check_failed++))
+            check_failed=$((check_failed + 1))
+            diag_record fail "$message"
             ;;
         "WARN")
             echo -e "${YELLOW}⚠️  WARN${NC} - $message"
-            ((check_warnings++))
+            check_warnings=$((check_warnings + 1))
+            diag_record warn "$message"
             ;;
     esac
 }
 
 get_power_setting() {
     local setting=$1
-    pmset -g | grep "^[[:space:]]*${setting}[[:space:]]" | awk '{print $2}' | head -1
+    # awk, not grep: a setting this Mac doesn't have (sms on Apple silicon)
+    # must print nothing, not fail the pipeline and end the script (D24).
+    pmset -g | awk -v s="$setting" '$1 == s && !found { print $2; found = 1 }'
 }
 
 echo "🔍 Mac Mini HomeServer - Power Management Diagnostics"
@@ -193,13 +204,13 @@ else
     echo -e "${RED}🚨 ATTENTION NEEDED${NC} - Critical power settings require configuration"
     echo ""
     echo "🔧 Quick fix command:"
-    echo "   sudo ./scripts/92_configure_power.sh"
+    echo "   ./scripts/core/ensure_power_settings.sh"
     exit_code=1
 fi
 
 echo ""
 echo "💡 For complete power management setup:"
-echo "   sudo ./scripts/92_configure_power.sh"
+echo "   ./scripts/core/ensure_power_settings.sh"
 echo ""
 echo "🔍 To monitor power settings:"
 echo "   pmset -g"

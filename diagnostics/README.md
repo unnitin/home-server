@@ -10,6 +10,30 @@ These helper scripts let you quickly verify the health of your home server compo
 ./diagnostics/run_all.sh
 ```
 
+## Machine-readable output (JSON mode)
+
+Every diagnostic can report as JSON Lines for the MCP server and other tools:
+
+```bash
+DIAG_FORMAT=json ./diagnostics/check_immich.sh
+DIAG_FORMAT=json ./diagnostics/run_all.sh      # every diagnostic, one stream
+```
+
+stdout then carries one JSON object per check, and the stream ends with a summary object. Everything else the script prints goes to stderr.
+
+```json
+{"type":"check","id":"immich.main.1","component":"immich","section":"","status":"ok","message":"HTTP 200: http://localhost:2283/api/server/ping"}
+{"type":"summary","component":"immich","status":"ok","summary":"immich: 1 passed, 0 warnings, 0 failures","passed":1,"warnings":0,"failures":0,"exit_code":0}
+```
+
+- `status` on a check: `ok`, `warn` or `fail`.
+- `status` on a summary: `ok`, `warn`, `fail`, `error` (the script exited non-zero without recording a failure) or `unknown` (no checks ran).
+- `component` matches the MCP `health_check` components.
+- `run_all.sh` streams each diagnostic's records and ends with its own summary (component `all`).
+- `full_summary.sh` hands JSON mode over to `run_all.sh`.
+
+Human output is unchanged when `DIAG_FORMAT` is unset.
+
 ## 📋 Individual Diagnostic Scripts
 
 ### **check_raid_status.sh** - Storage Health

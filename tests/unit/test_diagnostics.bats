@@ -64,6 +64,7 @@ EOF
     run bash -c 'eval "$(sed -n "/^run_diagnostic()/,/^}/p" "$1/diagnostics/run_all.sh")"
         SCRIPT_DIR="$2"; SCRIPT_RESULTS=(); YELLOW=""; NC=""
         warn() { echo "WARN - $*"; }
+        diag_record() { :; }
         set -e
         run_diagnostic "fails.sh" "A failing check"
         run_diagnostic "passes.sh" "A passing check"

@@ -27,8 +27,10 @@ run_diagnostic() {
     if [[ -x "$SCRIPT_DIR/$script" ]]; then
         if "$SCRIPT_DIR/$script"; then
             SCRIPT_RESULTS+=("✅ $description")
+            diag_record ok "$description"
         else
             SCRIPT_RESULTS+=("❌ $description")
+            diag_record fail "$description"
         fi
     else
         warn "Script not found or not executable: $script"
