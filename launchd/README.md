@@ -81,7 +81,7 @@ Monitors Staging directories for new media files and automatically processes the
 **Purpose**: Automated media file organization for Plex and Jellyfin Media Servers
 
 **Features**:
-- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Real-time monitoring of `/Volumes/warmstore/staging/{movies,tv-shows,collections}/`
 - Automatic file processing using Plex naming standards
 - Preserves folder structure for Collections
 - Graceful error handling with failed files moved to staging/failed/
