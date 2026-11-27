@@ -69,11 +69,26 @@ def _order(marker: Path) -> list[str]:
     return [line.split()[0] for line in marker.read_text().splitlines()]
 
 
+def _until(test, timeout: float = 15.0) -> bool:
+    """Poll: supervisors take a moment to start, longer on a busy CI runner."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if test():
+            return True
+        time.sleep(0.1)
+    return False
+
+
+def _states(many) -> list[str]:
+    return sorted(jobs.get(j["id"])["state"] for j in many)
+
+
 def test_two_jobs_on_one_lock_run_one_after_the_other(tmp_path):
     marker = tmp_path / "ran.txt"
-    first = submit(steps(secs=1.5, marker=marker), lock="media")
+    first = submit(steps(secs=3, marker=marker), lock="media")
+    assert _until(lambda: jobs.get(first["id"])["state"] == "running")
     second = submit(steps(secs=0, marker=marker), lock="media")
-    time.sleep(1.0)
+    time.sleep(1.5)  # long enough for its supervisor to start and wait
     assert jobs.get(second["id"])["state"] == "queued"
     assert jobs.wait(first["id"])["state"] == "done"
     assert jobs.wait(second["id"])["state"] == "done"
@@ -82,17 +97,18 @@ def test_two_jobs_on_one_lock_run_one_after_the_other(tmp_path):
 
 def test_jobs_on_different_locks_overlap(tmp_path):
     marker = tmp_path / "ran.txt"
-    a = submit(steps(secs=1.5, marker=marker), lock="a")
-    b = submit(steps(secs=1.5, marker=marker), lock="b")
+    a = submit(steps(secs=4, marker=marker), lock="a")
+    b = submit(steps(secs=4, marker=marker), lock="b")
+    assert _until(lambda: _states([a, b]) == ["running", "running"])
     assert jobs.wait(a["id"])["state"] == jobs.wait(b["id"])["state"] == "done"
     assert _order(marker) == ["start", "start", "end", "end"]
 
 
 def test_at_most_max_running_jobs_run_at_once():
-    many = [submit(steps(secs=2)) for _ in range(3)]
-    time.sleep(1.5)
-    states = sorted(jobs.get(j["id"])["state"] for j in many)
-    assert states == ["queued", "running", "running"]
+    many = [submit(steps(secs=4)) for _ in range(3)]
+    assert _until(lambda: _states(many).count("running") == 2)
+    time.sleep(0.5)  # the third had every chance to start
+    assert _states(many) == ["queued", "running", "running"]
     for j in many:
         assert jobs.wait(j["id"])["state"] == "done"
 
