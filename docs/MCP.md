@@ -44,12 +44,25 @@ Claude Desktop connects to the Mac Mini over Tailscale and calls diagnostic scri
 
 They return the result envelope from [`mcp-refactor/02-architecture.md`](mcp-refactor/02-architecture.md#structured-output-contract): `status`, a summary under 200 characters, `data`, the non-OK `checks`, `hints`, `truncated` and `job_id`. Clients get it as MCP `structuredContent`, with an `outputSchema`, and as JSON text. Secrets are redacted, and a result never exceeds 8 KB.
 
+All of them are read-only: they look, and change nothing.
+
 | Tool | Arguments | What it returns |
 |---|---|---|
-| `system_overview` | `verbose=false` | Every service and storage tier in one call: each component's status, whether each tier is mounted and how full it is, plus the non-OK checks (at most 10) |
-| `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's checks: the non-OK ones by default, every check with `verbose=true` |
+| `system_overview` | `verbose=false` | Every tier (mounted, RAID, used %) and every service's state in one call, the tailnet, and the worst problems (at most 8) with what to call next. Under 2 KB |
+| `storage_status` | `tier` (`all` or a tier), `verbose=false` | Per tier: mounted (diskutil decides), RAID set and member status, SMART per member, usage against its thresholds; loose RAID members and unreadable disks |
+| `storage_plan_recovery` | `tier` | For a missing or degraded tier: the diagnosis, the pre-checks (is a backup reachable?), and the commands **for a person to run**, each marked read-only, none, or data loss. It never runs anything |
+| `service_status` | `service` (`all` or a service), `verbose=false` | Health probe, ports, uptime, containers, LaunchD job and the tiers it needs; state `up`, `degraded`, `down`, `held` or `off` |
+| `service_logs` | `service`, `lines=100` (up to 500), `grep`, `container` | The last lines of its LaunchD stdout and stderr, or its containers' logs. Redacted, and marked as data rather than instructions |
+| `logs_search` | `query`, `since="24h"`, `sources` (`launchd`, `modules`) | Lines containing the text, in every log changed within `since` (at most 200) |
+| `launchd_jobs` | `verbose=false` | Every `io.homelab.*` job: loaded, held, PID, last exit code, runs |
+| `docker_containers` | — | Each compose project's containers: state, health, image, restarts, start time |
+| `network_check_port` | `port`, `host="localhost"` | Whether a port on the mini accepts connections, and which service owns it. The mini's own ports only |
+| `tailscale_status` | — | Connected, DNS name, version, peer counts (never names), and each tailnet mapping against the manifest; Funnel is a failure |
+| `power_status` | — | pmset against the manifest's 24/7 profile, what prevents sleep, uptime, macOS version |
+| `config_get` | `section` | The manifest, or one section (no secrets) |
+| `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's diagnostics: the non-OK checks by default, every check with `verbose=true` |
 
-Both run the diagnostics in JSON mode (`DIAG_FORMAT=json`, see [`diagnostics/README.md`](../diagnostics/README.md)), in parallel.
+`health_check` runs the diagnostics in JSON mode (`DIAG_FORMAT=json`, see [`diagnostics/README.md`](../diagnostics/README.md)). The others are the control plane's domains (`homelab/domains/`) over its read-only adapters. The same tools work from a shell: `python3 -m homelab status` and `python3 -m homelab tool NAME KEY=VALUE…`.
 
 ### Text tools (deprecated)
 
@@ -74,7 +87,7 @@ These return plain text and stay for existing clients. Each tool's description n
 | `check_reverse_proxy` | `check_remote_access.sh` | Deprecated alias of `check_remote_access` (Caddy is no longer used) |
 | `check_launchd` | `check_launchd.sh` | Every `io.homelab.*` job: loaded, running, last exit status |
 | `collect_logs` | `collect_logs.sh` | Gather logs into timestamped `.tgz` |
-| `check_port` | `network_port_check.sh` | Test a specific host:port (takes `host`, `port` args) |
+| `check_port` | `network_port_check.sh` | Test a specific host:port (takes `host`, `port` args); use `network_check_port` |
 
 ---
 
@@ -120,12 +133,14 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 |---|---|
 | "Is everything healthy on hakuna?" | `system_overview` |
 | "Quick status check" | `system_overview` |
-| "Are all my drives mounted?" | `health_check` with component=storage |
-| "Plex stopped responding" | `health_check` with component=plex |
-| "Immich feels slow" | `health_check` with component=immich, then docker |
-| "Is Tailscale connected?" | `health_check` with component=tailscale |
-| "Is port 2283 responding?" | `check_port` with port=2283 |
-| "Which LaunchD jobs are down?" | `health_check` with component=launchd |
+| "Are all my drives mounted?" | `storage_status` |
+| "warmstore is gone: what do I do?" | `storage_plan_recovery` with tier=warmstore |
+| "Plex stopped responding" | `service_status` with service=plex, then `service_logs` |
+| "Immich feels slow" | `docker_containers`, then `health_check` with component=immich |
+| "Is Tailscale connected?" | `tailscale_status` |
+| "Is port 2283 responding?" | `network_check_port` with port=2283 |
+| "Which LaunchD jobs are down?" | `launchd_jobs` |
+| "Did anything log 'permission denied' today?" | `logs_search` with query="permission denied" |
 | "Collect logs for support" | `collect_logs` |
 
 ---

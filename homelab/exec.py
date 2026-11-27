@@ -48,6 +48,7 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
     "launchctl": ("/bin/launchctl",),
     "lsof": ("/usr/sbin/lsof",),
     "pmset": ("/usr/bin/pmset",),
+    "ps": ("/bin/ps",),
     "security": ("/usr/bin/security",),
     "smartctl": tuple(f"{d}/smartctl" for d in BREW),
     "sw_vers": ("/usr/bin/sw_vers",),
@@ -108,6 +109,17 @@ def _launchctl(args: Sequence[str]) -> bool:
 
 def _pmset(args: Sequence[str]) -> bool:
     return _starts(args, ("-g",))
+
+
+def _ps(args: Sequence[str]) -> bool:
+    """ps -o FIELDS -p PID: one process's fields, nothing else."""
+    return (
+        len(args) == 4
+        and args[0] == "-o"
+        and re.fullmatch(r"[a-z]+=?(,[a-z]+=?)*", args[1]) is not None
+        and args[2] == "-p"
+        and args[3].isdigit()
+    )
 
 
 def _security(args: Sequence[str]) -> bool:
@@ -209,6 +221,7 @@ RULES: dict[str, Callable[[Sequence[str]], bool]] = {
     "launchctl": _launchctl,
     "lsof": _anything,
     "pmset": _pmset,
+    "ps": _ps,
     "security": _security,
     "smartctl": _smartctl,
     "sw_vers": _nothing_but_flags,

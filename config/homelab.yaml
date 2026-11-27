@@ -114,3 +114,13 @@ photos:
   library: immich                        # Immich's upload location
   takeout_downloads: takeout-downloads   # Google Takeout zips
   takeout_work_dir: tmp/takeout-processed
+
+# The 24/7 power profile (pmset). Checked by scripts/core/ensure_power_settings.sh,
+# diagnostics/check_power_settings.sh and the power_status tool.
+power:
+  sleep: 0          # never sleep
+  displaysleep: 1   # the display may sleep after a minute
+  disksleep: 0      # never spin disks down
+  womp: 1           # wake for network access
+  powernap: 0
+  standby: 0

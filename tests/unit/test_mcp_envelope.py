@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Tests for the structured tools: homelab_mcp/envelope.py, health_check and
-system_overview in mcp_routing.py, and their registration in mcp_server.py.
+"""Tests for the structured tools: homelab_mcp/envelope.py, health_check in
+mcp_routing.py, and their registration in mcp_server.py.
 
 Diagnostics are faked at the subprocess boundary with DIAG_FORMAT=json output,
 so nothing on the machine is read.
@@ -128,7 +128,7 @@ def test_render_text_is_compact():
     assert "- [fail] plex: down" in text
 
 
-# --- health_check and system_overview -----------------------------------------
+# --- health_check ----------------------------------------------------------------
 
 
 @pytest.fixture
@@ -185,51 +185,6 @@ def test_every_diagnostic_belongs_to_a_component():
     assert covered <= scripts
 
 
-def test_tier_usage_needs_a_real_mount(tmp_path):
-    (tmp_path / "warmstore").mkdir()  # an empty mount-point folder (D22)
-    tiers = mcp_routing.tier_usage(str(tmp_path))
-    assert tiers["warmstore"] == {"mounted": False, "used_pct": None}
-
-
-def test_system_overview_on_a_healthy_box_is_under_2_kb(fake_diagnostics, monkeypatch):
-    mounted = {"mounted": True, "used_pct": 41}
-    monkeypatch.setattr(
-        mcp_routing, "tier_usage", lambda: {t: dict(mounted) for t in mcp_routing.TIERS}
-    )
-    env = mcp_routing.system_overview()
-    assert env["status"] == "ok"
-    assert len(json.dumps(env).encode()) < 2048
-    assert env["data"]["tiers"]["faststore"]["used_pct"] == 41
-
-
-def test_system_overview_reports_an_unmounted_tier(fake_diagnostics, monkeypatch):
-    tiers = {
-        "faststore": {"mounted": True, "used_pct": 33},
-        "warmstore": {"mounted": False, "used_pct": None},
-        "coldstore": {"mounted": False, "used_pct": None},
-    }
-    monkeypatch.setattr(mcp_routing, "tier_usage", lambda: tiers)
-    env = mcp_routing.system_overview()
-    assert env["status"] == "fail"
-    assert env["summary"].startswith("1 failing, 1 warnings: warmstore is not mounted")
-
-
-def test_system_overview_caps_its_checks(fake_diagnostics, monkeypatch):
-    _, outputs = fake_diagnostics
-    many = [check("launchd", "fail", f"job {i} exit 126", i) for i in range(30)]
-    outputs["check_launchd.sh"] = many + [summary("launchd", "fail", failures=30)]
-    mounted = {"mounted": True, "used_pct": 41}
-    monkeypatch.setattr(
-        mcp_routing, "tier_usage", lambda: {t: dict(mounted) for t in mcp_routing.TIERS}
-    )
-    env = mcp_routing.system_overview()
-    assert len(env["checks"]) == mcp_routing.OVERVIEW_MAX_CHECKS
-    assert env["truncated"] is True
-
-
-# --- registration in the MCP server -------------------------------------------
-
-
 @pytest.fixture
 def server():
     pytest.importorskip("mcp.server.fastmcp")
@@ -255,11 +210,31 @@ def test_structured_tools_publish_input_and_output_schemas(server):
         ]
 
 
+def test_the_observe_tools_publish_envelopes_and_are_read_only(server):
+    tools = {t.name: t for t in asyncio.run(server.build_server().list_tools())}
+    for name in server.homelab_tools.TOOLS:
+        tool = tools[name]
+        assert list(tool.outputSchema["properties"])[:2] == ["status", "summary"], name
+        assert tool.annotations.readOnlyHint and not tool.annotations.destructiveHint
+        assert len(tool.description) < 400, name
+
+
+def test_tool_enums_come_from_the_manifest(server):
+    tools = {t.name: t for t in asyncio.run(server.build_server().list_tools())}
+    tier = tools["storage_status"].inputSchema["properties"]["tier"]
+    assert tier["enum"] == ["all", "faststore", "warmstore", "coldstore"]
+    svc = tools["service_status"].inputSchema["properties"]["service"]["enum"]
+    assert svc[0] == "all" and "plex" in svc and "media_watcher" in svc
+    lines = tools["service_logs"].inputSchema["properties"]["lines"]
+    assert lines["maximum"] == 500
+    assert "tier" in tools["storage_plan_recovery"].inputSchema["required"]
+
+
 def test_old_tools_say_what_replaces_them(server):
     tools = {t.name: t for t in asyncio.run(server.build_server().list_tools())}
     assert tools["check_immich"].description.startswith("Deprecated")
     assert "health_check(component='immich')" in tools["check_immich"].description
-    assert not tools["check_port"].description.startswith("Deprecated")
+    assert "use network_check_port" in tools["check_port"].description
     assert not tools["collect_logs"].description.startswith("Deprecated")
 
 
@@ -295,14 +270,6 @@ def test_read_manifest_env_unescapes_and_expands_home(tmp_path, monkeypatch):
 
 def test_read_manifest_env_missing_file_is_empty(tmp_path):
     assert mcp_routing.read_manifest_env(str(tmp_path / "none.env")) == {}
-
-
-def test_tiers_come_from_the_manifest_with_coldstore_renamed():
-    assert mcp_routing.TIERS == {
-        "faststore": "faststore",
-        "warmstore": "warmstore",
-        "coldstore": "coldstore",  # was Archive until 2026-11-26 (D25)
-    }
 
 
 def test_network_checks_use_the_manifests_ports():

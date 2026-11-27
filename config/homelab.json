@@ -247,5 +247,13 @@
     "library": "immich",
     "takeout_downloads": "takeout-downloads",
     "takeout_work_dir": "tmp/takeout-processed"
+  },
+  "power": {
+    "sleep": 0,
+    "displaysleep": 1,
+    "disksleep": 0,
+    "womp": 1,
+    "powernap": 0,
+    "standby": 0
   }
 }
