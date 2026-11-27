@@ -66,6 +66,7 @@ All of them are read-only: they look, and change nothing.
 | `updates_check` | — | Outdated Homebrew packages, Immich running vs latest (a major version is flagged; the moving `release` tag too), Plex and Jellyfin versions. Reports only |
 | `history_query` | `metric`, `since="7d"`, `bucket="1h"`, `above`, `below` | A metric's series from the 15-minute snapshots: points, min/max, trend per day, and when it last crossed a threshold ("when did warmstore last pass 80%?") |
 | `incident_list` | `status` (`open`, `resolved`, `all`), `limit=20` | Incidents the snapshots opened (a component started failing) or a person opened, with their latest events |
+| `audit_recent` | `limit=20`, `tool`, `since="24h"` | The server's recent tool calls: when, which token and model, the tool, its tier and the outcome. Arguments come back as data |
 | `memory_recall` | `query`, `component`, `kinds`, `limit=5` | Kept notes, and past incidents' causes and fixes, most relevant and recent first |
 | `photos_albums` | `filter` (`all`, `owned`, `shared`) | Immich albums: photo count, date span, shared or not |
 | `photos_album_profile` | `album` (id or name) | What its photos share: people (% of photos), places, months, photo/video mix |
@@ -155,21 +156,7 @@ scripts/automation/configure_launchd.sh
 scripts/infrastructure/apply_tailscale_serve.sh
 ```
 
-Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`) on your MacBook.
-Claude Desktop only supports local stdio processes — use `mcp-remote` as a bridge:
-
-```json
-{
-  "mcpServers": {
-    "io.homelab.mcp": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://<mini>.<tailnet>.ts.net:8765/mcp"]
-    }
-  }
-}
-```
-
-Node.js must be installed on the MacBook (`brew install node` if missing).
+Every client needs a token (`python3 -m homelab token create NAME --scope ops`, printed once). How to give one to Claude Desktop (through `mcp-remote`) or Claude Code is in [homelab_mcp/README.md](../homelab_mcp/README.md#tokens).
 
 ---
 
@@ -193,6 +180,7 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 | "When did warmstore last pass 80%?" | `history_query` with metric=storage.warmstore.used_pct, above=80 |
 | "Has this happened before?" | `memory_recall` with the symptom |
 | "Collect logs for support" | `collect_logs` |
+| "What did you change last night?" | `audit_recent` |
 
 ---
 
@@ -207,7 +195,11 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 
 ## Constraints
 
-- **Read-only** — observe tools only; no restart or remediation actions
-- **No auth layer yet** (tokens arrive in Phase 3). The server binds to 127.0.0.1 and is reachable only through `tailscale serve`, so only tailnet devices can call it; never enable Funnel on :8765
-- **Timeouts** — most tools: 60s; `collect_logs`: 120s
-- **No script changes** — diagnostic scripts are called as-is, zero logic added on top
+The server enforces these itself; none depends on a model following instructions (docs/mcp-refactor/05).
+
+- **Tokens and scopes.** Every request needs a bearer token. Its scope decides what `tools/list` shows and what `tools/call` allows, checked again on every call: `observe` is read-only (T0), `ops` adds the safe actions (T1), `admin` adds changes that need approval (T2, from Phase 5), `curator` sees the curation tools only. Over stdio (`mcp_server.py --stdio`, a person on the mini) the scope is `HOMELAB_MCP_SCOPE`, default `observe`.
+- **Tiers** are in `config/policy.yaml`, one per tool. The server won't start if a tool is missing from it. T1 calls are limited to 10 a minute per token, and act only when called with `dry_run=false`.
+- **Never exposed (T3):** creating, deleting or erasing RAID sets or disks, `setup_flags.sh`, arbitrary shell. No tool reaches them, and `homelab.exec` refuses them.
+- **Audit:** every call (refused ones too) is recorded with the token's name, the Tailscale user, the model if the client sends `X-Homelab-Model`, the redacted arguments and the outcome. `python3 -m homelab audit` or `audit_recent`.
+- **Network:** the server binds to 127.0.0.1 and is reachable only through `tailscale serve`, so only tailnet devices can reach it; never enable Funnel on :8765.
+- **Timeouts:** most tools 60s; `collect_logs` 120s.

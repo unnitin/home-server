@@ -16,10 +16,11 @@ POL = policy.load()
 
 
 def raw() -> dict:
-    return copy.deepcopy(config.read_yaml(config.CONFIG_DIR / policy.POLICY_FILE))
+    return copy.deepcopy(policy.read())  # the YAML, or policy.json without PyYAML
 
 
 def test_policy_json_matches_the_yaml():
+    pytest.importorskip("yaml")
     rendered = (config.CONFIG_DIR / policy.POLICY_JSON).read_text(encoding="utf-8")
     assert rendered == policy.render(), "run: python3 -m homelab config render"
 

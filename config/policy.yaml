@@ -96,6 +96,7 @@ tools:
   photos_album_profile: T0
   photos_unsorted: T0
   media_items: T0
+  audit_recent: T0
 
   # T0: the old text tools, kept for existing clients (each names its replacement)
   run_all_diagnostics: T0

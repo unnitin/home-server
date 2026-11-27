@@ -59,9 +59,11 @@ def snap(conn, mini, ts, monkeypatch):
 
 
 def test_migrations_apply_once_and_record_their_version(conn, state_db):
-    assert db.migrate(conn) == 1
+    latest = db.migrations()[-1][0]
+    assert db.migrate(conn) == latest
     again = db.connect()  # a second open applies nothing new
-    assert again.execute("SELECT COUNT(*) FROM schema_version").fetchone()[0] == 1
+    count = again.execute("SELECT COUNT(*) FROM schema_version").fetchone()[0]
+    assert count == len(db.migrations())
     assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
 
 

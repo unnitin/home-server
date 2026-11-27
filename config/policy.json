@@ -112,6 +112,7 @@
     "photos_album_profile": "T0",
     "photos_unsorted": "T0",
     "media_items": "T0",
+    "audit_recent": "T0",
     "run_all_diagnostics": "T0",
     "quick_summary": "T0",
     "check_prereqs": "T0",

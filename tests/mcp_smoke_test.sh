@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # MCP Server Smoke Test
-# Starts the server on a loopback test port, checks it answers MCP, is bound to
-# loopback only and rejects foreign Host headers, then shuts it down.
+# Starts the server on a loopback test port with its own state database, checks
+# it answers MCP with a token (and refuses without one), is bound to loopback only
+# and rejects foreign Host headers, then shuts it down.
 # Usage: bash tests/mcp_smoke_test.sh      (PYTHON=... to pick the interpreter)
 set -euo pipefail
 
@@ -43,7 +44,12 @@ if lsof -iTCP:"$PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
 fi
 pass "Port $PORT is free"
 
-# --- 4. Start server ---
+# --- 4. Start server, with its own state database and a token for this test ---
+SMOKE_DIR="$(mktemp -d)"
+trap 'cleanup; rm -rf "$SMOKE_DIR"' EXIT
+export HOMELAB_STATE_DB="$SMOKE_DIR/state.db"   # never the real one
+TOKEN=$(cd "$REPO_ROOT" && "$PYTHON" -m homelab token create smoke-test --scope observe | awk '/hlk_/ {print $1}')
+[[ "$TOKEN" == hlk_* ]] || fail "could not create a test token"
 HOMELAB_MCP_PORT="$PORT" "$PYTHON" "$SERVER_PY" >/dev/null 2>&1 &
 SERVER_PID=$!
 for i in $(seq 1 20); do
@@ -58,13 +64,17 @@ listeners=$(lsof -nP -a -p "$SERVER_PID" -iTCP -sTCP:LISTEN | awk 'NR > 1 {print
 [[ "$listeners" == "127.0.0.1:$PORT" ]] || fail "Expected only 127.0.0.1:$PORT, got: $listeners"
 pass "Listening on 127.0.0.1:$PORT only"
 
-# --- 6. MCP initialize works, for loopback and tailnet Host headers ---
-[[ "$(post)" == "200" ]] || fail "initialize via loopback did not return 200"
-[[ "$(post -H "Host: mini.example.ts.net:8765")" == "200" ]] || fail "tailnet Host rejected"
+# --- 6. MCP initialize works with a token, for loopback and tailnet Host headers ---
+AUTH=(-H "Authorization: Bearer $TOKEN")
+[[ "$(post "${AUTH[@]}")" == "200" ]] || fail "initialize via loopback did not return 200"
+[[ "$(post "${AUTH[@]}" -H "Host: mini.example.ts.net:8765")" == "200" ]] || fail "tailnet Host rejected"
 pass "MCP initialize returns 200 (loopback and tailnet Host)"
+[[ "$(post)" == "401" ]] || fail "a request without a token was not refused with 401"
+[[ "$(post -H "Authorization: Bearer hlk_wrong")" == "401" ]] || fail "a wrong token was not refused"
+pass "No token, or a wrong one: 401"
 
 # --- 7. Foreign Host rejected (DNS-rebinding protection) ---
-[[ "$(post -H "Host: evil.example.com")" == "421" ]] || fail "foreign Host was not rejected with 421"
+[[ "$(post "${AUTH[@]}" -H "Host: evil.example.com")" == "421" ]] || fail "foreign Host was not rejected with 421"
 pass "Foreign Host header rejected (421)"
 
 # --- 8. Process still alive ---
