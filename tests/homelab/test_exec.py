@@ -72,7 +72,12 @@ REFUSED = [
     ["diskutil", "mount", "disk9s1"],
     ["diskutil", "rename", "Archive", "coldstore"],
     ["launchctl", "bootout", "gui/501/io.homelab.plex"],
-    ["launchctl", "kickstart", "-k", "gui/501/io.homelab.plex"],
+    [
+        "launchctl",
+        "kickstart",
+        "-k",
+        "gui/501/io.homelab.mcp",
+    ],  # never the server itself
     ["launchctl", "disable", "gui/501/io.homelab.colima"],
     ["pmset", "-a", "sleep", "0"],
     ["tailscale", "serve", "reset"],
@@ -311,3 +316,80 @@ def test_spawn_and_popen_refuse_what_check_refuses(tmp_path):
         hexec.spawn(["bash", "-c", "echo hi"], tmp_path / "log")
     with pytest.raises(hexec.ExecRefused):
         hexec.popen(["diskutil", "eraseDisk", "APFS", "x", "disk9"])
+
+
+# --- the T1 actions ----------------------------------------------------------------
+
+COMPOSE = str(REPO / "services" / "immich" / "docker-compose.yml")
+SCRIPTS = REPO / "scripts"
+
+
+@pytest.fixture
+def gui501(monkeypatch):
+    from homelab.adapters import launchd
+
+    monkeypatch.setattr(launchd, "domain", lambda: "gui/501")
+
+
+@pytest.mark.parametrize(
+    "argv,allowed",
+    [
+        (["launchctl", "kickstart", "gui/501/io.homelab.snapshot"], True),
+        (["launchctl", "kickstart", "-k", "gui/501/io.homelab.plex"], True),
+        (["launchctl", "kickstart", "-k", "gui/501/io.homelab.mcp"], False),
+        (["launchctl", "kickstart", "gui/502/io.homelab.snapshot"], False),
+        (["launchctl", "kickstart", "system/io.homelab.snapshot"], False),
+        (["launchctl", "kickstart", "gui/501/com.apple.Finder"], False),
+        (["launchctl", "bootout", "gui/501/io.homelab.plex"], False),
+        (["launchctl", "disable", "gui/501/io.homelab.plex"], False),
+        (["docker", "compose", "-f", COMPOSE, "restart"], True),
+        (["docker", "compose", "-f", COMPOSE, "start"], True),
+        (["docker", "compose", "-f", COMPOSE, "up", "-d"], False),
+        (["docker", "compose", "-f", COMPOSE, "down"], False),
+        (["docker", "compose", "-f", COMPOSE, "pull"], False),
+        (["docker", "compose", "-f", COMPOSE, "restart", "immich-db"], False),
+        (["docker", "compose", "-f", "/tmp/evil.yml", "restart"], False),
+        (["docker", "compose", "restart"], False),
+        (
+            ["tailscale", "serve", "--bg", "--https=8765", "http://127.0.0.1:18765"],
+            True,
+        ),
+        (["tailscale", "serve", "--bg", "--https=8765", "http://localhost:22"], False),
+        (
+            ["tailscale", "serve", "--bg", "--https=9999", "http://127.0.0.1:18765"],
+            False,
+        ),
+        (["tailscale", "funnel", "--bg", "8765"], False),
+        (["tailscale", "serve", "reset"], False),
+        (["tailscale", "serve", "--https=443", "off"], False),
+        (["bash", str(SCRIPTS / "services" / "restart_native_app.sh"), "plex"], True),
+        (
+            ["bash", str(SCRIPTS / "services" / "restart_native_app.sh"), "immich"],
+            False,
+        ),
+        (["bash", str(SCRIPTS / "media" / "processor.sh"), "--movies-only"], True),
+        (["bash", str(SCRIPTS / "media" / "processor.sh"), "--cleanup-only"], False),
+        (
+            ["bash", str(SCRIPTS / "storage" / "setup_direct_mounts.sh"), "--dry-run"],
+            True,
+        ),
+        (["bash", str(SCRIPTS / "storage" / "format_and_mount.sh")], False),
+        (["bash", str(SCRIPTS / "services" / "deploy_containers.sh")], False),
+        (["python", "-m", "homelab", "bundle", "--since", "24h"], True),
+        (["python", "-m", "homelab", "bundle", "--since", "24h; id"], False),
+    ],
+)
+def test_actions_are_allowed_only_with_the_manifests_arguments(gui501, argv, allowed):
+    if allowed:
+        hexec.check(argv)
+    else:
+        with pytest.raises(hexec.ExecRefused):
+            hexec.check(argv)
+
+
+def test_under_test_mode_a_real_action_never_runs_as_a_job(monkeypatch):
+    monkeypatch.setenv("TEST_MODE", "1")
+    argv = ["bash", str(SCRIPTS / "services" / "restart_native_app.sh"), "plex"]
+    hexec.check(argv)  # allowed in itself
+    with pytest.raises(hexec.ExecRefused, match="TEST_MODE"):
+        hexec.popen(argv)

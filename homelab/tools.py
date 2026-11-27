@@ -1,7 +1,8 @@
 """The tools, by name: what the MCP server and the CLI both call.
 
 TOOLS only look (T0). WRITES add to the state database: notes and incident
-records, never anything on the system itself.
+records, never anything on the system itself. ACTIONS act on the system (T1):
+safe and reversible, each a dry run unless called with dry_run=False.
 
 `call` never raises: a bug or an unexpected state becomes an error result
 that says what failed, so a client always gets an envelope back.
@@ -14,7 +15,8 @@ import traceback
 from typing import Any, Callable
 
 from homelab import result as R
-from homelab.domains import context, curation, governance, health, logs, media
+from homelab.domains import actions, context, curation, governance, health, logs
+from homelab.domains import media
 from homelab.domains import memory, network
 from homelab.domains import photos
 from homelab.domains import services
@@ -62,6 +64,17 @@ WRITES: dict[str, Callable[..., dict[str, Any]]] = {
 }
 # Tools that act on the system (T1): safe, reversible, dry_run=True by default.
 ACTIONS: dict[str, Callable[..., dict[str, Any]]] = {
+    "service_restart": actions.service_restart,
+    "service_start": actions.service_start,
+    "launchd_kickstart": actions.launchd_kickstart,
+    "media_process": actions.media_process,
+    "media_retry_failed": actions.media_retry_failed,
+    "library_scan": actions.library_scan,
+    "photos_run_job": actions.photos_run_job,
+    "tailscale_serve_reconcile": actions.tailscale_serve_reconcile,
+    "storage_ensure_layout": actions.storage_ensure_layout,
+    "power_ensure": actions.power_ensure,
+    "logs_collect": actions.logs_collect,
     "job_cancel": governance.job_cancel,
 }
 ALL = {**TOOLS, **WRITES, **ACTIONS}

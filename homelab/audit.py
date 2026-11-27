@@ -13,12 +13,16 @@ import json
 import os
 import sys
 import time
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, Optional
 
 from homelab import config, redact
 from homelab.state import db
 
+# Who is calling, for the jobs a call starts: the token's name over MCP, set by
+# the server around each call (and carried into its worker thread), else cli.
+CALLER: ContextVar[str] = ContextVar("homelab_caller", default="cli")
 ARGS_MAX = 2000  # characters of JSON kept per row
 SUMMARY_MAX = 200
 _MOUNT_CACHE: dict[str, tuple[float, bool]] = {}

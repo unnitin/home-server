@@ -254,11 +254,14 @@ class HomelabMCP(FastMCP):
             raise ToolError(
                 f"rate limit for {tier} tools reached: try again in {wait}s"
             )
+        caller = homelab_audit.CALLER.set(client.name)  # jobs record who asked
         try:
             result = await super().call_tool(name, arguments)
         except Exception as err:
             await record("error", f"{type(err).__name__}: {err}")
             raise
+        finally:
+            homelab_audit.CALLER.reset(caller)
         structured = result
         if isinstance(result, tuple) and len(result) == 2:
             structured = result[1]
@@ -316,6 +319,22 @@ ACTS = ToolAnnotations(
     readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False
 )
 JobState = Literal["all", "queued", "running", "done", "failed", "cancelled", "lost"]
+JobLabel = Literal[  # type: ignore[valid-type]
+    tuple(
+        _MANIFEST.services[n].launchd
+        for n in _MANIFEST.boot_order
+        if _MANIFEST.services[n].launchd
+    )
+]
+Library = Literal[tuple(_MANIFEST.media.libraries)]  # type: ignore[valid-type]
+MediaServer = Literal["both", "plex", "jellyfin"]
+ImmichJob = Literal[
+    "thumbnailGeneration",
+    "metadataExtraction",
+    "smartSearch",
+    "faceDetection",
+    "duplicateDetection",
+]
 NoteKind = Literal["fact", "preference", "decision", "resolution", "todo"]
 EventKind = Literal["observation", "action", "hypothesis", "note"]
 
@@ -801,6 +820,115 @@ def build_server():
     )
     async def job_cancel(job_id: str, dry_run: bool = True) -> Envelope:
         return await run("job_cancel", job_id=job_id, dry_run=dry_run)
+
+    @act(
+        "service_restart",
+        "Restart a service the way its LaunchD job starts it: quit and reopen a "
+        "native app, `compose restart` for containers, `kickstart -k` for a job. "
+        "Checks the tiers and services it needs first. Slow ones run as a job. "
+        "Dry run (the default) returns the plan.",
+    )
+    async def service_restart(service: ServiceName, dry_run: bool = True) -> Envelope:
+        return await run("service_restart", service=service, dry_run=dry_run)
+
+    @act(
+        "service_start",
+        "Start a service that's down, after checking what it needs. Already up: "
+        "nothing to do. Never releases a held LaunchD job. Dry run by default.",
+    )
+    async def service_start(service: ServiceName, dry_run: bool = True) -> Envelope:
+        return await run("service_start", service=service, dry_run=dry_run)
+
+    @act(
+        "launchd_kickstart",
+        "Run an io.homelab LaunchD job now (restart it if it's running), e.g. the "
+        "snapshot or storage job. Not for held jobs or the MCP server. Dry run by "
+        "default.",
+    )
+    async def launchd_kickstart(label: JobLabel, dry_run: bool = True) -> Envelope:
+        return await run("launchd_kickstart", label=label, dry_run=dry_run)
+
+    @act(
+        "media_process",
+        "Process media staging into the Plex/Jellyfin libraries, as a job (one at a "
+        "time: a second queues). Needs the media tier mounted. Dry run shows how "
+        "many files are waiting.",
+    )
+    async def media_process(
+        library: LibraryOrAll = "all", dry_run: bool = True
+    ) -> Envelope:
+        return await run("media_process", library=library, dry_run=dry_run)
+
+    @act(
+        "media_retry_failed",
+        "Move files that failed processing (staging/failed/<YYYYMMDD>) back to a "
+        "library's staging folder and process it again. Pick the library they "
+        "belong to. Dry run lists them.",
+    )
+    async def media_retry_failed(
+        library: Library, date: Optional[str] = None, dry_run: bool = True
+    ) -> Envelope:
+        return await run(
+            "media_retry_failed", library=library, date=date, dry_run=dry_run
+        )
+
+    @act(
+        "library_scan",
+        "Ask Plex and/or Jellyfin to scan their libraries for new files. Refused "
+        "while the media tier is unmounted, so they never scan empty folders. Dry "
+        "run by default.",
+    )
+    async def library_scan(
+        server: MediaServer = "both", dry_run: bool = True
+    ) -> Envelope:
+        return await run("library_scan", server=server, dry_run=dry_run)
+
+    @act(
+        "photos_run_job",
+        "Start an Immich background job, for the photos it hasn't done (missing) or "
+        "all of them again (all). Dry run shows the queue. Never deletes anything.",
+    )
+    async def photos_run_job(
+        job: ImmichJob,
+        mode: Literal["missing", "all"] = "missing",
+        dry_run: bool = True,
+    ) -> Envelope:
+        return await run("photos_run_job", job=job, mode=mode, dry_run=dry_run)
+
+    @act(
+        "tailscale_serve_reconcile",
+        "Add the tailnet mappings the manifest declares that are missing or point "
+        "elsewhere, once their backend answers. Never removes one, never Funnel. "
+        "Dry run shows the diff.",
+    )
+    async def tailscale_serve_reconcile(dry_run: bool = True) -> Envelope:
+        return await run("tailscale_serve_reconcile", dry_run=dry_run)
+
+    @act(
+        "storage_ensure_layout",
+        "Create the manifest's missing folders on each mounted tier. Never deletes, "
+        "never changes an existing folder, skips a tier that isn't mounted. Dry run "
+        "lists them.",
+    )
+    async def storage_ensure_layout(dry_run: bool = True) -> Envelope:
+        return await run("storage_ensure_layout", dry_run=dry_run)
+
+    @act(
+        "power_ensure",
+        "Put drifted power settings back to the manifest's 24/7 profile with the "
+        "scoped sudo rule (pmset only). Dry run shows the drift.",
+    )
+    async def power_ensure(dry_run: bool = True) -> Envelope:
+        return await run("power_ensure", dry_run=dry_run)
+
+    @act(
+        "logs_collect",
+        "Build a redacted support bundle (job logs, LaunchD state, status, "
+        "incidents, audit) on the mini, as a job. Returns its path and size, never "
+        "its contents.",
+    )
+    async def logs_collect(since: str = "24h", dry_run: bool = True) -> Envelope:
+        return await run("logs_collect", since=since, dry_run=dry_run)
 
     register_context(server)
 

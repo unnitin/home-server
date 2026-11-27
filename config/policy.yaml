@@ -131,5 +131,17 @@ tools:
   # T1: writes a log bundle under /tmp (old text tool)
   collect_logs: T1
 
-  # T1: actions on the system. Each takes dry_run, true by default
+  # T1: actions on the system. Each takes dry_run, true by default. A lock
+  # lets one run at a time per key: a job queues behind the running one.
+  service_restart: { tier: T1, lock: "service:{service}" }
+  service_start: { tier: T1, lock: "service:{service}" }
+  launchd_kickstart: T1
+  media_process: { tier: T1, lock: media }
+  media_retry_failed: { tier: T1, lock: media }
+  library_scan: T1
+  photos_run_job: T1
+  tailscale_serve_reconcile: { tier: T1, lock: serve }
+  storage_ensure_layout: { tier: T1, lock: storage }
+  power_ensure: { tier: T1, lock: power }
+  logs_collect: { tier: T1, lock: bundle }
   job_cancel: T1

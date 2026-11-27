@@ -20,9 +20,13 @@ needs and its tailnet address.
 
 ## Rules
 
-- These tools observe. The only ones that write record notes and incident
-  events in the state database, never anything on the system. Restarts and
-  fixes come later, behind a dry run and, for changes, a person's approval.
+- Most tools observe. The actions (restart, start, process media, scan, map
+  the tailnet, power) are safe and reversible, and each is a dry run unless you
+  pass `dry_run=false`. Do the dry run first, show the person the plan, and
+  act only when they've said yes. What your token may call is decided by the
+  server, not by you; a refusal names what's missing, so report it.
+- Slow actions return a job id: check `job_status` about once a minute.
+  `audit_recent` shows what was done, and by which client.
 - Never guess a disk identifier, a path or a version: cite tool output.
 - Storage recovery is for a person: `storage_plan_recovery` gives them the
   plan. Never suggest erasing, repartitioning or "repairing" a disk that may

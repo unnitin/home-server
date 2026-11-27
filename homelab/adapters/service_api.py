@@ -89,6 +89,24 @@ class Client:
         )
         return self._check(r)
 
+    def act(self, method: str, path: str, body: Any = None) -> int:
+        """A request that changes something (T1 actions: a library scan, an
+        Immich job). Returns the HTTP status; the body, often empty, is ignored."""
+        r = http.request(
+            method,
+            self.base + path,
+            headers=self._headers(False),
+            body=body,
+            timeout=self.timeout * 2,
+        )
+        if r.status is None:
+            raise ApiError(f"{self.service}: no answer ({r.error})")
+        if r.status in (401, 403):
+            raise SecretRejected(self.service, self.secret, r.status)
+        if not r.ok:
+            raise ApiError(f"{self.service}: HTTP {r.status} from {method} {r.url}")
+        return r.status
+
 
 def optional(fn: Callable[[], Any]) -> tuple[Optional[Any], Optional[str]]:
     """(result, None) or (None, the reason), for reports that go on without it."""

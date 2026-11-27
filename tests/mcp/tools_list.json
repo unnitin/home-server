@@ -566,6 +566,87 @@
     "read_only": true
   },
   {
+    "name": "launchd_kickstart",
+    "input": {
+      "properties": {
+        "label": {
+          "enum": [
+            "io.homelab.storage",
+            "io.homelab.powermgmt",
+            "io.homelab.colima",
+            "io.homelab.compose.immich",
+            "io.homelab.plex",
+            "io.homelab.jellyfin",
+            "io.homelab.landing",
+            "io.homelab.media.watcher",
+            "io.homelab.tailscale",
+            "io.homelab.updatecheck",
+            "io.homelab.snapshot",
+            "io.homelab.mcp"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "title": "launchd_kickstartArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "library_scan",
+    "input": {
+      "properties": {
+        "server": {
+          "default": "both",
+          "enum": [
+            "both",
+            "plex",
+            "jellyfin"
+          ],
+          "title": "Server",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "library_scanArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "logs_collect",
+    "input": {
+      "properties": {
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "logs_collectArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
     "name": "logs_search",
     "input": {
       "properties": {
@@ -652,6 +733,71 @@
       "type": "object"
     },
     "read_only": true
+  },
+  {
+    "name": "media_process",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "all",
+          "enum": [
+            "all",
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "media_processArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "media_retry_failed",
+    "input": {
+      "properties": {
+        "library": {
+          "enum": [
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "library"
+      ],
+      "title": "media_retry_failedArguments",
+      "type": "object"
+    },
+    "read_only": false
   },
   {
     "name": "media_staging_list",
@@ -892,6 +1038,44 @@
     "read_only": true
   },
   {
+    "name": "photos_run_job",
+    "input": {
+      "properties": {
+        "job": {
+          "enum": [
+            "thumbnailGeneration",
+            "metadataExtraction",
+            "smartSearch",
+            "faceDetection",
+            "duplicateDetection"
+          ],
+          "title": "Job",
+          "type": "string"
+        },
+        "mode": {
+          "default": "missing",
+          "enum": [
+            "missing",
+            "all"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "title": "photos_run_jobArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
     "name": "photos_stats",
     "input": {
       "properties": {},
@@ -914,6 +1098,21 @@
       "type": "object"
     },
     "read_only": true
+  },
+  {
+    "name": "power_ensure",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "power_ensureArguments",
+      "type": "object"
+    },
+    "read_only": false
   },
   {
     "name": "power_status",
@@ -1022,6 +1221,78 @@
     "read_only": true
   },
   {
+    "name": "service_restart",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_restartArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "service_start",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_startArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
     "name": "service_status",
     "input": {
       "properties": {
@@ -1055,6 +1326,21 @@
       "type": "object"
     },
     "read_only": true
+  },
+  {
+    "name": "storage_ensure_layout",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "storage_ensure_layoutArguments",
+      "type": "object"
+    },
+    "read_only": false
   },
   {
     "name": "storage_plan_recovery",
@@ -1118,6 +1404,21 @@
       "type": "object"
     },
     "read_only": true
+  },
+  {
+    "name": "tailscale_serve_reconcile",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "tailscale_serve_reconcileArguments",
+      "type": "object"
+    },
+    "read_only": false
   },
   {
     "name": "tailscale_status",

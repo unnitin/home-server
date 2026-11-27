@@ -131,6 +131,10 @@ def submit(
 ) -> dict[str, Any]:
     """Record a job and start its supervisor. Returns the job's row."""
     hexec.check(argv)  # refuse now, not later in a log nobody reads
+    if requested_by is None:
+        from homelab.audit import CALLER
+
+        requested_by = CALLER.get()
     conn = conn or db.connect()
     job_id = new_id()
     log = log_dir() / f"{job_id}.log"

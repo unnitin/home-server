@@ -12,6 +12,18 @@
 #    back afterwards (apply_tailscale_serve.sh), whether or not it started.
 # 4. Waits up to START_TIMEOUT seconds (default 60) for the health URL.
 # Returns 0 when the app answers, 1 otherwise.
+#
+#   watch_native_app plex     # after start_native_app, under LaunchD (D32)
+#
+# Stays in the foreground while the app answers, checking every WATCH_INTERVAL
+# seconds (default 60), and returns 1 once it has failed WATCH_FAILS checks in a
+# row (default 3). So the LaunchD job runs once per app start, and KeepAlive
+# starts the app again only when it has really stopped answering.
+#
+#   quit_native_app plex      # for a restart (restart_native_app.sh)
+#
+# Asks every process of the app's bundle to quit (TERM), waits up to
+# QUIT_TIMEOUT seconds (default 30), then kills what's left.
 
 set -euo pipefail
 
@@ -93,4 +105,58 @@ start_native_app() {
     fi
     echo "❌ $app did not answer $url within ${timeout}s" >&2
     return 1
+}
+
+watch_native_app() {
+    local svc="$1" url expect interval limit fails=0
+    url=$(_svc "$svc" HEALTH_URL)
+    expect=$(_svc "$svc" HEALTH_EXPECT)
+    interval="${WATCH_INTERVAL:-60}"
+    limit="${WATCH_FAILS:-3}"
+    ((interval >= 1)) || interval=1
+    echo "$(date): Watching $svc ($url every ${interval}s)"
+    while true; do
+        sleep "$interval"
+        if _healthy "$url" "$expect"; then
+            fails=0
+            continue
+        fi
+        fails=$((fails + 1))
+        echo "$(date): $svc not answering ($fails/$limit)"
+        if ((fails >= limit)); then
+            echo "$(date): $svc stopped answering; exiting so LaunchD starts it again" >&2
+            return 1
+        fi
+    done
+}
+
+_app_pids() {  # the PIDs of every process running from the app's bundle
+    pgrep -f "$HOMELAB_APPS_DIR/$1.app/Contents/" 2>/dev/null || true
+}
+
+quit_native_app() {
+    local svc="$1" app pids waited=0 timeout
+    app=$(_svc "$svc" APP)
+    timeout="${QUIT_TIMEOUT:-30}"
+    [[ -n "$app" ]] || { echo "❌ $svc is not a native app in the manifest" >&2; return 1; }
+    pids=$(_app_pids "$app")
+    if [[ -z "$pids" ]]; then
+        echo "$app is not running"
+        return 0
+    fi
+    echo "$(date): Asking $app to quit (PIDs: $(tr '\n' ' ' <<<"$pids"))"
+    # shellcheck disable=SC2086  # one PID per word
+    kill -TERM $pids 2>/dev/null || true
+    while [[ -n "$(_app_pids "$app")" ]] && ((waited < timeout)); do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    pids=$(_app_pids "$app")
+    if [[ -n "$pids" ]]; then
+        echo "⚠️  $app still running after ${timeout}s; killing it"
+        # shellcheck disable=SC2086
+        kill -KILL $pids 2>/dev/null || true
+        sleep 1
+    fi
+    echo "$(date): $app has quit"
 }
