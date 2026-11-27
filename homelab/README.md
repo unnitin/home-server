@@ -37,13 +37,29 @@ output recorded on the mini (`tests/fixtures/exec/`).
 | `domains/curation.py` | the read-only curation reports: `photos_albums`, `photos_album_profile`, `photos_unsorted`, `media_items` (Plex and Jellyfin joined by file) |
 | `adapters/releases.py` | the latest Immich release on GitHub: the one call that leaves the mini (fixed URL, nothing sent) |
 | `domains/health.py` | `system_overview`, built on the above, in parallel |
-| `tools.py` | the tools by name, shared by the MCP server and the CLI; a failure becomes an error result |
+| `tools.py` | the tools by name (`TOOLS` read, `WRITES` record, `ACTIONS` act), shared by the MCP server and the CLI; a failure becomes an error result |
+
+Phase 3: who may do what, and the safe actions.
+
+| Module | What |
+|---|---|
+| `policy.py` | `config/policy.yaml`: each tool's tier, the scopes, toolsets, locks, the T1 rate limit, the never-exposed names. The server won't start if its tools and the policy disagree |
+| `auth.py` | bearer tokens (`homelab token create|list|revoke`), kept as SHA-256 in `state.db` |
+| `audit.py` | one row per tool call (token, Tailscale user, model, redacted args, outcome), mirrored to `audit.jsonl` while the log tier is mounted |
+| `jobs.py` | long-running work: a detached supervisor per job, flock locks and slots, `::progress` lines, survives a server restart |
+| `sudoers.py` | the scoped sudo rule: exact `pmset` commands from the manifest's power profile, nothing else |
+| `bundle.py` | the redacted log bundle `logs_collect` builds |
+| `domains/actions.py` | the T1 actions: dry runs by default, guards from the manifest, slow ones as jobs |
+| `domains/governance.py` | `audit_recent`, `job_status`, `job_logs`, `job_list`, `job_cancel` |
 
 ```bash
 python3 -m homelab status                         # the overview, as text (--json for the envelope)
-python3 -m homelab tool --list                    # every read-only tool
+python3 -m homelab tool --list                    # every tool
 python3 -m homelab tool storage_status tier=warmstore
 python3 -m homelab tool service_logs service=plex lines=50 grep=error
+python3 -m homelab tool service_restart service=jellyfin          # a dry run: the plan
+python3 -m homelab jobs                           # long-running jobs
+python3 -m homelab audit                          # what MCP clients called
 ```
 
 ## The state database
@@ -96,10 +112,14 @@ committed and kept current by the same test) when PyYAML is missing.
 Everything the control plane runs goes through `homelab.exec.run(argv)`:
 
 - a name from its allowlist, found at a fixed path, never on `PATH`;
-- only read-only uses in Phase 2. The disk-erasing storage scripts and
-  `diskutil erase*`/`appleRAID create|delete` are refused, always
-  (`tests/homelab/test_exec.py`);
-- under `TEST_MODE=1` nothing runs: results come from `tests/fixtures/exec/`.
+- read-only uses, plus the T1 actions with arguments the manifest holds: a
+  `kickstart` of a manifest job, `compose restart|start` of a manifest compose
+  file, `serve --bg` of a manifest mapping, the action scripts with their
+  allowed arguments, and `sudo -n` only for the scoped rule's commands. The
+  disk-erasing storage scripts and `diskutil erase*`/`appleRAID create|delete`
+  are refused, always (`tests/homelab/test_exec.py`);
+- under `TEST_MODE=1` nothing runs: results come from `tests/fixtures/exec/`,
+  and the only job that runs is `tests/fixtures/jobs/steps.sh`.
 
 ## API secrets
 

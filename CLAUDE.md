@@ -45,11 +45,14 @@ config/         → the manifest homelab.yaml, the safety policy policy.yaml, an
                   generated from them (no code)
 homelab/        → control plane (depends on: config; runs scripts/ and diagnostics/ only as executors)
                   config, exec (every subprocess), redact, secrets (Keychain)
+                  policy (config/policy.yaml), auth (tokens), audit, jobs, sudoers, bundle
                   adapters/ (diskutil, launchctl, tailscale, docker, brew, system, the service APIs)
-                  domains/ (what the tools answer), state/ (state.db), context/ (docs, topology)
+                  domains/ (what the tools answer; actions.py: the T1 actions), state/ (state.db),
+                  context/ (docs, topology)
                   tools.py (the tools by name), cli.py (`python3 -m homelab …`)
 homelab_mcp/    → MCP server: registers homelab's tools, health_check over diagnostics/, the
-                  operating guide (instructions.md), resources and prompts
+                  operating guide (instructions.md), resources and prompts; bearer tokens,
+                  scope filtering, the T1 rate limit and the audit row for every call
 agent/          → model-agnostic harness (Phase 4, not yet written)
 ```
 
@@ -172,6 +175,7 @@ Each plist logs to `/tmp/homelab-<job>.{out,err}` (the manifest's `storage.launc
 - Jobs are never loaded from a linked git worktree: they'd break when it's removed. Load them from the main checkout.
 - Scripts a job runs can't read the external volumes under LaunchD until access is granted (D27). Jobs that need to read them run Python 3.11 instead (`io.homelab.mcp`, `io.homelab.snapshot`), which can.
 - `io.homelab.snapshot` runs `python3 -m homelab snapshot` every 15 minutes: history, incidents and versions in the state database.
+- `io.homelab.plex` and `io.homelab.jellyfin` run their start script with `--foreground`: it stays while the app answers and exits after three failed checks in a row, so KeepAlive restarts the app only when it has stopped (D32).
 
 ---
 
@@ -303,6 +307,9 @@ Install hooks: `pip install pre-commit && pre-commit install`
 - **Never run a subprocess in `homelab/` outside `homelab.exec`**, and never put a disk-changing command on its allowlist
 - **Never return GPS coordinates or images from a photo tool**: ids, dates, city and country, and names only
 - **Never commit fixtures recorded on the mini without removing what identifies it**
+- **Never add an action without `dry_run: bool = True` and its guards**: it checks what the manifest says it needs (tiers mounted, services up) before doing anything, and refuses the MCP server, Tailscale and Colima
+- **Never give the control plane general sudo, a wildcard sudo rule, or any sudo rule for `diskutil`**: `/etc/sudoers.d/homelab` holds exact `pmset` commands only (`homelab/sudoers.py`); a sudoers `*` matches spaces too
+- **Never let a test run a real action**: under `TEST_MODE` jobs run only `tests/fixtures/jobs/`, and action tests capture `jobs.submit`. The tests run on the mini, next to the real Plex
 
 ---
 
