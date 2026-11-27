@@ -1,0 +1,925 @@
+[
+  {
+    "name": "check_colima_docker",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_docker_services",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_homebrew",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_immich",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_jellyfin",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_launchd",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_plex",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_port",
+    "input": {
+      "properties": {
+        "port": {
+          "title": "Port",
+          "type": "integer"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "check_portArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_prereqs",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_raid",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_remote_access",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_reverse_proxy",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_storage",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_tailscale",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "collect_logs",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "config_get",
+    "input": {
+      "properties": {
+        "section": {
+          "anyOf": [
+            {
+              "enum": [
+                "host",
+                "storage",
+                "services",
+                "boot_order",
+                "remote_access",
+                "media",
+                "photos",
+                "power"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        }
+      },
+      "title": "config_getArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "docker_containers",
+    "input": {
+      "properties": {},
+      "title": "docker_containersArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "docs_search",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "limit": {
+          "default": 5,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "docs_searchArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "health_check",
+    "input": {
+      "properties": {
+        "component": {
+          "default": "all",
+          "enum": [
+            "all",
+            "storage",
+            "raid",
+            "docker",
+            "immich",
+            "plex",
+            "jellyfin",
+            "tailscale",
+            "launchd",
+            "power",
+            "network",
+            "prereqs",
+            "homebrew"
+          ],
+          "title": "Component",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "health_checkArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "history_query",
+    "input": {
+      "properties": {
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "since": {
+          "default": "7d",
+          "title": "Since",
+          "type": "string"
+        },
+        "bucket": {
+          "default": "1h",
+          "title": "Bucket",
+          "type": "string"
+        },
+        "above": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Above"
+        },
+        "below": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Below"
+        }
+      },
+      "required": [
+        "metric"
+      ],
+      "title": "history_queryArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "incident_list",
+    "input": {
+      "properties": {
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "resolved",
+            "all"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "incident_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "incident_open",
+    "input": {
+      "properties": {
+        "component": {
+          "title": "Component",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "severity": {
+          "default": "warn",
+          "enum": [
+            "fail",
+            "warn"
+          ],
+          "title": "Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "component",
+        "title"
+      ],
+      "title": "incident_openArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "incident_resolve",
+    "input": {
+      "properties": {
+        "incident_id": {
+          "title": "Incident Id",
+          "type": "integer"
+        },
+        "root_cause": {
+          "title": "Root Cause",
+          "type": "string"
+        },
+        "resolution": {
+          "title": "Resolution",
+          "type": "string"
+        }
+      },
+      "required": [
+        "incident_id",
+        "root_cause",
+        "resolution"
+      ],
+      "title": "incident_resolveArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "incident_update",
+    "input": {
+      "properties": {
+        "incident_id": {
+          "title": "Incident Id",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "observation",
+            "action",
+            "hypothesis",
+            "note"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        }
+      },
+      "required": [
+        "incident_id",
+        "kind",
+        "body"
+      ],
+      "title": "incident_updateArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "launchd_jobs",
+    "input": {
+      "properties": {
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "launchd_jobsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "logs_search",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "launchd",
+                  "modules"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sources"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "logs_searchArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "media_library_stats",
+    "input": {
+      "properties": {},
+      "title": "media_library_statsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "media_staging_list",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "all",
+          "enum": [
+            "all",
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "include_failed": {
+          "default": true,
+          "title": "Include Failed",
+          "type": "boolean"
+        }
+      },
+      "title": "media_staging_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "memory_forget",
+    "input": {
+      "properties": {
+        "note_id": {
+          "title": "Note Id",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "note_id",
+        "reason"
+      ],
+      "title": "memory_forgetArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "memory_note",
+    "input": {
+      "properties": {
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "fact",
+            "preference",
+            "decision",
+            "resolution",
+            "todo"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Component"
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tags"
+        },
+        "expires_in_days": {
+          "anyOf": [
+            {
+              "maximum": 3650,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires In Days"
+        }
+      },
+      "required": [
+        "body",
+        "kind"
+      ],
+      "title": "memory_noteArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "memory_recall",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Component"
+        },
+        "kinds": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "fact",
+                  "preference",
+                  "decision",
+                  "resolution",
+                  "todo"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kinds"
+        },
+        "limit": {
+          "default": 5,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "memory_recallArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "network_check_port",
+    "input": {
+      "properties": {
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "title": "Port",
+          "type": "integer"
+        },
+        "host": {
+          "default": "localhost",
+          "enum": [
+            "localhost",
+            "127.0.0.1"
+          ],
+          "title": "Host",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "network_check_portArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_stats",
+    "input": {
+      "properties": {},
+      "title": "photos_statsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "power_status",
+    "input": {
+      "properties": {},
+      "title": "power_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "quick_summary",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "run_all_diagnostics",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "runbook_get",
+    "input": {
+      "properties": {
+        "topic": {
+          "title": "Topic",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topic"
+      ],
+      "title": "runbook_getArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "service_logs",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "lines": {
+          "default": 100,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Lines",
+          "type": "integer"
+        },
+        "grep": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grep"
+        },
+        "container": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Container"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_logsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "service_status",
+    "input": {
+      "properties": {
+        "service": {
+          "default": "all",
+          "enum": [
+            "all",
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "service_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "storage_plan_recovery",
+    "input": {
+      "properties": {
+        "tier": {
+          "enum": [
+            "faststore",
+            "warmstore",
+            "coldstore"
+          ],
+          "title": "Tier",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tier"
+      ],
+      "title": "storage_plan_recoveryArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "storage_status",
+    "input": {
+      "properties": {
+        "tier": {
+          "default": "all",
+          "enum": [
+            "all",
+            "faststore",
+            "warmstore",
+            "coldstore"
+          ],
+          "title": "Tier",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "storage_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "system_overview",
+    "input": {
+      "properties": {
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "system_overviewArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "tailscale_status",
+    "input": {
+      "properties": {},
+      "title": "tailscale_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "updates_check",
+    "input": {
+      "properties": {},
+      "title": "updates_checkArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "verify_media_paths",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  }
+]
