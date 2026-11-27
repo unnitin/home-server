@@ -102,6 +102,15 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - Resources, prompts, `docs_search`/`runbook_get` (FTS5), `instructions.md`.
 - `homelab` CLI exposing the same domain functions for humans.
 
+**Progress** (2026-11-27):
+- Built: `homelab/exec.py` (the allowlist, fixed program paths, timeouts that kill the process group, TEST_MODE fixtures; the T3 commands always refused), `redact.py`, and `config/homelab.json` so the LaunchD Python reads the manifest without PyYAML (#42).
+- Built: read-only adapters for diskutil, launchctl, Tailscale, Docker, Homebrew, power and SMART, tested against output recorded on the mini (#43). Keychain secrets (`homelab secrets`) and the Immich, Plex and Jellyfin API adapters (#44).
+- Built: the T0 tools on the domains, `system_overview` rebuilt on the adapters (0.4 s, 1.9 KB live), `storage_plan_recovery`, the `homelab status` and `homelab tool` commands, and the manifest's `power:` profile (#45). `media_staging_list`, `media_library_stats`, `photos_stats`, `updates_check` (#46).
+- Built: `state.db` with migrations, `io.homelab.snapshot` every 15 minutes, `history_query`, automatic incidents (one per failing component, reopened within an hour so flapping makes one), `memory_*` and `incident_*`, retention, and the daily copy to coldstore (#47).
+- Built: the operating guide in `initialize`, resources, prompts, `docs_search` and `runbook_get` over FTS5, and the tool-schema portability lint with the committed `tools/list` surface; CI now runs the MCP tests (#48). The read-only curation reports: albums, album profiles, unsorted photos, and movies joined across Plex and Jellyfin (#49).
+- Found: D32. Every step was gated, merged into `mcp-refactor`, and the merged branch tested from a clean clone before going on.
+- Still to do: the VM rehearsal and the deploy (which loads `io.homelab.snapshot` and restarts the MCP job), and the API keys (`homelab secrets …`), without which the library, photo and curation tools say which key is missing. The curation adapters haven't run against the live APIs yet.
+
 **Acceptance:** "When did warmstore last exceed 80%?" is answerable from history. Unplugging a test volume opens an incident within 15 minutes, and remounting it resolves the incident. Tool-schema portability lint passes (names, flat schemas, OpenAI strict, Gemini subset).
 
 ## Phase 3 — Policy, auth, audit, jobs, safe actions
