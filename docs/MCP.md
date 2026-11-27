@@ -60,7 +60,13 @@ All of them are read-only: they look, and change nothing.
 | `tailscale_status` | — | Connected, DNS name, version, peer counts (never names), and each tailnet mapping against the manifest; Funnel is a failure |
 | `power_status` | — | pmset against the manifest's 24/7 profile, what prevents sleep, uptime, macOS version |
 | `config_get` | `section` | The manifest, or one section (no secrets) |
+| `media_staging_list` | `library` (`all`, `movies`, `tv`, `collections`), `include_failed=true` | Files waiting in staging and their age (over 24 h is a warning), and files that failed processing, by date |
+| `media_library_stats` | — | Plex sections and Jellyfin libraries: item counts, folders (flagged if outside the manifest), last scan, recent additions. Needs their API keys |
+| `photos_stats` | — | Immich version, photo and video totals (never per person), library size, job backlog and failures, the photo tier's free space. Needs an admin's API key |
+| `updates_check` | — | Outdated Homebrew packages, Immich running vs latest (a major version is flagged; the moving `release` tag too), Plex and Jellyfin versions. Reports only |
 | `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's diagnostics: the non-OK checks by default, every check with `verbose=true` |
+
+The API keys these need live in the Keychain: `python3 -m homelab secrets list` shows which are set ([homelab/README.md](../homelab/README.md#api-secrets)). Without one, a tool says which command sets it.
 
 `health_check` runs the diagnostics in JSON mode (`DIAG_FORMAT=json`, see [`diagnostics/README.md`](../diagnostics/README.md)). The others are the control plane's domains (`homelab/domains/`) over its read-only adapters. The same tools work from a shell: `python3 -m homelab status` and `python3 -m homelab tool NAME KEY=VALUE…`.
 
@@ -141,6 +147,9 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 | "Is port 2283 responding?" | `network_check_port` with port=2283 |
 | "Which LaunchD jobs are down?" | `launchd_jobs` |
 | "Did anything log 'permission denied' today?" | `logs_search` with query="permission denied" |
+| "Why hasn't my new movie shown up?" | `media_staging_list`, then `media_library_stats` |
+| "Is Immich still indexing?" | `photos_stats` |
+| "Anything to update?" | `updates_check` |
 | "Collect logs for support" | `collect_logs` |
 
 ---
