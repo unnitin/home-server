@@ -344,6 +344,7 @@ scripts/automation/configure_launchd.sh
 | Media Watcher | `io.homelab.media.watcher.plist` | Automated media processing |
 | Tailscale | `io.homelab.tailscale.plist` | Auto-start VPN connection |
 | Updates | `io.homelab.updatecheck.plist` | Weekly update checks |
+| Snapshots | `io.homelab.snapshot.plist` | Every 15 min: history, incidents and versions in the state database |
 
 ### Verification
 ```bash

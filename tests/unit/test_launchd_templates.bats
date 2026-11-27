@@ -29,7 +29,7 @@ render() {
     render
     [ "$status" -eq 0 ]
     [ ! -s "$LAUNCHCTL_CALLS" ]
-    for name in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck mcp; do
+    for name in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck snapshot mcp; do
         [ -f "$OUT/io.homelab.$name.plist" ]
     done
 }

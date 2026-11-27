@@ -453,7 +453,7 @@ def test_a_crashing_tool_returns_an_error_envelope(monkeypatch):
     def boom(**kw):
         raise RuntimeError("kaboom")
 
-    monkeypatch.setitem(tools.TOOLS, "power_status", boom)
+    monkeypatch.setitem(tools.ALL, "power_status", boom)
     r = tools.call("power_status")
     assert r["status"] == "error" and "kaboom" in r["summary"]
 

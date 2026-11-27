@@ -39,7 +39,7 @@ mount_tier() { mkdir -p "$VOL/$1"; FAKE_MOUNTS="$FAKE_MOUNTS $VOL/$1"; }
 all_up() {
     FAKE_UP="http://localhost:2283/api/server/ping http://localhost:32400/identity http://localhost:8096/health http://127.0.0.1:8080/"
     for t in faststore warmstore coldstore; do mount_tier "$t"; done
-    for j in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck mcp; do
+    for j in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck snapshot mcp; do
         echo "- 0 io.homelab.$j" >>"$FAKE_LIST"
     done
 }
@@ -92,7 +92,7 @@ all_up() {
 
 @test "health: every job in the manifest is checked, jellyfin and mcp included" {
     run bash "$HEALTH"
-    for j in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck mcp; do
+    for j in storage powermgmt colima compose.immich plex jellyfin landing media.watcher updatecheck snapshot mcp; do
         [[ "$output" == *"io.homelab.$j - "* ]] || false
     done
 }

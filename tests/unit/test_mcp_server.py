@@ -83,7 +83,7 @@ def test_http_guard_accepts_loopback_and_tailnet_rejects_others():
 def test_every_routed_tool_is_registered():
     server = mcp_server.build_server()
     names = {tool.name for tool in asyncio.run(server.list_tools())}
-    structured = {"health_check"} | set(mcp_server.homelab_tools.TOOLS)
+    structured = {"health_check"} | set(mcp_server.homelab_tools.ALL)
     assert set(mcp_routing.TOOL_SCRIPTS) | {"check_port"} | structured == names
 
 

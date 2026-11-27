@@ -172,6 +172,13 @@
       "depends_on": [],
       "optional": false
     },
+    "snapshot": {
+      "kind": "job",
+      "launchd": "io.homelab.snapshot",
+      "ports": [],
+      "depends_on": [],
+      "optional": false
+    },
     "mcp": {
       "kind": "process",
       "launchd": "io.homelab.mcp",
@@ -192,6 +199,7 @@
     "media_watcher",
     "tailscale",
     "updatecheck",
+    "snapshot",
     "mcp"
   ],
   "remote_access": {

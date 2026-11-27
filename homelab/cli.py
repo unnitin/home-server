@@ -7,7 +7,10 @@ python3 -m homelab secrets list           which API secrets are set (never their
 python3 -m homelab secrets set NAME       store one in the Keychain (not echoed)
 python3 -m homelab secrets import-plex    copy Plex's own token into the Keychain
 python3 -m homelab status [--json]         the system overview
-python3 -m homelab tool NAME [KEY=VALUE…]  run any read-only tool; `tool --list`
+python3 -m homelab tool NAME [KEY=VALUE…]  run any tool; `tool --list`
+python3 -m homelab snapshot               record one snapshot (io.homelab.snapshot)
+python3 -m homelab history METRIC [--since 7d] [--above N]
+python3 -m homelab incidents [--all]
 """
 
 from __future__ import annotations
@@ -128,10 +131,12 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_tool(args: argparse.Namespace) -> int:
+    import inspect
+
     from homelab import tools
 
     if args.list or not args.name:
-        for name, fn in tools.TOOLS.items():
+        for name, fn in tools.ALL.items():
             doc = (fn.__doc__ or "").strip().splitlines()
             print(f"{name:<24} {doc[0] if doc else ''}")
         return 0
@@ -142,9 +147,44 @@ def cmd_tool(args: argparse.Namespace) -> int:
             print(f"parameters are KEY=VALUE: {pair!r}", file=sys.stderr)
             return 2
         kwargs[key] = _value(value)
+    fn = tools.ALL.get(args.name)
+    if fn is not None and "actor" in inspect.signature(fn).parameters:
+        kwargs.setdefault("actor", "cli")
     res = tools.call(args.name, **kwargs)
     print(json.dumps(res, indent=2))
     return 0 if res["status"] in ("ok", "warn") else 1
+
+
+def cmd_snapshot(args: argparse.Namespace) -> int:
+    from homelab.state import snapshot
+
+    out = snapshot.take()
+    print(json.dumps(out))
+    return 0
+
+
+def cmd_history(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call(
+        "history_query", metric=args.metric, since=args.since, above=args.above
+    )
+    print(json.dumps(res, indent=2) if args.json else render_text(res))
+    return 0 if res["status"] != "error" else 1
+
+
+def cmd_incidents(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call("incident_list", status="all" if args.all else "open")
+    if res["status"] == "error":
+        print(render_text(res))
+        return 1
+    for row in res["data"]["incidents"]["content"]:
+        closed = f" -> {row['closed']}" if row["closed"] else ""
+        print(f"#{row['id']} [{row['status']}] {row['component']}: {row['title']}")
+        print(f"    {row['opened']}{closed}")
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -184,6 +224,16 @@ def build_parser() -> argparse.ArgumentParser:
     tl.add_argument("params", nargs="*", metavar="KEY=VALUE")
     tl.add_argument("--list", action="store_true")
     tl.set_defaults(fn=cmd_tool)
+    top.add_parser("snapshot", help="record one snapshot").set_defaults(fn=cmd_snapshot)
+    hi = top.add_parser("history", help="a metric's history")
+    hi.add_argument("metric")
+    hi.add_argument("--since", default="7d")
+    hi.add_argument("--above", type=float)
+    hi.add_argument("--json", action="store_true")
+    hi.set_defaults(fn=cmd_history)
+    inc = top.add_parser("incidents", help="open incidents (--all for every one)")
+    inc.add_argument("--all", action="store_true")
+    inc.set_defaults(fn=cmd_incidents)
     return parser
 
 

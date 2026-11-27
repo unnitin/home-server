@@ -72,7 +72,7 @@ def stats() -> dict:
                 "photos.tier",
                 "fail",
                 f"{m.photos.tier} is not mounted: the photo library is on it",
-                "immich",
+                m.photos.tier,  # the tier's problem: one incident, not two
             )
         )
     else:
