@@ -55,6 +55,7 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
     "security": ("/usr/bin/security",),
     "smartctl": tuple(f"{d}/smartctl" for d in BREW),
     "sw_vers": ("/usr/bin/sw_vers",),
+    "sudo": ("/usr/bin/sudo",),
     "sysctl": ("/usr/sbin/sysctl",),
     "tailscale": (
         *(f"{d}/tailscale" for d in BREW),
@@ -123,6 +124,22 @@ def _ps(args: Sequence[str]) -> bool:
         and args[2] == "-p"
         and args[3].isdigit()
     )
+
+
+def _sudo(args: Sequence[str]) -> bool:
+    """`sudo -n CMD…` or `sudo -n -l CMD…` (is it allowed?), only for a command
+    in the scoped sudo rule (homelab/sudoers.py): never a shell, never
+    diskutil, never a value the manifest doesn't hold. -n: never ask for a
+    password, so a missing rule fails at once instead of hanging."""
+    from homelab import sudoers
+
+    rest = list(args)
+    if rest[:1] != ["-n"]:
+        return False
+    rest = rest[1:]
+    if rest[:1] == ["-l"]:
+        rest = rest[1:]
+    return sudoers.allowed(rest)
 
 
 def _security(args: Sequence[str]) -> bool:
@@ -246,6 +263,7 @@ RULES: dict[str, Callable[[Sequence[str]], bool]] = {
     "ps": _ps,
     "python": _python,
     "security": _security,
+    "sudo": _sudo,
     "smartctl": _smartctl,
     "sw_vers": _nothing_but_flags,
     "sysctl": _sysctl,
