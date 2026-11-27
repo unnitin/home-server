@@ -161,11 +161,19 @@ def prune(conn: sqlite3.Connection, now: Optional[datetime] = None) -> dict[str,
         old = conn.execute(
             "DELETE FROM metrics WHERE ts < ?", (_ago(METRICS_KEEP_DAYS, now),)
         ).rowcount
+        audit = conn.execute(  # the audit log: a year, like the metrics
+            "DELETE FROM audit WHERE ts < ?", (_ago(METRICS_KEEP_DAYS, now),)
+        ).rowcount
         conn.execute("COMMIT")
     except sqlite3.Error:
         conn.execute("ROLLBACK")
         raise
-    return {"snapshots": gone, "metrics_squashed": squashed, "metrics_dropped": old}
+    return {
+        "snapshots": gone,
+        "metrics_squashed": squashed,
+        "metrics_dropped": old,
+        "audit_dropped": audit,
+    }
 
 
 def backup(conn: sqlite3.Connection, now: Optional[datetime] = None) -> Optional[str]:

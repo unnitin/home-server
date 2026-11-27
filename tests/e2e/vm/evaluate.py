@@ -84,10 +84,11 @@ def evaluate(run: Path) -> tuple[list[dict[str, Any]], bool]:
             state = "running" if job["pid"] else "not running"
             check(label, status == 0, f"exit {status}, {state}")
 
-    check(
+    mcp_code = after.get("mcp_initialize_http")
+    check(  # from Phase 3 a request needs a token: 401 without one is an answer
         "MCP answers initialize on 127.0.0.1:18765",
-        after.get("mcp_initialize_http") == "200",
-        f"HTTP {after.get('mcp_initialize_http')}",
+        mcp_code in ("200", "401"),
+        f"HTTP {mcp_code}" + (" (token required)" if mcp_code == "401" else ""),
     )
     check(
         "Plex answers",

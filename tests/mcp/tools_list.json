@@ -1,5 +1,39 @@
 [
   {
+    "name": "audit_recent",
+    "input": {
+      "properties": {
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool"
+        },
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        }
+      },
+      "title": "audit_recentArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
     "name": "check_colima_docker",
     "input": {
       "properties": {},

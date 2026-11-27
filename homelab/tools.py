@@ -14,7 +14,8 @@ import traceback
 from typing import Any, Callable
 
 from homelab import result as R
-from homelab.domains import context, curation, health, logs, media, memory, network
+from homelab.domains import context, curation, governance, health, logs, media
+from homelab.domains import memory, network
 from homelab.domains import photos
 from homelab.domains import services
 from homelab.domains import storage, system, updates
@@ -45,6 +46,7 @@ TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "photos_album_profile": curation.photos_album_profile,
     "photos_unsorted": curation.photos_unsorted,
     "media_items": curation.media_items,
+    "audit_recent": governance.audit_recent,
 }
 
 # Tools that write to the state database (notes, incidents), never the system.

@@ -73,11 +73,19 @@ def test_host_allowed(host, allowed):
 
 
 def test_http_guard_accepts_loopback_and_tailnet_rejects_others():
+    from homelab import auth
+
+    bearer = {"authorization": "Bearer " + auth.create("pytest", ["observe"])}
     with TestClient(mcp_server.build_app(), base_url="http://127.0.0.1:18765") as c:
-        assert post_init(c).status_code == 200
-        assert post_init(c, host="mini.tail1234.ts.net:8765").status_code == 200
-        assert post_init(c, host="evil.example.com").status_code == 421
-        assert post_init(c, origin="http://evil.example.com").status_code == 403
+        assert post_init(c, **bearer).status_code == 200
+        assert (
+            post_init(c, host="mini.tail1234.ts.net:8765", **bearer).status_code == 200
+        )
+        assert post_init(c, host="evil.example.com", **bearer).status_code == 421
+        assert (
+            post_init(c, origin="http://evil.example.com", **bearer).status_code == 403
+        )
+        assert post_init(c).status_code == 401  # no token
 
 
 def test_every_routed_tool_is_registered():

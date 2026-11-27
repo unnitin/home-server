@@ -11,6 +11,9 @@ python3 -m homelab tool NAME [KEY=VALUE…]  run any tool; `tool --list`
 python3 -m homelab snapshot               record one snapshot (io.homelab.snapshot)
 python3 -m homelab history METRIC [--since 7d] [--above N]
 python3 -m homelab incidents [--all]
+python3 -m homelab token create NAME --scope ops [--toolset core] [--expires-days N]
+python3 -m homelab token list|revoke NAME  MCP client tokens (shown once, kept hashed)
+python3 -m homelab audit [--limit N]       the MCP server's recent tool calls
 """
 
 from __future__ import annotations
@@ -187,6 +190,64 @@ def cmd_incidents(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_token_create(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    scopes = [s.strip() for s in ",".join(args.scope).split(",") if s.strip()]
+    try:
+        token = auth.create(args.name, scopes, args.toolset, args.expires_days)
+    except auth.TokenError as err:
+        print(f"homelab: {err}", file=sys.stderr)
+        return 2
+    print(
+        f"Token for {args.name} (scopes: {', '.join(scopes)}). It isn't shown "
+        "again, and only its hash is kept:\n"
+    )
+    print(f"  {token}\n")
+    print("Clients send it as the header  Authorization: Bearer <token>")
+    return 0
+
+
+def cmd_token_list(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    rows = auth.tokens()
+    if not rows:
+        print("No tokens: homelab token create NAME --scope ops")
+    for r in rows:
+        state = f"revoked {r['revoked_at']}" if r["revoked_at"] else "active"
+        if not r["revoked_at"] and r["expires_at"]:
+            state += f", expires {r['expires_at']}"
+        extra = f", toolset {r['toolset']}" if r["toolset"] else ""
+        print(
+            f"{r['name']}: {r['scopes']}{extra} ({state}; last used "
+            f"{r['last_used_at'] or 'never'})"
+        )
+    return 0
+
+
+def cmd_token_revoke(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    if auth.revoke(args.name):
+        print(f"Revoked {args.name}: its next request is refused")
+        return 0
+    print(f"homelab: no active token named {args.name!r}", file=sys.stderr)
+    return 1
+
+
+def cmd_audit(args: argparse.Namespace) -> int:
+    from homelab import audit
+
+    for r in reversed(audit.recent(args.limit)):
+        who = r["client"] + (f" ({r['tailscale_user']})" if r["tailscale_user"] else "")
+        print(
+            f"{r['ts']} {who} {r['tool']} [{r['tier']}] -> {r['outcome']}: "
+            f"{r['summary'] or ''}"
+        )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="homelab")
     parser.add_argument(
@@ -234,6 +295,29 @@ def build_parser() -> argparse.ArgumentParser:
     inc = top.add_parser("incidents", help="open incidents (--all for every one)")
     inc.add_argument("--all", action="store_true")
     inc.set_defaults(fn=cmd_incidents)
+
+    tok = top.add_parser("token", help="bearer tokens for MCP clients")
+    sub = tok.add_subparsers(dest="command", required=True)
+    mk = sub.add_parser("create", help="make one (printed once)")
+    mk.add_argument("name", help="the client, e.g. macbook-claude")
+    mk.add_argument(
+        "--scope",
+        action="append",
+        required=True,
+        help="observe, ops, admin or curator (repeat, or comma-separate)",
+    )
+    mk.add_argument("--toolset", help="narrow it to a toolset, e.g. core")
+    mk.add_argument("--expires-days", type=int)
+    mk.set_defaults(fn=cmd_token_create)
+    sub.add_parser("list", help="every token, never its value").set_defaults(
+        fn=cmd_token_list
+    )
+    rv = sub.add_parser("revoke", help="refuse a token from now on")
+    rv.add_argument("name")
+    rv.set_defaults(fn=cmd_token_revoke)
+    au = top.add_parser("audit", help="the MCP server's recent tool calls")
+    au.add_argument("--limit", type=int, default=30)
+    au.set_defaults(fn=cmd_audit)
     return parser
 
 

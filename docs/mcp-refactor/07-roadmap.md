@@ -139,6 +139,7 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 
 **Progress** (2026-11-27):
 - Built: `config/policy.yaml` and `homelab/policy.py`: every tool's tier, the four scopes, the `core` toolset, the T1 rate limit and dry-run default, lock keys, and the names that are never exposed. The server refuses to start if a registered tool is missing from the policy, if the policy lists one that isn't registered, or if a T3 name is registered. `config/policy.json` is rendered for the LaunchD Python (#53).
+- Built: bearer tokens (`homelab token create|list|revoke`, kept hashed in `state.db`), with `tools/list` filtered by the token's scope and toolset and every call checked again; the T1 rate limit (10 a minute per token); the audit log (every call, refused ones included, with the token, Tailscale user, model, redacted arguments and outcome; mirrored to `audit.jsonl` while warmstore is mounted) and `audit_recent` (#54). Requests without a valid token get 401.
 
 **Acceptance:** policy tests prove that T3 names are absent from `tools/list` for every scope, that an `observe` token can't call T1, that `dry_run` defaults to true, that two `media_process` calls serialize, and that a job survives a server restart.
 

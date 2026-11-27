@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Probe the MCP server's Phase 2 surface, inside the VM. Prints one JSON object.
 
-  mcp_probe.py URL
+mcp_probe.py URL      (MCP_TOKEN: the bearer token, from Phase 3)
 """
 
 import asyncio
 import json
+import os
 import sys
 
 from mcp import ClientSession
@@ -14,7 +15,9 @@ from mcp.client.streamable_http import streamablehttp_client
 
 async def main(url: str) -> dict:
     out: dict = {}
-    async with streamablehttp_client(url) as (r, w, _):
+    token = os.environ.get("MCP_TOKEN")
+    headers = {"Authorization": f"Bearer {token}"} if token else None
+    async with streamablehttp_client(url, headers=headers) as (r, w, _):
         async with ClientSession(r, w) as s:
             init = await s.initialize()
             out["instructions_words"] = len((init.instructions or "").split())
