@@ -92,3 +92,46 @@ def recently_added(limit: int = 5, c: Optional[Client] = None) -> list[Added]:
         )
         for m in mc.get("Metadata", [])[:limit]
     ]
+
+
+@dataclass(frozen=True)
+class Movie:
+    key: str  # Plex's ratingKey
+    title: str
+    year: Optional[int]
+    tmdb: Optional[str]
+    matched: bool  # Plex's agent found it (not a local:// item)
+    files: tuple[str, ...]
+    labels: tuple[str, ...]
+    added_at: Optional[int]
+
+
+def movies(section: str, c: Optional[Client] = None) -> list[Movie]:
+    c = c or client()
+    mc = c.get(f"/library/sections/{section}/all?type=1&includeGuids=1").get(
+        "MediaContainer", {}
+    )
+    out = []
+    for m in mc.get("Metadata", []):
+        guids = [g.get("id", "") for g in m.get("Guid", [])]
+        tmdb = next(
+            (g.split("://", 1)[1] for g in guids if g.startswith("tmdb://")), None
+        )
+        files = tuple(
+            p.get("file", "")
+            for media in m.get("Media", [])
+            for p in media.get("Part", [])
+        )
+        out.append(
+            Movie(
+                key=str(m.get("ratingKey", "")),
+                title=m.get("title", ""),
+                year=m.get("year"),
+                tmdb=tmdb,
+                matched=not str(m.get("guid", "")).startswith("local://"),
+                files=files,
+                labels=tuple(lab.get("tag", "") for lab in m.get("Label", [])),
+                added_at=m.get("addedAt"),
+            )
+        )
+    return out

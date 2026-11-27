@@ -9,13 +9,15 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 MAX_POINTS = 120
-UNITS = {"m": 60, "h": 3600, "d": 86400}
+UNITS = {"m": 60, "h": 3600, "d": 86400, "w": 604800, "y": 31536000}
 
 
 def seconds(text: str) -> int:
-    m = re.fullmatch(r"(\d+)\s*([mhd])", text.strip())
+    m = re.fullmatch(r"(\d+)\s*([mhdwy])", text.strip())
     if not m:
-        raise ValueError(f"use a number and m, h or d, like 30m, 1h, 7d: {text!r}")
+        raise ValueError(
+            f"use a number and m, h, d, w or y, like 30m, 7d, 1y: {text!r}"
+        )
     return int(m.group(1)) * UNITS[m.group(2)]
 
 

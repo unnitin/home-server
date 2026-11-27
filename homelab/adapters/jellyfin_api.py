@@ -65,3 +65,30 @@ def last_scan(c: Optional[Client] = None) -> Optional[Scan]:
                 state=task.get("State", ""),
             )
     return None
+
+
+@dataclass(frozen=True)
+class Movie:
+    id: str
+    title: str
+    year: Optional[int]
+    tmdb: Optional[str]
+    path: str
+    tags: tuple[str, ...]
+
+
+def movies(c: Optional[Client] = None) -> list[Movie]:
+    data = (c or client()).get(
+        "/Items?IncludeItemTypes=Movie&Recursive=true&Fields=ProviderIds,Path,Tags"
+    )
+    return [
+        Movie(
+            id=i.get("Id", ""),
+            title=i.get("Name", ""),
+            year=i.get("ProductionYear"),
+            tmdb=(i.get("ProviderIds") or {}).get("Tmdb") or None,
+            path=i.get("Path", ""),
+            tags=tuple(i.get("Tags") or ()),
+        )
+        for i in data.get("Items", [])
+    ]

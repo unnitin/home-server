@@ -1,0 +1,56 @@
+{
+  "status": 200,
+  "json": {
+    "Items": [
+      {
+        "Id": "j1",
+        "Name": "Arrival",
+        "ProductionYear": 2016,
+        "ProviderIds": {
+          "Tmdb": "329865"
+        },
+        "Path": "/Volumes/warmstore/movies/Arrival (2016)/Arrival (2016).mkv",
+        "Tags": []
+      },
+      {
+        "Id": "j2",
+        "Name": "Dune",
+        "ProductionYear": 2021,
+        "ProviderIds": {
+          "Tmdb": "438631"
+        },
+        "Path": "/Volumes/warmstore/movies/Dune (2021)/Dune (2021).mkv",
+        "Tags": []
+      },
+      {
+        "Id": "j3",
+        "Name": "The Thing",
+        "ProductionYear": 2011,
+        "ProviderIds": {
+          "Tmdb": "60935"
+        },
+        "Path": "/Volumes/warmstore/movies/The Thing (1982)/The Thing (1982).mkv",
+        "Tags": []
+      },
+      {
+        "Id": "j4",
+        "Name": "clip",
+        "ProductionYear": null,
+        "ProviderIds": {},
+        "Path": "/Volumes/warmstore/movies/Home Video 2019/clip.mkv",
+        "Tags": []
+      },
+      {
+        "Id": "j6",
+        "Name": "Moana",
+        "ProductionYear": 2016,
+        "ProviderIds": {
+          "Tmdb": "277834"
+        },
+        "Path": "/Volumes/warmstore/movies/Moana (2016)/Moana (2016).mkv",
+        "Tags": []
+      }
+    ],
+    "TotalRecordCount": 5
+  }
+}

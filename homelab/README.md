@@ -34,6 +34,7 @@ output recorded on the mini (`tests/fixtures/exec/`).
 | `domains/media.py` | `media_staging_list`, `media_library_stats` |
 | `domains/photos.py` | `photos_stats` |
 | `domains/updates.py` | `updates_check` (reports only) |
+| `domains/curation.py` | the read-only curation reports: `photos_albums`, `photos_album_profile`, `photos_unsorted`, `media_items` (Plex and Jellyfin joined by file) |
 | `adapters/releases.py` | the latest Immich release on GitHub: the one call that leaves the mini (fixed URL, nothing sent) |
 | `domains/health.py` | `system_overview`, built on the above, in parallel |
 | `tools.py` | the tools by name, shared by the MCP server and the CLI; a failure becomes an error result |
