@@ -78,6 +78,24 @@ The curation reports (08) only read. Photo results carry ids, dates, city and co
 
 The API keys these need live in the Keychain: `python3 -m homelab secrets list` shows which are set ([homelab/README.md](../homelab/README.md#api-secrets)). Without one, a tool says which command sets it.
 
+### Actions (T1)
+
+Safe, reversible actions for `ops` tokens. Each is a **dry run unless called with `dry_run=false`**, and the dry run returns the exact plan. Each checks first what the manifest says it needs (tiers mounted, services up) and refuses, saying why, when something's missing. Slow ones run as jobs. Limited to 10 a minute per token.
+
+| Tool | Arguments | Does |
+|---|---|---|
+| `service_restart` | `service`, `dry_run=true` | Plex/Jellyfin: quit and reopen (a job). Immich: `docker compose restart` (no pull, no recreate). A job service: `launchctl kickstart -k`. Never the MCP server, Tailscale or Colima |
+| `service_start` | `service`, `dry_run=true` | Starts a service that's down; nothing if it's up. Never releases a held job |
+| `launchd_kickstart` | `label`, `dry_run=true` | Runs an io.homelab job now (restarts it if running). Not held jobs, not the MCP server |
+| `media_process` | `library="all"`, `dry_run=true` | Processes staging into the libraries (a job, one at a time) |
+| `media_retry_failed` | `library`, `date`, `dry_run=true` | Moves failed files back to that library's staging and processes it; never overwrites |
+| `library_scan` | `server="both"`, `dry_run=true` | Plex and/or Jellyfin library scan. Refused while the media tier is unmounted |
+| `photos_run_job` | `job`, `mode="missing"`, `dry_run=true` | Starts an Immich job (thumbnails, metadata, smart search, faces, duplicates) |
+| `tailscale_serve_reconcile` | `dry_run=true` | Adds missing tailnet mappings from the manifest once their backend answers. Never removes one, never Funnel |
+| `storage_ensure_layout` | `dry_run=true` | Creates the manifest's missing folders on mounted tiers; never deletes |
+| `power_ensure` | `dry_run=true` | Puts drifted power settings back, with the scoped sudo rule (`sudo scripts/core/install_sudoers.sh`) |
+| `logs_collect` | `since="24h"`, `dry_run=true` | A redacted log bundle on the mini (a job); returns its path and size |
+
 ### Jobs
 
 Work that outlasts a client's timeout (processing media, a log bundle, an app restart) runs as a job: the tool returns `status: pending` and a `job_id` at once, and the work goes on under its own supervisor process (`python3 -m homelab job-run`), which survives a restart of the server. One job at a time per lock (one `media` job, one restart per service), at most two at once (`config/policy.yaml`). Logs are kept for 30 days beside the state database.

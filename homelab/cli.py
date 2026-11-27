@@ -16,6 +16,7 @@ python3 -m homelab token list|revoke NAME  MCP client tokens (shown once, kept h
 python3 -m homelab audit [--limit N]       the MCP server's recent tool calls
 python3 -m homelab jobs [--state S]        long-running jobs; `jobs --cancel ID`
 python3 -m homelab sudoers render|check    the scoped sudo rule (install_sudoers.sh)
+python3 -m homelab bundle [--since 24h]    a redacted log bundle (the logs_collect job)
 """
 
 from __future__ import annotations
@@ -274,6 +275,14 @@ def cmd_jobs(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_bundle(args: argparse.Namespace) -> int:
+    from homelab import bundle
+
+    res = bundle.build(args.since)
+    print(f"Bundle: {res['path']} ({res['bytes']:,} bytes, {res['files']} files)")
+    return 0
+
+
 def cmd_sudoers_render(args: argparse.Namespace) -> int:
     from homelab import sudoers
 
@@ -380,6 +389,9 @@ def build_parser() -> argparse.ArgumentParser:
     jb.add_argument("--limit", type=int, default=20)
     jb.add_argument("--cancel", metavar="JOB_ID")
     jb.set_defaults(fn=cmd_jobs)
+    bd = top.add_parser("bundle", help="a redacted log bundle (logs_collect)")
+    bd.add_argument("--since", default="24h")
+    bd.set_defaults(fn=cmd_bundle)
     sd = top.add_parser("sudoers", help="the scoped sudo rule for pmset")
     sub = sd.add_subparsers(dest="command", required=True)
     rd = sub.add_parser("render", help="print /etc/sudoers.d/homelab")

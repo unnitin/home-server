@@ -197,3 +197,40 @@ def test_audit_recent_returns_calls_as_data(app_client):
     note = next(c for c in data["calls"] if c["tool"] == "memory_note")
     assert note["args"]["type"] == "data"
     assert "tailscale_user" not in note
+
+
+def test_an_action_over_mcp_is_a_dry_run_and_its_job_names_the_token(
+    app_client, monkeypatch
+):
+    from homelab import jobs
+    from homelab.domains import actions
+
+    seen = {}
+
+    def submit(kind, argv, **kw):
+        seen["by"] = (
+            kw.get("requested_by")
+            or __import__("homelab.audit", fromlist=["CALLER"]).CALLER.get()
+        )
+        return {
+            "id": "j-20261127-000000-0001",
+            "kind": kind,
+            "state": "queued",
+            "progress": None,
+            "stage": None,
+            "requested_by": seen["by"],
+            "created_at": "x",
+            "started_at": None,
+            "ended_at": None,
+            "exit_code": None,
+            "error": None,
+        }
+
+    monkeypatch.setattr(jobs, "submit", submit)
+    monkeypatch.setattr(actions, "guard_checks", lambda m, needs: [])
+    s = Session(app_client, auth.create("macbook-claude", ["ops"]))
+    dry = s.call("logs_collect")
+    assert dry["structuredContent"]["data"]["dry_run"] is True and not seen
+    res = s.call("logs_collect", dry_run=False)
+    assert res["structuredContent"]["job_id"] and seen["by"] == "macbook-claude"
+    assert audit.recent(1)[0]["job_id"] == "j-20261127-000000-0001"

@@ -73,6 +73,7 @@ scripts/
 | [`services/install_plex.sh`](services/README.md#install_plexsh) | Install Plex Media Server | setup_full.sh, setup_flags.sh |
 | [`services/start_plex_safe.sh`](services/README.md#start_plex_safesh) | Safe Plex startup | LaunchD io.homelab.plex |
 | [`services/lib/native_app.sh`](services/README.md#libnative_appsh) | Start a native app from the manifest safely | start_plex_safe.sh, start_jellyfin_safe.sh |
+| [`services/restart_native_app.sh`](services/README.md#restart_native_appsh) | Quit and start a native app (Plex, Jellyfin) | MCP `service_restart` (a job) |
 | [`services/configure_plex_direct.sh`](services/README.md#configure_plex_directsh) | Configure Plex direct paths | setup_full.sh, Manual |
 | [`services/enable_landing.sh`](services/README.md#enable_landingsh) | Landing page service | setup_full.sh, LaunchD |
 | [`services/import_takeout.sh`](services/README.md#import_takeoutsh) | Google Takeout import wrapper | Manual |

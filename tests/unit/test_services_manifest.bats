@@ -24,6 +24,8 @@ setup() {
 #!/usr/bin/env bash
 n=$(( $(cat "$CHECKS") + 1 )); echo "$n" >"$CHECKS"
 if [[ "$FAKE_DOWN_CHECKS" == -1 || "$n" -le "$FAKE_DOWN_CHECKS" ]]; then printf 000; exit 7; fi
+# FAKE_UP_CHECKS=N: answers N checks, then stops answering (the app died)
+if [[ -n "${FAKE_UP_CHECKS:-}" && "$n" -gt "$FAKE_UP_CHECKS" ]]; then printf 000; exit 7; fi
 printf 200
 STUB
     printf '#!/usr/bin/env bash\necho "open $*" >> "$CALLS"\n' >"$STUBS/open"
@@ -109,4 +111,52 @@ map_plex() { echo '{"Web": {"mini.example.ts.net:32400": {"Handlers": {"/": {"Pr
 @test "the landing page serves on the manifest's port" {
     ! grep -nE '[^A-Z_]8080' "$ROOT/scripts/services/enable_landing.sh" | grep -v '^[0-9]*:#' || false
     grep -q 'HOMELAB_SVC_LANDING_PORTS' "$ROOT/scripts/services/enable_landing.sh"
+}
+
+@test "--foreground stays while the app answers, and exits once it stops (D32)" {
+    FAKE_UP_CHECKS=3 WATCH_INTERVAL=1 WATCH_FAILS=2 run bash "$ROOT/scripts/services/start_plex_safe.sh" --foreground
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"already running and answering"* ]] || false
+    [[ "$output" == *"Watching plex"* ]] || false
+    [[ "$output" == *"not answering (2/2)"* && "$output" == *"exiting so LaunchD starts it again"* ]] || false
+    [ "$(cat "$CHECKS")" -eq 5 ]   # 1 at start, 2 good while watching, 2 bad
+}
+
+@test "without --foreground the start script returns once the app answers" {
+    run bash "$ROOT/scripts/services/start_plex_safe.sh"
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"Watching"* ]] || false
+}
+
+@test "the LaunchD jobs run the start scripts in the foreground" {
+    grep -q "start_plex_safe.sh --foreground" "$ROOT/launchd/io.homelab.plex.plist"
+    grep -q "start_jellyfin_safe.sh --foreground" "$ROOT/launchd/io.homelab.jellyfin.plist"
+}
+
+@test "restart quits the app's processes, then starts it and waits for it" {
+    mount_faststore
+    # pgrep: the app has a process for its first two checks, then it's gone
+    printf '#!/usr/bin/env bash
+echo "pgrep $*" >> "$CALLS"
+n=$(grep -c "^pgrep" "$CALLS")
+[ "$n" -le 2 ] && echo 999999
+exit 0
+' >"$STUBS/pgrep"
+    chmod +x "$STUBS/pgrep"
+    QUIT_TIMEOUT=3 run bash "$ROOT/scripts/services/restart_native_app.sh" plex
+    [ "$status" -eq 0 ]
+    grep -q "pgrep -f $HOMELAB_APPS_DIR/Plex Media Server.app/Contents/" "$CALLS"
+    [[ "$output" == *"Asking Plex Media Server to quit"* && "$output" == *"has quit"* ]] || false
+    [[ "$output" == *"::stage starting"* && "$output" == *"answering"* ]] || false
+}
+
+@test "restart refuses before quitting anything when the data tier isn't mounted" {
+    printf '#!/usr/bin/env bash
+echo "pgrep $*" >> "$CALLS"
+' >"$STUBS/pgrep"
+    chmod +x "$STUBS/pgrep"
+    run bash "$ROOT/scripts/services/restart_native_app.sh" jellyfin
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"faststore is not mounted"* ]] || false
+    ! grep -q "^pgrep" "$CALLS" || false
 }

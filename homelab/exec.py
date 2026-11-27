@@ -2,8 +2,9 @@
 
 - argv lists only, never a shell string;
 - only programs on the allowlist below, each found at a fixed path (never PATH),
-  and only the read-only subcommands listed for it. Phase 3 adds the safe
-  actions; the destructive storage commands (T3) are never added, and
+  and only the read-only subcommands listed for it, plus the safe actions (T1)
+  with arguments taken from the manifest; the destructive storage commands
+  (T3) are never added, and
   tests/homelab/test_exec.py checks that they're refused;
 - a timeout per call that kills the program and everything it started;
 - NO_COLOR=1, the manifest's HOMELAB_* values and a fixed PATH in its
@@ -107,8 +108,36 @@ def _diskutil(args: Sequence[str]) -> bool:
     return _starts(args, ("list",), ("info",), ("apfs", "list"), ("appleRAID", "list"))
 
 
+def _manifest():
+    from homelab import config
+
+    return config.load()
+
+
+# Jobs never kickstarted from the control plane: the MCP server would end the
+# very call that asked.
+KICK_NEVER = {"io.homelab.mcp"}
+
+
 def _launchctl(args: Sequence[str]) -> bool:
-    return _starts(args, ("print",), ("print-disabled",), ("list",))
+    if _starts(args, ("print",), ("print-disabled",), ("list",)):
+        return True
+    # T1: kickstart [-k] gui/<uid>/<label>, for a job in the manifest
+    rest = list(args)
+    if rest[:1] != ["kickstart"]:
+        return False
+    rest = rest[1:]
+    if rest[:1] == ["-k"]:
+        rest = rest[1:]
+    if len(rest) != 1:
+        return False
+    from homelab.adapters import launchd  # this user's GUI domain only
+
+    domain, _, label = rest[0].rpartition("/")
+    if domain != launchd.domain() or label in KICK_NEVER:
+        return False
+    labels = {s.launchd for s in _manifest().services.values() if s.launchd}
+    return label in labels
 
 
 def _pmset(args: Sequence[str]) -> bool:
@@ -176,18 +205,39 @@ def _colima(args: Sequence[str]) -> bool:
 
 
 def _tailscale(args: Sequence[str]) -> bool:
-    return _starts(
+    if _starts(
         args,
         ("status",),
         ("serve", "status"),
         ("funnel", "status"),
         ("version",),
         ("ip",),
-    )
+    ):
+        return True
+    # T1: serve --bg --https=PORT TARGET, only a mapping the manifest declares.
+    # Never funnel, reset or off.
+    if len(args) == 4 and tuple(args[:2]) == ("serve", "--bg"):
+        m = re.fullmatch(r"--https=(\d+)", args[2])
+        mappings = {
+            (mp.https, mp.target) for mp in _manifest().remote_access.tailscale_serve
+        }
+        return bool(m) and (int(m.group(1)), args[3]) in mappings
+    return False
 
 
 COMPOSE_OPTIONS = {"-f", "--file", "-p", "--project-name", "--project-directory"}
 COMPOSE_READ = {"ps", "logs", "images", "ls", "version", "config"}
+# T1: restart and start keep the containers that exist: they never pull,
+# recreate or apply a changed compose file (that's `up`, never allowed here).
+COMPOSE_ACT = {"restart", "start"}
+
+
+def _compose_files() -> set[str]:
+    return {
+        str((REPO / s.compose_dir / "docker-compose.yml").resolve())
+        for s in _manifest().services.values()
+        if s.compose_dir
+    }
 
 
 def _docker(args: Sequence[str]) -> bool:
@@ -196,14 +246,27 @@ def _docker(args: Sequence[str]) -> bool:
     if not _starts(args, ("compose",)):
         return False
     rest = list(args[1:])
+    files = []
     while rest and rest[0].startswith("-"):
         option = rest.pop(0)
         if "=" in option and option.split("=", 1)[0] in COMPOSE_OPTIONS:
+            name, value = option.split("=", 1)
+            if name in ("-f", "--file"):
+                files.append(value)
             continue
         if option not in COMPOSE_OPTIONS or not rest:
             return False
-        rest.pop(0)
-    return bool(rest) and rest[0] in COMPOSE_READ
+        value = rest.pop(0)
+        if option in ("-f", "--file"):
+            files.append(value)
+    if not rest:
+        return False
+    if rest[0] in COMPOSE_READ:
+        return True
+    if rest[0] in COMPOSE_ACT and len(rest) == 1 and files:
+        known = _compose_files()
+        return all(str(Path(f).resolve()) in known for f in files)
+    return False
 
 
 SMART_READ = {"-a", "-H", "-i", "-A", "-x", "-j", "--json", "--all", "--info"}
@@ -215,10 +278,27 @@ def _smartctl(args: Sequence[str]) -> bool:
 
 
 JOB_FIXTURES = REPO / "tests" / "fixtures" / "jobs"
+MEDIA_PASSES = {"--movies-only", "--tv-only", "--collections-only", "--all"}
+
+
+def _native_apps() -> set[str]:
+    return {n for n, s in _manifest().services.items() if s.kind == "native_app"}
+
+
+# T1: the scripts/ executors the actions run, each with the arguments it may get.
+ACTION_SCRIPTS: dict[str, Callable[[list[str]], bool]] = {
+    "scripts/services/restart_native_app.sh": lambda a: len(a) == 1
+    and a[0] in _native_apps(),
+    "scripts/services/start_plex_safe.sh": lambda a: a == [],
+    "scripts/services/start_jellyfin_safe.sh": lambda a: a == [],
+    "scripts/media/processor.sh": lambda a: len(a) == 1 and a[0] in MEDIA_PASSES,
+    "scripts/storage/setup_direct_mounts.sh": lambda a: a in ([], ["--dry-run"]),
+}
 
 
 def _bash(args: Sequence[str]) -> bool:
-    """Only a diagnostics script, run as a file: no -c, no options.
+    """A diagnostics script, or one of ACTION_SCRIPTS with its arguments, run as
+    a file: no -c, no options.
 
     Under TEST_MODE also the test jobs in tests/fixtures/jobs/.
     """
@@ -231,23 +311,29 @@ def _bash(args: Sequence[str]) -> bool:
         script = script.resolve(strict=True)
     except OSError:
         return False
+    if T3_SCRIPT.search(script.name) or script.suffix != ".sh":
+        return False
+    try:
+        relative = str(script.relative_to(REPO.resolve()))
+    except ValueError:
+        relative = ""
+    if relative in ACTION_SCRIPTS:
+        return ACTION_SCRIPTS[relative](list(args[1:]))
     folders = [DIAGNOSTICS.resolve()]
     if test_mode():
         folders.append(JOB_FIXTURES.resolve())
-    return (
-        script.parent in folders
-        and script.suffix == ".sh"
-        and not T3_SCRIPT.search(script.name)
-    )
+    return script.parent in folders
 
 
 JOB_ID = re.compile(r"^j-\d{8}-\d{6}-[0-9a-f]{4}$")
 
 
 def _python(args: Sequence[str]) -> bool:
-    """Only this package's own commands: a job's supervisor."""
+    """Only this package's own commands: a job's supervisor, the log bundle."""
     if len(args) == 4 and tuple(args[:3]) == ("-m", "homelab", "job-run"):
         return JOB_ID.match(args[3]) is not None
+    if len(args) == 5 and tuple(args[:4]) == ("-m", "homelab", "bundle", "--since"):
+        return re.fullmatch(r"\d{1,4}[mhd]", args[4]) is not None
     return False
 
 
@@ -397,6 +483,11 @@ def popen(argv: Sequence[str], env: Optional[dict[str, str]] = None):
     only the test jobs pass check()."""
     check(argv)
     RECORDED.calls.append(tuple(argv))
+    if test_mode() and not _is_test_job(argv):
+        # Tests run on the mini too: a real action (quitting Plex…) never runs.
+        raise ExecRefused(
+            f"TEST_MODE: only tests/fixtures/jobs run as jobs, not {argv[0]} …"
+        )
     path = resolve(argv[0])
     if path is None:
         raise ExecError(f"{argv[0]}: not installed")
@@ -410,6 +501,15 @@ def popen(argv: Sequence[str], env: Optional[dict[str, str]] = None):
         start_new_session=True,
         close_fds=True,
     )
+
+
+def _is_test_job(argv: Sequence[str]) -> bool:
+    if len(argv) < 2 or argv[0] != "bash":
+        return False
+    try:
+        return Path(argv[1]).resolve().parent == JOB_FIXTURES.resolve()
+    except OSError:
+        return False
 
 
 def clean_line(raw: bytes) -> str:

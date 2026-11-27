@@ -41,8 +41,13 @@ Application layer managing Jellyfin, Plex, Immich, web services, and data import
 
 #### **start_plex_safe.sh**
 **Purpose**: Start Plex if it isn't answering  
-**Usage**: Called by LaunchD `io.homelab.plex`, or by hand  
-**Features**: Steps in `lib/native_app.sh`, values from the manifest (app, health URL, port, data tier). Leaves a running app alone; won't start the app unless its data tier is really mounted; takes the tailnet mapping on its port down while it starts and puts the manifest's mappings back either way; waits up to `START_TIMEOUT` seconds (default 60)
+**Usage**: Called by LaunchD `io.homelab.plex` with `--foreground`, or by hand (returns once Plex answers)  
+**Features**: Steps in `lib/native_app.sh`, values from the manifest (app, health URL, port, data tier). Leaves a running app alone; won't start the app unless its data tier is really mounted; takes the tailnet mapping on its port down while it starts and puts the manifest's mappings back either way; waits up to `START_TIMEOUT` seconds (default 60). With `--foreground` it then stays running while the app answers and exits after `WATCH_FAILS` failed checks in a row (default 3, every `WATCH_INTERVAL` = 60 s), so the LaunchD job no longer relaunches every two minutes (D32)
+
+#### **restart_native_app.sh**
+**Purpose**: Restart a native app from the manifest (Plex, Jellyfin): quit it, then start it the way its LaunchD job does  
+**Usage**: `scripts/services/restart_native_app.sh plex`; run as a job by the MCP `service_restart` tool  
+**Features**: Refuses before quitting anything if the app's data tier isn't mounted. Sends TERM to every process of the app's bundle, KILL after `QUIT_TIMEOUT` seconds (default 30), then `start_native_app`. Prints `::stage`/`::progress` lines for the job runner
 
 #### **configure_plex_direct.sh**
 **Purpose**: Configure Plex to use direct mount paths (no symlinks)  
@@ -78,6 +83,7 @@ scripts/services/
 ├── start_jellyfin_safe.sh  # Safe Jellyfin startup
 ├── install_plex.sh         # Plex Media Server setup
 ├── start_plex_safe.sh      # Safe Plex startup
+├── restart_native_app.sh   # Quit and start Plex or Jellyfin (service_restart)
 ├── configure_plex_direct.sh # Plex direct path configuration
 ├── enable_landing.sh       # Landing page service
 ├── import_takeout.sh       # Google Takeout import
