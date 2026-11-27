@@ -41,6 +41,7 @@ brew*.lock
 # Per-machine manifest overrides (config/homelab.yaml is the committed base)
 config/homelab.local.yaml
 config/homelab.local.env
+config/homelab.local.json
 
 # User override env files
 .env.local
