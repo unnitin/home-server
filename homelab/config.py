@@ -12,15 +12,21 @@ Bash never parses YAML. `render` writes what bash reads:
   apply_tailscale_serve.sh and check_remote_access.sh;
 - config/homelab.local.env: only the values the local overrides change
   (gitignored; written only when homelab.local.yaml exists).
+
+Python on the mini doesn't parse YAML either: the LaunchD Python has pydantic
+but no PyYAML. `render` also writes config/homelab.json (the validated
+manifest, committed) and config/homelab.local.json (the overrides as given,
+gitignored), and `load` reads those when PyYAML is missing.
 """
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 REPO = Path(__file__).resolve().parents[1]
@@ -30,6 +36,8 @@ LOCAL_MANIFEST = "homelab.local.yaml"
 ENV_FILE = "homelab.env"
 LOCAL_ENV_FILE = "homelab.local.env"
 SERVE_FILE = "tailscale_serve.txt"
+JSON_FILE = "homelab.json"
+LOCAL_JSON_FILE = "homelab.local.json"
 
 NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 LABEL = re.compile(r"^io\.homelab\.[a-z0-9]+(\.[a-z0-9]+)*$")
@@ -272,19 +280,64 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
 
 
 def read_yaml(path: Path) -> dict[str, Any]:
+    import yaml  # here, not at the top: the mini's LaunchD Python has no PyYAML
+
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     if not isinstance(data, dict):
         raise ValueError(f"{path} must hold a mapping")
     return data
 
 
+def read_json(path: Path) -> dict[str, Any]:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must hold an object")
+    return data
+
+
+def have_yaml() -> bool:
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def load(config_dir: Path = CONFIG_DIR, local: bool = True) -> Manifest:
-    """The manifest, with config/homelab.local.yaml merged over it if present."""
+    """The manifest, with config/homelab.local.yaml merged over it if present.
+
+    Without PyYAML this reads the rendered JSON instead (`load_rendered`).
+    """
+    if not have_yaml():
+        return load_rendered(config_dir, local)
+    return load_yaml(config_dir, local)
+
+
+def load_yaml(config_dir: Path = CONFIG_DIR, local: bool = True) -> Manifest:
+    """The manifest from config/homelab.yaml (+ homelab.local.yaml). Needs PyYAML."""
     data = read_yaml(config_dir / MANIFEST)
     local_path = config_dir / LOCAL_MANIFEST
     if local and local_path.exists():
         data = deep_merge(data, read_yaml(local_path))
     return Manifest.model_validate(data)
+
+
+def load_rendered(config_dir: Path = CONFIG_DIR, local: bool = True) -> Manifest:
+    """The manifest from config/homelab.json, plus homelab.local.json if present.
+
+    The same manifest `load` gives while the rendered files are current, which
+    tests/unit/test_manifest.py checks.
+    """
+    data = read_json(config_dir / JSON_FILE)
+    local_path = config_dir / LOCAL_JSON_FILE
+    if local and local_path.exists():
+        data = deep_merge(data, read_json(local_path))
+    return Manifest.model_validate(data)
+
+
+def expand(path: str) -> Path:
+    """A manifest path as a real one: a leading ~/ is the home folder."""
+    return Path(os.path.expanduser(path))
 
 
 # --- rendering ---------------------------------------------------------------
@@ -423,17 +476,27 @@ def render_serve(m: Manifest) -> str:
     return SERVE_HEADER + "".join(rows)
 
 
+def render_json(data: dict[str, Any]) -> str:
+    return json.dumps(data, indent=2) + "\n"
+
+
 def outputs(config_dir: Path = CONFIG_DIR) -> dict[Path, str]:
     """Every generated file and the text it should hold."""
-    base = load(config_dir, local=False)
+    base = load_yaml(config_dir, local=False)
     files = {
         config_dir / ENV_FILE: render_env(env_items(base)),
         config_dir / SERVE_FILE: render_serve(base),
+        config_dir
+        / JSON_FILE: render_json(base.model_dump(mode="json", exclude_none=True)),
     }
     if (config_dir / LOCAL_MANIFEST).exists():
         before = dict(env_items(base))
-        changed = [(k, v) for k, v in env_items(load(config_dir)) if before.get(k) != v]
+        merged = load_yaml(config_dir)
+        changed = [(k, v) for k, v in env_items(merged) if before.get(k) != v]
         files[config_dir / LOCAL_ENV_FILE] = render_env(changed, LOCAL_ENV_HEADER)
+        files[config_dir / LOCAL_JSON_FILE] = render_json(
+            read_yaml(config_dir / LOCAL_MANIFEST)
+        )
     return files
 
 

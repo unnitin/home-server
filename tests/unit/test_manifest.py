@@ -52,7 +52,7 @@ def config_dir(tmp_path: Path) -> Path:
     """A copy of config/ to render into."""
     d = tmp_path / "config"
     shutil.copytree(REPO / "config", d)
-    for name in (config.LOCAL_MANIFEST, config.LOCAL_ENV_FILE):
+    for name in (config.LOCAL_MANIFEST, config.LOCAL_ENV_FILE, config.LOCAL_JSON_FILE):
         (d / name).unlink(missing_ok=True)
     return d
 
@@ -69,7 +69,7 @@ def test_generated_files_are_current():
     stale = [
         str(p.relative_to(REPO))
         for p in config.stale()
-        if p.name != config.LOCAL_ENV_FILE
+        if p.name not in (config.LOCAL_ENV_FILE, config.LOCAL_JSON_FILE)
     ]
     assert not stale, f"re-render: python3 -m homelab config render ({stale})"
 
@@ -217,6 +217,28 @@ def test_local_overrides_change_only_what_they_name(config_dir):
     assert "HOMELAB_TIER_WARMSTORE_MOUNT" in keys and "HOMELAB_MEDIA_TV_DIR" in keys
     assert "HOMELAB_TIER_FASTSTORE_MOUNT" not in keys
     assert env_of(local)["HOMELAB_MEDIA_TV_DIR"] == "/Volumes/media2/tv-shows"
+
+
+def test_the_rendered_json_is_the_same_manifest(config_dir):
+    """What the mini's LaunchD Python reads, without PyYAML."""
+    assert config.load_rendered(config_dir) == config.load_yaml(config_dir)
+
+
+def test_without_pyyaml_load_reads_the_rendered_json(config_dir, monkeypatch):
+    (config_dir / config.LOCAL_MANIFEST).write_text(
+        yaml.safe_dump({"host": {"name": "elsewhere"}})
+    )
+    config.write(config_dir)
+    monkeypatch.setattr(config, "have_yaml", lambda: False)
+    m = config.load(config_dir)
+    assert m == config.load_yaml(config_dir) and m.host.name == "elsewhere"
+    assert config.load(config_dir, local=False).host.name == "mini"
+
+
+def test_the_rendered_json_is_what_a_json_reader_gets():
+    data = json.loads((REPO / "config" / config.JSON_FILE).read_text())
+    assert data["services"]["plex"]["ports"] == [32400]
+    assert data["storage"]["state_dir"].startswith("~/")  # no user path written
 
 
 def test_render_check_fails_on_a_stale_file_and_render_fixes_it(config_dir, capsys):
