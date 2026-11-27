@@ -44,7 +44,8 @@
         "photos_album_profile",
         "photos_unsorted",
         "media_items",
-        "memory_recall"
+        "memory_recall",
+        "job_status"
       ]
     }
   },
@@ -60,7 +61,8 @@
       "media_staging_list",
       "photos_stats",
       "memory_recall",
-      "runbook_get"
+      "runbook_get",
+      "job_status"
     ]
   },
   "jobs": {
@@ -113,6 +115,9 @@
     "photos_unsorted": "T0",
     "media_items": "T0",
     "audit_recent": "T0",
+    "job_status": "T0",
+    "job_logs": "T0",
+    "job_list": "T0",
     "run_all_diagnostics": "T0",
     "quick_summary": "T0",
     "check_prereqs": "T0",
@@ -135,6 +140,7 @@
     "incident_open": "T1",
     "incident_update": "T1",
     "incident_resolve": "T1",
-    "collect_logs": "T1"
+    "collect_logs": "T1",
+    "job_cancel": "T1"
   }
 }

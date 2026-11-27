@@ -274,3 +274,40 @@ def test_the_environment_is_not_shared_with_os_environ(real_bash):
     before = dict(os.environ)
     hexec.child_env({"X": "1"})
     assert dict(os.environ) == before
+
+
+# --- jobs (Phase 3) ----------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "argv,allowed",
+    [
+        (["python", "-m", "homelab", "job-run", "j-20261127-101500-ab12"], True),
+        (["python", "-m", "homelab", "job-run", "j-1; rm -rf /"], False),
+        (["python", "-m", "homelab", "tool", "system_overview"], False),
+        (["python", "-c", "import os"], False),
+        (["python", "script.py"], False),
+    ],
+)
+def test_python_runs_only_a_job_supervisor(argv, allowed):
+    if allowed:
+        hexec.check(argv)
+    else:
+        with pytest.raises(hexec.ExecRefused):
+            hexec.check(argv)
+
+
+def test_test_jobs_run_only_under_test_mode(monkeypatch):
+    job = str(hexec.JOB_FIXTURES / "steps.sh")
+    monkeypatch.setenv("TEST_MODE", "1")
+    hexec.check(["bash", job])
+    monkeypatch.setenv("TEST_MODE", "0")
+    with pytest.raises(hexec.ExecRefused):
+        hexec.check(["bash", job])
+
+
+def test_spawn_and_popen_refuse_what_check_refuses(tmp_path):
+    with pytest.raises(hexec.ExecRefused):
+        hexec.spawn(["bash", "-c", "echo hi"], tmp_path / "log")
+    with pytest.raises(hexec.ExecRefused):
+        hexec.popen(["diskutil", "eraseDisk", "APFS", "x", "disk9"])

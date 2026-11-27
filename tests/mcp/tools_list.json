@@ -451,6 +451,106 @@
     "read_only": false
   },
   {
+    "name": "job_cancel",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_cancelArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "job_list",
+    "input": {
+      "properties": {
+        "state": {
+          "default": "all",
+          "enum": [
+            "all",
+            "queued",
+            "running",
+            "done",
+            "failed",
+            "cancelled",
+            "lost"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "job_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "job_logs",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "lines": {
+          "default": 50,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Lines",
+          "type": "integer"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_logsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "job_status",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
     "name": "launchd_jobs",
     "input": {
       "properties": {

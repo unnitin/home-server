@@ -47,6 +47,9 @@ TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "photos_unsorted": curation.photos_unsorted,
     "media_items": curation.media_items,
     "audit_recent": governance.audit_recent,
+    "job_status": governance.job_status,
+    "job_logs": governance.job_logs,
+    "job_list": governance.job_list,
 }
 
 # Tools that write to the state database (notes, incidents), never the system.
@@ -57,7 +60,11 @@ WRITES: dict[str, Callable[..., dict[str, Any]]] = {
     "memory_note": memory.memory_note,
     "memory_forget": memory.memory_forget,
 }
-ALL = {**TOOLS, **WRITES}
+# Tools that act on the system (T1): safe, reversible, dry_run=True by default.
+ACTIONS: dict[str, Callable[..., dict[str, Any]]] = {
+    "job_cancel": governance.job_cancel,
+}
+ALL = {**TOOLS, **WRITES, **ACTIONS}
 
 
 def call(name: str, **kwargs: Any) -> dict[str, Any]:

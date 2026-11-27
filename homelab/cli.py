@@ -14,6 +14,7 @@ python3 -m homelab incidents [--all]
 python3 -m homelab token create NAME --scope ops [--toolset core] [--expires-days N]
 python3 -m homelab token list|revoke NAME  MCP client tokens (shown once, kept hashed)
 python3 -m homelab audit [--limit N]       the MCP server's recent tool calls
+python3 -m homelab jobs [--state S]        long-running jobs; `jobs cancel ID`
 """
 
 from __future__ import annotations
@@ -248,6 +249,30 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_job_run(args: argparse.Namespace) -> int:
+    from homelab import jobs
+
+    return jobs.supervise(args.job_id)
+
+
+def cmd_jobs(args: argparse.Namespace) -> int:
+    from homelab import jobs
+
+    jobs.reconcile()
+    if args.cancel:
+        job = jobs.cancel(args.cancel)
+        print(f"{job['id']}: {job['state']}")
+        return 0
+    for j in jobs.jobs(args.state, args.limit):
+        pct = f" {j['progress']:g}%" if j["progress"] is not None else ""
+        print(
+            f"{j['id']} {j['kind']} [{j['state']}{pct}] by "
+            f"{j['requested_by'] or '?'} at {j['created_at']}"
+            + (f": {j['error']}" if j["error"] else "")
+        )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="homelab")
     parser.add_argument(
@@ -318,6 +343,16 @@ def build_parser() -> argparse.ArgumentParser:
     au = top.add_parser("audit", help="the MCP server's recent tool calls")
     au.add_argument("--limit", type=int, default=30)
     au.set_defaults(fn=cmd_audit)
+    jr = top.add_parser("job-run", help=argparse.SUPPRESS)  # a job's supervisor
+    jr.add_argument("job_id")
+    jr.set_defaults(fn=cmd_job_run)
+    jb = top.add_parser("jobs", help="long-running jobs")
+    jb.add_argument(
+        "--state", choices=["queued", "running", "done", "failed", "cancelled", "lost"]
+    )
+    jb.add_argument("--limit", type=int, default=20)
+    jb.add_argument("--cancel", metavar="JOB_ID")
+    jb.set_defaults(fn=cmd_jobs)
     return parser
 
 

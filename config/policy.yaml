@@ -26,11 +26,11 @@ scopes:
   admin: { tiers: [T0, T1, T2] }
   curator:                                                      # docs/mcp-refactor/08
     tiers: [T0, T1, T2]
-    only: [photos_albums, photos_album_profile, photos_unsorted, media_items, memory_recall]
+    only: [photos_albums, photos_album_profile, photos_unsorted, media_items, memory_recall, job_status]
 
 toolsets:
   # For small models on small context windows (03): the dozen tools that
-  # answer most questions. job_status joins when the job runner exists.
+  # answer most questions.
   core:
     - system_overview
     - health_check
@@ -43,6 +43,7 @@ toolsets:
     - photos_stats
     - memory_recall
     - runbook_get
+    - job_status
 
 jobs:
   max_running: 2          # the mini also runs Plex transcoding and Immich ML
@@ -97,6 +98,9 @@ tools:
   photos_unsorted: T0
   media_items: T0
   audit_recent: T0
+  job_status: T0
+  job_logs: T0
+  job_list: T0
 
   # T0: the old text tools, kept for existing clients (each names its replacement)
   run_all_diagnostics: T0
@@ -126,3 +130,6 @@ tools:
 
   # T1: writes a log bundle under /tmp (old text tool)
   collect_logs: T1
+
+  # T1: actions on the system. Each takes dry_run, true by default
+  job_cancel: T1
