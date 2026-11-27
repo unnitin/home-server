@@ -109,7 +109,23 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - Built: `state.db` with migrations, `io.homelab.snapshot` every 15 minutes, `history_query`, automatic incidents (one per failing component, reopened within an hour so flapping makes one), `memory_*` and `incident_*`, retention, and the daily copy to coldstore (#47).
 - Built: the operating guide in `initialize`, resources, prompts, `docs_search` and `runbook_get` over FTS5, and the tool-schema portability lint with the committed `tools/list` surface; CI now runs the MCP tests (#48). The read-only curation reports: albums, album profiles, unsorted photos, and movies joined across Plex and Jellyfin (#49).
 - Found: D32. Every step was gated, merged into `mcp-refactor`, and the merged branch tested from a clean clone before going on.
-- Still to do: the VM rehearsal and the deploy (which loads `io.homelab.snapshot` and restarts the MCP job), and the API keys (`homelab secrets …`), without which the library, photo and curation tools say which key is missing. The curation adapters haven't run against the live APIs yet.
+- Built: the Phase 2 step in the VM rehearsal (#51).
+- **Phase 2 is built and deployed (2026-11-27).**
+  - **Rehearsal:** a VM rehearsal of `35f1e15` passed (run `homelab-rehearsal-20261127-045816`). That tree is the deployed code; the deployed commit adds only docs. In the VM:
+    - every job exits 0, the snapshot job included, apart from the two Docker jobs;
+    - MCP serves 49 tools, with the guide, resources and prompts;
+    - **unmounting faststore opened an incident at the next snapshot, and remounting it resolved it;**
+    - history answered from the snapshots;
+    - both data guards were unchanged.
+  - **Deploy:** the mini's `deployed` branch was fast-forwarded to `8976ed5` (tag `deploy-2026-11-27-p2`), and `configure_launchd.sh snapshot mcp` installed the new job and restarted MCP. Nothing else was reloaded.
+  - **Checks:**
+    - The snapshot job's first run under LaunchD exited 0. It read faststore's usage (D27 doesn't affect Python), recorded the five versions, and opened one incident: warmstore not mounted (D21).
+    - MCP serves 49 tools over the tailnet, and history, incidents, doc search and the recovery plan all answer.
+    - Every loaded job exits 0.
+    - `run_all.sh`: 13 passed, 1 failed (warmstore offline, D21).
+    - `data_guard.py verify`: no unexpected changes.
+  - **After the deploy:** `system_overview` measured 2.07 KB on the mini with its open incident listed. It now gives the incident count only (2.0 KB), shipping with the next deploy.
+- Still to do: the API keys (`homelab secrets …`). Without them, the library, photo and curation tools say which key is missing, and the curation adapters haven't run against the live APIs.
 
 **Acceptance:** "When did warmstore last exceed 80%?" is answerable from history. Unplugging a test volume opens an incident within 15 minutes, and remounting it resolves the incident. Tool-schema portability lint passes (names, flat schemas, OpenAI strict, Gemini subset).
 

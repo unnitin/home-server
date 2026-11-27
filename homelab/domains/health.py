@@ -72,7 +72,7 @@ def overview(verbose: bool = False) -> dict:
 
     extra = memory.overview_extra()
     data.update(extra)
-    if extra.get("incidents", {}).get("open"):
+    if extra.get("incidents_open"):
         hints.append("incident_list()")
     up = sum(1 for s in svc_states.values() if s == "up")
     mounted = sum(1 for t in tiers.values() if t["mounted"])

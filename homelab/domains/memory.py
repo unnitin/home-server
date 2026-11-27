@@ -181,9 +181,13 @@ def overview_extra() -> dict[str, Any]:
         conn = db.connect(create=False)
     except (FileNotFoundError, OSError):
         return {}
-    rows = incidents.listing(conn, "open", 5)
+    open_count = conn.execute(
+        "SELECT COUNT(*) FROM incidents WHERE status != 'resolved'"
+    ).fetchone()[0]
     last = snapshot.latest(conn)
+    # A count only: the titles repeat the checks above them, and the overview
+    # stays under 2 KB (incident_list has the rest).
     return {
-        "incidents": {"open": len(rows), "titles": [r["title"] for r in rows[:3]]},
+        "incidents_open": int(open_count),
         "last_snapshot": last["ts"] if last else None,
     }
