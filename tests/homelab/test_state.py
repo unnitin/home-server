@@ -404,14 +404,34 @@ def test_the_overview_shows_open_incidents(conn, mini, monkeypatch):
     mini.tiers["faststore"] = Tier(mounted=False, set_status="", members=[])
     snap(conn, mini, "2026-11-27T10:00:00Z", monkeypatch)
     r = health.overview()
-    assert r["data"]["incidents"]["open"] == 1 and "incident_list()" in r["hints"]
+    assert r["data"]["incidents_open"] == 1 and "incident_list()" in r["hints"]
     assert r["data"]["last_snapshot"] == "2026-11-27T10:00:00Z"
+
+
+def test_the_overview_of_the_mini_today_with_its_incident_is_under_2_kb(
+    conn, mini, monkeypatch
+):
+    """As deployed: two tiers away, loose disks, held jobs, an open incident."""
+    from homelab import result as R
+
+    mini.tiers["warmstore"] = Tier(mounted=False, set_status="", members=[])
+    mini.tiers["coldstore"] = Tier(mounted=False, set_status="", members=[])
+    mini.orphans, mini.unreadable = ["disk6s2"], ["disk7"]
+    mini.held = {
+        "io.homelab.colima",
+        "io.homelab.media.watcher",
+        "io.homelab.compose.immich",
+    }
+    snap(conn, mini, "2026-11-27T10:00:00Z", monkeypatch)
+    r = health.overview()
+    assert r["data"]["incidents_open"] == 1
+    assert R.size(r) < 2048, R.size(r)
 
 
 def test_the_overview_without_a_database(mini, state_db):
     mini.ready()
     r = health.overview()
-    assert "incidents" not in r["data"] and not state_db.exists()
+    assert "incidents_open" not in r["data"] and not state_db.exists()
 
 
 def test_cli_snapshot_history_and_incidents(conn, mini, monkeypatch, capsys):
