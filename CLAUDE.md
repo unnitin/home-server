@@ -10,7 +10,9 @@ This repository configures a Mac mini as a self-hosted home server running:
 - **AppleRAID** — three-tier storage (NVMe faststore, SSD warmstore, HDD coldstore)
 - **LaunchD** — macOS service automation and boot sequencing
 
-The codebase contains shell scripts organized in 7 modules (plus a standalone `diagnostics/` directory), with a Python script for Google Takeout import, Docker Compose for Immich, and LaunchD plists for automation. To get a current count: `find scripts/ diagnostics/ -name "*.sh" | wc -l`
+The codebase contains shell scripts organized in 7 modules (plus a standalone `diagnostics/` directory), the manifest `config/homelab.yaml`, a Python control plane (`homelab/`) and MCP server (`homelab_mcp/`), a Python script for Google Takeout import, Docker Compose for Immich, and LaunchD plists for automation. To get a current count: `find scripts/ diagnostics/ -name "*.sh" | wc -l`
+
+The plan behind the current refactor is in `docs/mcp-refactor/` (assessment, architecture, roadmap).
 
 ---
 
@@ -34,15 +36,34 @@ Sibling directory (outside the scripts/ module tree):
 diagnostics/    → health checks and observability (standalone — no dependencies on scripts/)
 ```
 
-Diagnostics scripts use raw CLI tools directly and do not source from `scripts/core/` or any other module. This is intentional so they can run even if the scripts module tree is broken.
+Diagnostics scripts use raw CLI tools directly and do not source from `scripts/core/` or any other module. This is intentional so they can run even if the scripts module tree is broken. They read the manifest's values from `config/homelab.env` directly (in `diag_lib.sh`), with a built-in default for each.
+
+Python, outside the module tree:
+
+```
+config/         → the manifest homelab.yaml, and the files generated from it (no code)
+homelab/        → control plane: loads and validates the manifest (depends on: config)
+homelab_mcp/    → MCP server: runs diagnostics/ in JSON mode, reads config/homelab.env
+agent/          → model-agnostic harness (Phase 4, not yet written)
+```
 
 **Runtime boot order**: Colima → Storage mounts → Immich containers → Plex → Jellyfin → Tailscale → Media watcher
 
 ---
 
+## The Manifest
+
+`config/homelab.yaml` is the single source of truth for storage tiers, services, ports, LaunchD labels, health URLs, tailnet mappings and media paths. **Never hardcode a port, path or label: read it from the manifest.**
+
+- Bash reads it through `config/homelab.env`, flat `HOMELAB_*` variables generated from the YAML. Scripts get them by sourcing `scripts/core/environment.sh`. Diagnostics read the file directly.
+- After editing the manifest, run `python3 -m homelab config render` and commit the regenerated `config/homelab.env` and `config/tailscale_serve.txt` with it. `tests/unit/test_manifest.py` fails while they're stale.
+- `python3 -m homelab config validate` checks it; `python3 -m homelab config get <section>` prints a section as JSON.
+- Per-machine overrides go in `config/homelab.local.yaml` (gitignored); `render` turns them into `config/homelab.local.env`.
+- A `HOMELAB_*` variable already set in the environment wins over both files, which is how tests point scripts at a temporary `/Volumes` (`homelab_volumes_at` in `tests/test_helper.bash`).
+
 ## Storage Naming Conventions
 
-Always use these exact names — they are hardcoded across LaunchD plists, diagnostic scripts, and documentation:
+These names come from the manifest. Use them exactly:
 
 | Name | Device | Mount Point | Use |
 |------|--------|-------------|-----|
@@ -50,7 +71,9 @@ Always use these exact names — they are hardcoded across LaunchD plists, diagn
 | `warmstore` | SSD RAID | `/Volumes/warmstore` | Media library (Plex/Jellyfin), logs |
 | `coldstore` | HDD RAID | `/Volumes/coldstore` | Cold archive storage (named `coldstore` since 2026-11-26; a disk still named `Archive` is renamed with `diskutil rename Archive coldstore`) |
 
-Log directory: `/Volumes/warmstore/logs/{module}/`
+Log directory: `/Volumes/warmstore/logs/{module}/` (the manifest's `storage.log_root`). Media folders are kebab-case: `movies`, `tv-shows`, `collections`, `staging/{movies,tv-shows,collections,failed}`.
+
+A folder under `/Volumes` is not proof that a volume is mounted: macOS leaves empty mount-point folders behind, and writing to one fills the internal disk. Check with `homelab_is_mounted` (scripts) or `diag_is_mounted` (diagnostics), which ask `diskutil`. Never create a mount-point folder.
 
 ---
 
@@ -70,6 +93,7 @@ All scripts use `set -euo pipefail` — fail fast on errors, unset variables, an
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../core/environment.sh"   # adjust relative path
 ```
+`environment.sh` exports `HOMELAB_REPO` (this checkout's physical path) and every `HOMELAB_*` value from the manifest, and provides `homelab_tier_mount <tier>`, `homelab_is_mounted <path>` and the `log_*` functions below (a script's own `log_*` win).
 
 ### Logging
 ```bash
@@ -91,17 +115,25 @@ fi
 Never write `/Users/someuser/` or any user-specific path in scripts. The pre-commit hook rejects this. Use environment variables or dynamic detection instead.
 
 ### Script permissions
-All `.sh` files must be executable (`chmod +x`). The pre-commit hook enforces shebangs and executable bits.
+All `.sh` files must be executable (`chmod +x`). The pre-commit hook enforces shebangs and executable bits, including on `.bats` and `.py` files that have a shebang.
+
+### Counters under `set -e`
+Write `n=$((n + 1))`, never `((n++))`: a post-increment returns 1 when `n` is 0, and under `set -e` that ends the script.
+
+### bash 3.2
+LaunchD runs `/bin/bash`, which is bash 3.2. An empty array is unbound under `set -u`: expand it as `${arr[@]+"${arr[@]}"}`.
 
 ---
 
 ## Python Conventions
 
-Python files (currently only `scripts/takeout/enhanced_takeout_import.py`) must:
+One `pyproject.toml` at the repo root covers the Python: `homelab/`, `homelab_mcp/`, `agent/` (later) and `scripts/takeout/`. Python files must:
 - Pass `black --line-length=88` formatting
 - Pass `flake8 --max-line-length=88 --ignore=E203,W503`
 - Use type hints where practical
 - Not exceed 88 character line length
+
+The Python LaunchD runs (`/opt/homebrew/bin/python3.11`) has pydantic but no PyYAML. Code that runs on the mini without a development setup, such as `homelab_mcp/`, reads `config/homelab.env` with the standard library and never the YAML.
 
 ---
 
@@ -117,7 +149,12 @@ Validate syntax before committing:
 plutil -lint launchd/io.homelab.{service}.plist
 ```
 
-Each plist references logs under `/Volumes/warmstore/logs/{service}/`.
+Each plist logs to `/tmp/homelab-<job>.{out,err}` (the manifest's `storage.launchd_log_dir`), which exists before warmstore mounts. Plists are templates: `__REPO__`, `__HOME__` and `__USER__` are filled in by `scripts/automation/configure_launchd.sh`, which takes its jobs and their order from the manifest's `boot_order`.
+
+- `configure_launchd.sh [--render-only] [JOB...]` installs every job, or the ones named.
+- A job held with `launchctl disable` stays held: it's rendered but not loaded.
+- Jobs are never loaded from a linked git worktree: they'd break when it's removed. Load them from the main checkout.
+- Scripts a job runs can't read the external volumes under LaunchD until access is granted (D27).
 
 ---
 
@@ -139,7 +176,13 @@ IMMICH_API_KEY="..."
 
 # Testing
 TEST_MODE=1                   # Suppresses destructive operations in tests
+
+# From the manifest (via environment.sh), for example:
+HOMELAB_TIER_FASTSTORE_MOUNT  # /Volumes/faststore
+HOMELAB_MEDIA_TV_DIR          # /Volumes/warmstore/tv-shows
+HOMELAB_SVC_PLEX_PORTS        # 32400
 ```
+The full list is in `config/homelab.env`.
 
 Never commit actual secrets. The `services/immich/.env` is gitignored. Use `.env.example` as a template.
 
@@ -176,7 +219,8 @@ bats tests/unit/test_script_validation.bats
 - Shell script tests: add `.bats` file in the appropriate `tests/` subdirectory using BATS framework
 - Python tests: add `test_*.py` in the appropriate subdirectory using pytest
 - Always set `TEST_MODE=1` in tests to prevent destructive operations
-- Use `tests/test_helper.bash` for shared BATS helpers
+- Use `tests/test_helper.bash` for shared BATS helpers; `homelab_volumes_at "$BATS_TEST_TMPDIR/Volumes"` moves every manifest path under `/Volumes` to a temporary folder
+- Stub `diskutil`, `launchctl`, `tailscale` and the like on `PATH`, and assert the stub is the one found (`command -v`) before running anything that could touch the real system
 
 ---
 
@@ -203,12 +247,14 @@ Install hooks: `pip install pre-commit && pre-commit install`
 4. Add an entry to `scripts/README.md` (required by pre-commit hook)
 5. Add corresponding tests in `tests/unit/` or `tests/integration/`
 6. If it's a new service, add a LaunchD plist in `launchd/` and document it in `docs/`
+7. Take every port, path and label from `environment.sh`, never a literal
 
 ---
 
 ## Adding a New Service
 
-1. **Script**: `scripts/services/install_{service}.sh` and `start_{service}_safe.sh`
+0. **Manifest**: add it under `services:` in `config/homelab.yaml` (kind, `launchd` label, ports, health URL), add it to `boot_order`, and add a `remote_access.tailscale_serve` mapping if it's reached over the tailnet. Then `python3 -m homelab config render`
+1. **Script**: `scripts/services/install_{service}.sh` and `start_{service}_safe.sh` (a native app can use `start_native_app` from `scripts/services/lib/native_app.sh`)
 2. **LaunchD**: `launchd/io.homelab.{service}.plist`
 3. **Docs**: `docs/{SERVICE}.md` with setup, troubleshooting, and configuration details
 4. **Diagnostics**: `diagnostics/check_{service}.sh`
@@ -226,6 +272,11 @@ Install hooks: `pip install pre-commit && pre-commit install`
 - **Never add module dependencies that go against the dependency graph** (e.g., `core/` importing from `services/`)
 - **Never run RAID/disk commands without `TEST_MODE=1`** in tests
 - **Do not add files to `venv/`** — the Python virtual environment is local only
+- **Never hardcode a port, path or label** — read the manifest
+- **Never treat a folder under `/Volumes` as a mounted volume** — ask `diskutil`, and never create a mount-point folder
+- **Never `chown -R` or `chmod -R` a volume or a service's data** — it rewrites every existing file's owner and mode
+- **Never erase a disk or RAID set that holds a file system** — and erase a blank one only behind `RAID_I_UNDERSTAND_DATA_LOSS=1`
+- **Never load LaunchD jobs from a git worktree**
 
 ---
 
