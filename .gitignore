@@ -12,6 +12,8 @@ Thumbs.db
 # Logs & temp
 *.log
 *.out
+# ...except recorded command output for TEST_MODE (homelab/exec.py)
+!tests/fixtures/exec/*.out
 *.err
 *.pid
 *.swp

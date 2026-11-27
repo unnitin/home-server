@@ -1,0 +1,60 @@
+gui/501/io.homelab.plex = {
+	active count = 1
+	path = /Users/me/Library/LaunchAgents/io.homelab.plex.plist
+	type = LaunchAgent
+	state = running
+
+	program = /usr/bin/env
+	arguments = {
+		/usr/bin/env
+		bash
+		-lc
+		sleep 120 && echo "$(date): Starting Plex Media Server service..." && /Users/me/home-server/scripts/services/start_plex_safe.sh
+	}
+
+	stdout path = /tmp/homelab-plex.out
+	stderr path = /tmp/homelab-plex.err
+	inherited environment = {
+		SSH_AUTH_SOCK => /private/tmp/com.apple.launchd.sQs2gZic1m/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		USER => me
+		PATH => /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+		HOME => /Users/me
+		XPC_SERVICE_NAME => io.homelab.plex
+	}
+
+	domain = gui/501 [100014]
+	asid = 100014
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 282
+	pid = 23179
+	immediate reason = inefficient
+	forks = 2
+	execs = 2
+	initialized = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	last exit code = 0
+
+	spawn type = daemon (3)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	jetsam thread limit = 32
+	cpumon = default
+	probabilistic guard malloc policy = {
+		activation rate = 1/1000
+		sample rate = 1/0
+	}
+
+	properties = keepalive | runatload | inferred program
+}
