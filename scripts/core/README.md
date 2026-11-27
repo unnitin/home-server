@@ -34,6 +34,12 @@ Foundation layer providing system bootstrap, environment setup, and health check
 **Dependencies**: `environment.sh` (the manifest), `df`, `diskutil`  
 **Used By**: Manual monitoring, storage management
 
+### **install_sudoers.sh**
+**Purpose**: Install the scoped sudo rule `/etc/sudoers.d/homelab`: your user may run exactly the `pmset -a <setting> <value>` commands of the manifest's power profile without a password, and nothing else (no wildcards, no rule for `diskutil`). Lets the MCP `power_ensure` tool put a drifted setting back  
+**Usage**: `sudo ./scripts/core/install_sudoers.sh [--yes]` to install or update; `--print` to see it; `--check` whether it's installed and current; `sudo … --remove`. Checked with `visudo -c` before and after; removed again if the sudo configuration doesn't check  
+**Dependencies**: `environment.sh`, `python3 -m homelab sudoers render` (the same rules `homelab.exec` checks every sudo call against), `visudo`  
+**Used By**: Setup, by hand; again after changing `power:` in the manifest
+
 ## 🔗 Module Dependencies
 
 **Depends on**: None (foundation layer)  
@@ -47,6 +53,7 @@ scripts/core/
 ├── ensure_power_settings.sh # Power management monitoring  
 ├── health_check.sh         # System health validation
 ├── check_storage_usage.sh  # Storage usage monitoring
+├── install_sudoers.sh      # The scoped sudo rule (pmset only)
 └── README.md              # This documentation
 ```
 

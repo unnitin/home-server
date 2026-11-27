@@ -14,7 +14,8 @@ python3 -m homelab incidents [--all]
 python3 -m homelab token create NAME --scope ops [--toolset core] [--expires-days N]
 python3 -m homelab token list|revoke NAME  MCP client tokens (shown once, kept hashed)
 python3 -m homelab audit [--limit N]       the MCP server's recent tool calls
-python3 -m homelab jobs [--state S]        long-running jobs; `jobs cancel ID`
+python3 -m homelab jobs [--state S]        long-running jobs; `jobs --cancel ID`
+python3 -m homelab sudoers render|check    the scoped sudo rule (install_sudoers.sh)
 """
 
 from __future__ import annotations
@@ -273,6 +274,32 @@ def cmd_jobs(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sudoers_render(args: argparse.Namespace) -> int:
+    from homelab import sudoers
+
+    print(sudoers.render(args.user), end="")
+    return 0
+
+
+def cmd_sudoers_check(args: argparse.Namespace) -> int:
+    """Whether sudo allows each command without a password (sudo -n -l)."""
+    from homelab import exec as hexec
+    from homelab import sudoers
+
+    missing = []
+    for rule in sudoers.rules():
+        if not hexec.run(["sudo", "-n", "-l", *rule], timeout=10).ok:
+            missing.append(" ".join(rule))
+    if missing:
+        print("Not allowed without a password:")
+        for line in missing:
+            print(f"  {line}")
+        print("Install the rule: sudo scripts/core/install_sudoers.sh")
+        return 1
+    print(f"The scoped sudo rule allows all {len(sudoers.rules())} commands")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="homelab")
     parser.add_argument(
@@ -353,6 +380,14 @@ def build_parser() -> argparse.ArgumentParser:
     jb.add_argument("--limit", type=int, default=20)
     jb.add_argument("--cancel", metavar="JOB_ID")
     jb.set_defaults(fn=cmd_jobs)
+    sd = top.add_parser("sudoers", help="the scoped sudo rule for pmset")
+    sub = sd.add_subparsers(dest="command", required=True)
+    rd = sub.add_parser("render", help="print /etc/sudoers.d/homelab")
+    rd.add_argument("--user", help="default: $SUDO_USER, else you")
+    rd.set_defaults(fn=cmd_sudoers_render)
+    sub.add_parser("check", help="is it installed and current?").set_defaults(
+        fn=cmd_sudoers_check
+    )
     return parser
 
 
