@@ -258,6 +258,12 @@ def take(
         conn.execute("ROLLBACK")
         raise
     pruned = prune(conn)
+    try:  # finished jobs and their logs, after 30 days
+        from homelab import jobs
+
+        pruned["jobs"] = jobs.prune(conn)
+    except Exception as err:  # never fails the snapshot
+        pruned["jobs_error"] = str(err)
     try:
         copied = backup(conn)
     except (OSError, sqlite3.Error) as err:  # the snapshot itself is already kept

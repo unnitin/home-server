@@ -78,6 +78,19 @@ The curation reports (08) only read. Photo results carry ids, dates, city and co
 
 The API keys these need live in the Keychain: `python3 -m homelab secrets list` shows which are set ([homelab/README.md](../homelab/README.md#api-secrets)). Without one, a tool says which command sets it.
 
+### Jobs
+
+Work that outlasts a client's timeout (processing media, a log bundle, an app restart) runs as a job: the tool returns `status: pending` and a `job_id` at once, and the work goes on under its own supervisor process (`python3 -m homelab job-run`), which survives a restart of the server. One job at a time per lock (one `media` job, one restart per service), at most two at once (`config/policy.yaml`). Logs are kept for 30 days beside the state database.
+
+| Tool | Arguments | Returns |
+|---|---|---|
+| `job_status` | `job_id` | State (`queued`, `running`, `done`, `failed`, `cancelled`, `lost`), progress %, stage, times, exit code, the last 20 log lines |
+| `job_logs` | `job_id`, `lines=50`, `offset=0` | A page of the log, counting back from the end |
+| `job_list` | `state="all"`, `limit=20` | Recent jobs, newest first |
+| `job_cancel` (T1) | `job_id`, `dry_run=true` | Stops it: TERM, then KILL after 10 s |
+
+From a shell: `python3 -m homelab jobs [--state running]`, `python3 -m homelab jobs --cancel ID`.
+
 ### Record tools
 
 These write to the state database, never to the system: notes for later sessions and incident records. They're the only tools that change anything at all.

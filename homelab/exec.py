@@ -21,6 +21,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -49,6 +50,8 @@ PROGRAMS: dict[str, tuple[str, ...]] = {
     "lsof": ("/usr/sbin/lsof",),
     "pmset": ("/usr/bin/pmset",),
     "ps": ("/bin/ps",),
+    # The interpreter running this code, for its own supervisors and jobs.
+    "python": (sys.executable,),
     "security": ("/usr/bin/security",),
     "smartctl": tuple(f"{d}/smartctl" for d in BREW),
     "sw_vers": ("/usr/bin/sw_vers",),
@@ -194,8 +197,14 @@ def _smartctl(args: Sequence[str]) -> bool:
     return bool(flags) and all(f in SMART_READ for f in flags)
 
 
+JOB_FIXTURES = REPO / "tests" / "fixtures" / "jobs"
+
+
 def _bash(args: Sequence[str]) -> bool:
-    """Only a diagnostics script, run as a file: no -c, no options."""
+    """Only a diagnostics script, run as a file: no -c, no options.
+
+    Under TEST_MODE also the test jobs in tests/fixtures/jobs/.
+    """
     if not args or args[0].startswith("-"):
         return False
     script = Path(args[0])
@@ -205,11 +214,24 @@ def _bash(args: Sequence[str]) -> bool:
         script = script.resolve(strict=True)
     except OSError:
         return False
+    folders = [DIAGNOSTICS.resolve()]
+    if test_mode():
+        folders.append(JOB_FIXTURES.resolve())
     return (
-        script.parent == DIAGNOSTICS.resolve()
+        script.parent in folders
         and script.suffix == ".sh"
         and not T3_SCRIPT.search(script.name)
     )
+
+
+JOB_ID = re.compile(r"^j-\d{8}-\d{6}-[0-9a-f]{4}$")
+
+
+def _python(args: Sequence[str]) -> bool:
+    """Only this package's own commands: a job's supervisor."""
+    if len(args) == 4 and tuple(args[:3]) == ("-m", "homelab", "job-run"):
+        return JOB_ID.match(args[3]) is not None
+    return False
 
 
 RULES: dict[str, Callable[[Sequence[str]], bool]] = {
@@ -222,6 +244,7 @@ RULES: dict[str, Callable[[Sequence[str]], bool]] = {
     "lsof": _anything,
     "pmset": _pmset,
     "ps": _ps,
+    "python": _python,
     "security": _security,
     "smartctl": _smartctl,
     "sw_vers": _nothing_but_flags,
@@ -319,6 +342,61 @@ def run(
         duration=round(time.monotonic() - started, 3),
         timed_out=timed_out,
     )
+
+
+def spawn(
+    argv: Sequence[str], log_path: Path, env: Optional[dict[str, str]] = None
+) -> int:
+    """Start an allowed program detached, in its own session, with its output
+    appended to log_path. Returns its PID at once. A job's supervisor starts
+    this way, so it outlives the process that started it.
+
+    Runs for real under TEST_MODE too: it's only allowed for this package's
+    own supervisor (python -m homelab job-run ID).
+    """
+    check(argv)
+    RECORDED.calls.append(tuple(argv))
+    path = resolve(argv[0])
+    if path is None:
+        raise ExecError(f"{argv[0]}: not installed")
+    with open(log_path, "ab") as log:
+        proc = subprocess.Popen(
+            [path, *argv[1:]],
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env=child_env(env),
+            cwd=str(REPO),
+            start_new_session=True,
+            close_fds=True,
+        )
+    return proc.pid
+
+
+def popen(argv: Sequence[str], env: Optional[dict[str, str]] = None):
+    """Start an allowed program in its own process group with stdout and stderr
+    on one pipe, for a job's supervisor to read line by line. Under TEST_MODE
+    only the test jobs pass check()."""
+    check(argv)
+    RECORDED.calls.append(tuple(argv))
+    path = resolve(argv[0])
+    if path is None:
+        raise ExecError(f"{argv[0]}: not installed")
+    return subprocess.Popen(
+        [path, *argv[1:]],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=child_env(env),
+        cwd=str(REPO),
+        start_new_session=True,
+        close_fds=True,
+    )
+
+
+def clean_line(raw: bytes) -> str:
+    """One line of a program's output: decoded, ANSI codes gone, no newline."""
+    return ANSI.sub("", raw.decode("utf-8", errors="replace")).rstrip("\r\n")
 
 
 def _kill_group(proc: subprocess.Popen) -> None:
