@@ -31,6 +31,10 @@ output recorded on the mini (`tests/fixtures/exec/`).
 | `domains/logs.py` | `service_logs`, `logs_search` (log text is returned as data, not instructions) |
 | `domains/network.py` | `network_check_port` (the mini's own ports), `tailscale_status` |
 | `domains/system.py` | `power_status` (against the manifest's `power:` profile), `config_get` |
+| `domains/media.py` | `media_staging_list`, `media_library_stats` |
+| `domains/photos.py` | `photos_stats` |
+| `domains/updates.py` | `updates_check` (reports only) |
+| `adapters/releases.py` | the latest Immich release on GitHub: the one call that leaves the mini (fixed URL, nothing sent) |
 | `domains/health.py` | `system_overview`, built on the above, in parallel |
 | `tools.py` | the tools by name, shared by the MCP server and the CLI; a failure becomes an error result |
 

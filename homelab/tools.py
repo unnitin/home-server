@@ -11,7 +11,8 @@ import traceback
 from typing import Any, Callable
 
 from homelab import result as R
-from homelab.domains import health, logs, network, services, storage, system
+from homelab.domains import health, logs, media, network, photos, services
+from homelab.domains import storage, system, updates
 
 TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "system_overview": health.overview,
@@ -26,6 +27,10 @@ TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "tailscale_status": network.tailscale_status,
     "power_status": system.power_status,
     "config_get": system.config_get,
+    "media_staging_list": media.staging_list,
+    "media_library_stats": media.library_stats,
+    "photos_stats": photos.stats,
+    "updates_check": updates.check,
 }
 
 
