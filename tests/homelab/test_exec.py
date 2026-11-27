@@ -179,8 +179,8 @@ def test_an_out_fixture_is_stdout_with_exit_0(test_mode):
 
 
 def test_a_missing_fixture_is_an_error_that_names_the_file():
-    with pytest.raises(hexec.FixtureMissing, match="launchctl_print-disabled_gui_501"):
-        hexec.run(["launchctl", "print-disabled", "gui/501"])
+    with pytest.raises(hexec.FixtureMissing, match="launchctl_print_gui_7_nothing"):
+        hexec.run(["launchctl", "print", "gui/7/nothing"])
 
 
 def test_a_repo_path_is_keyed_relative_to_the_repo():

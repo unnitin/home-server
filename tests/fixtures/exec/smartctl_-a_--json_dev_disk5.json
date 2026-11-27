@@ -1,0 +1,5 @@
+{
+  "rc": 2,
+  "stdout": "{\"smartctl\": {\"exit_status\": 2, \"messages\": [{\"string\": \"Smartctl open device: /dev/disk5 failed: Operation not supported by device\", \"severity\": \"error\"}]}}\n",
+  "stderr": ""
+}
