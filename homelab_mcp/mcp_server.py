@@ -33,6 +33,8 @@ from mcp_routing import (  # noqa: E402
 )
 from mcp_routing import health_check as run_health_check  # noqa: E402
 
+from prompts import PROMPTS  # noqa: E402
+
 from homelab import config as homelab_config  # noqa: E402
 from homelab import tools as homelab_tools  # noqa: E402
 from homelab.domains.system import SECTIONS  # noqa: E402
@@ -193,10 +195,18 @@ def _base_description(name):
     return descriptions.get(name, name)
 
 
+def instructions():
+    """The operating guide, sent in initialize (04): every client gets it."""
+    from homelab.domains.context import guide
+
+    return guide()
+
+
 def build_server():
     # The SDK's own Host check only knows exact names; HostGuard replaces it.
     server = FastMCP(
         "io.homelab.mcp",
+        instructions=instructions(),
         host=HOST,
         port=PORT,
         transport_security=TransportSecuritySettings(
@@ -500,6 +510,26 @@ def build_server():
             resolution=resolution,
         )
 
+    @observe(
+        "docs_search",
+        "Search the server's docs (setup, storage, recovery, each service) by "
+        "keyword. Returns the best sections' topics and snippets; read one with "
+        "runbook_get.",
+    )
+    async def docs_search(query: str, limit: int = Field(5, ge=1, le=20)) -> Envelope:
+        return await run("docs_search", query=query, limit=limit)
+
+    @observe(
+        "runbook_get",
+        "A doc section by topic (doc/section, from docs_search), a doc's list of "
+        "sections (doc), 'topology' (services, ports, tiers, tailnet) or "
+        "'operating-guide' (how to triage, the rules).",
+    )
+    async def runbook_get(topic: str) -> Envelope:
+        return await run("runbook_get", topic=topic)
+
+    register_context(server)
+
     @server.tool(
         name="health_check",
         annotations=READ_ONLY,
@@ -521,6 +551,112 @@ def build_server():
         return await anyio.to_thread.run_sync(dispatch, "check_port", args)
 
     return server
+
+
+def register_context(server):
+    """Resources and prompts (04). Each resource also has a tool, for clients
+    that don't read resources."""
+    import json as _json
+
+    from homelab.context import topology
+    from homelab.domains import context, memory, system
+
+    def envelope_json(result):
+        return _json.dumps(result, indent=2)
+
+    @server.resource(
+        "homelab://manifest",
+        name="manifest",
+        mime_type="application/json",
+        description="config/homelab.yaml, no secrets (tool: config_get)",
+    )
+    def manifest_resource() -> str:
+        return envelope_json(system.config_get()["data"])
+
+    @server.resource(
+        "homelab://topology",
+        name="topology",
+        mime_type="text/markdown",
+        description="Services, ports, tiers, tailnet (tool: runbook_get('topology'))",
+    )
+    def topology_resource() -> str:
+        return topology.text()
+
+    @server.resource(
+        "homelab://operating-guide",
+        name="operating-guide",
+        mime_type="text/markdown",
+        description="How to triage, and the rules (also the server's instructions)",
+    )
+    def guide_resource() -> str:
+        return context.guide()
+
+    @server.resource(
+        "homelab://runbooks/{doc}/{section}",
+        name="runbook",
+        mime_type="text/markdown",
+        description="One doc section (tools: docs_search, runbook_get)",
+    )
+    def runbook_resource(doc: str, section: str) -> str:
+        r = context.runbook_get(f"{doc}/{section}")
+        return r["data"].get("text") or r["summary"]
+
+    @server.resource(
+        "homelab://incidents/open",
+        name="open-incidents",
+        mime_type="application/json",
+        description="Open incidents (tool: incident_list)",
+    )
+    def incidents_resource() -> str:
+        return envelope_json(memory.incident_list("open"))
+
+    @server.resource(
+        "homelab://snapshot/latest",
+        name="latest-snapshot",
+        mime_type="application/json",
+        description="The last 15-minute snapshot (tool: system_overview)",
+    )
+    def snapshot_resource() -> str:
+        from homelab.state import db, snapshot
+
+        try:
+            last = snapshot.latest(db.connect(create=False))
+        except FileNotFoundError:
+            last = None
+        return envelope_json(last or {"note": "no snapshot yet"})
+
+    for name, (description, template) in PROMPTS.items():
+        _prompt(server, name, description, template)
+
+
+def _prompt(server, name, description, template):
+    import string
+
+    fields = [f for _, f, _, _ in string.Formatter().parse(template) if f]
+
+    if "symptom" in fields:
+
+        @server.prompt(name=name, description=description)
+        def p_symptom(symptom: str) -> str:
+            return template.format(symptom=symptom)
+
+    elif "library" in fields:
+
+        @server.prompt(name=name, description=description)
+        def p_library(library: str = "all") -> str:
+            return template.format(library=library)
+
+    elif "tier" in fields:
+
+        @server.prompt(name=name, description=description)
+        def p_tier(tier: str) -> str:
+            return template.format(tier=tier)
+
+    else:
+
+        @server.prompt(name=name, description=description)
+        def p_plain() -> str:
+            return template
 
 
 def build_app():

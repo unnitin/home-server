@@ -14,7 +14,8 @@ import traceback
 from typing import Any, Callable
 
 from homelab import result as R
-from homelab.domains import health, logs, media, memory, network, photos, services
+from homelab.domains import context, health, logs, media, memory, network, photos
+from homelab.domains import services
 from homelab.domains import storage, system, updates
 
 TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
@@ -37,6 +38,8 @@ TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "history_query": memory.history_query,
     "incident_list": memory.incident_list,
     "memory_recall": memory.memory_recall,
+    "docs_search": context.docs_search,
+    "runbook_get": context.runbook_get,
 }
 
 # Tools that write to the state database (notes, incidents), never the system.
