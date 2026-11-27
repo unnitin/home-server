@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "json": {
+    "MediaContainer": {
+      "size": 0,
+      "apiVersion": "1.1.1",
+      "claimed": true,
+      "machineIdentifier": "0000000000000000000000000000000000000000",
+      "version": "1.42.2.10156-f737b826c"
+    }
+  }
+}

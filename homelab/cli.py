@@ -1,13 +1,17 @@
 """`python3 -m homelab ...`: the control plane's command line.
 
 python3 -m homelab config validate        check config/homelab.yaml (+ local overrides)
-python3 -m homelab config render [--check] write (or check) the generated files
-python3 -m homelab config get [SECTION]   print the manifest, or one section, as JSON
+python3 -m homelab config render [--check] write (or check) generated files
+python3 -m homelab config get [SECTION]   print the manifest, or a section, as JSON
+python3 -m homelab secrets list           which API secrets are set (never their values)
+python3 -m homelab secrets set NAME       store one in the Keychain (not echoed)
+python3 -m homelab secrets import-plex    copy Plex's own token into the Keychain
 """
 
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import sys
 from pathlib import Path
@@ -15,7 +19,7 @@ from typing import Optional
 
 from pydantic import ValidationError
 
-from homelab import config
+from homelab import config, secrets
 
 SECTIONS = [
     "host",
@@ -61,6 +65,40 @@ def cmd_get(args: argparse.Namespace) -> int:
     return 0
 
 
+def secret_names(config_dir: Path) -> dict[str, str]:
+    """Secret name -> the service that uses it, from the manifest."""
+    services = config.load(config_dir).services
+    return {s.api.secret: name for name, s in services.items() if s.api}
+
+
+def cmd_secrets_list(args: argparse.Namespace) -> int:
+    for secret, service in sorted(secret_names(args.config_dir).items()):
+        state = "set" if secrets.get(secret) else "not set"
+        print(f"{secret:<20} {service:<10} {state}")
+    return 0
+
+
+def cmd_secrets_set(args: argparse.Namespace) -> int:
+    known = secret_names(args.config_dir)
+    if args.name not in known:
+        print(f"unknown secret {args.name!r}; the manifest's: {', '.join(known)}")
+        return 2
+    value = getpass.getpass(f"{args.name} for {known[args.name]} (not echoed): ")
+    secrets.store(args.name, value.strip())
+    print(f"stored {args.name} in the login Keychain (service: {secrets.SERVICE})")
+    return 0
+
+
+def cmd_secrets_import_plex(args: argparse.Namespace) -> int:
+    token = secrets.plex_token_from_preferences()
+    if token is None:
+        print("no PlexOnlineToken in Plex's preferences: sign the server in first")
+        return 1
+    secrets.store("plex_token", token)
+    print("stored plex_token in the login Keychain")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="homelab")
     parser.add_argument(
@@ -76,6 +114,16 @@ def build_parser() -> argparse.ArgumentParser:
     get = sub.add_parser("get", help="print the manifest as JSON")
     get.add_argument("section", nargs="?", choices=SECTIONS)
     get.set_defaults(fn=cmd_get)
+
+    sec = top.add_parser("secrets", help="service API secrets in the Keychain")
+    sub = sec.add_subparsers(dest="command", required=True)
+    sub.add_parser("list", help="which are set").set_defaults(fn=cmd_secrets_list)
+    put = sub.add_parser("set", help="store one (you're asked for the value)")
+    put.add_argument("name")
+    put.set_defaults(fn=cmd_secrets_set)
+    sub.add_parser(
+        "import-plex", help="copy Plex Media Server's own token into the Keychain"
+    ).set_defaults(fn=cmd_secrets_import_plex)
     return parser
 
 
@@ -83,7 +131,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         return args.fn(args)
-    except (ValidationError, ValueError, OSError) as err:
+    except (ValidationError, ValueError, OSError, RuntimeError) as err:
         print(f"homelab: {err}", file=sys.stderr)
         return 2
 

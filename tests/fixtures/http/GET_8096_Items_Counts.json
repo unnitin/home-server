@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "json": {
+    "MovieCount": 410,
+    "SeriesCount": 37,
+    "EpisodeCount": 1210,
+    "ArtistCount": 0,
+    "ProgramCount": 0,
+    "TrailerCount": 0,
+    "SongCount": 0,
+    "AlbumCount": 0,
+    "MusicVideoCount": 0,
+    "BoxSetCount": 4,
+    "BookCount": 0,
+    "ItemCount": 1661
+  }
+}

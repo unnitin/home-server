@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "json": {
+    "photos": 41250,
+    "videos": 1830,
+    "usage": 512000000000,
+    "usagePhotos": 380000000000,
+    "usageVideos": 132000000000,
+    "usageByUser": [
+      {
+        "userId": "u1",
+        "userName": "Person One",
+        "photos": 40000,
+        "videos": 1800,
+        "usage": 500000000000,
+        "quotaSizeInBytes": null
+      },
+      {
+        "userId": "u2",
+        "userName": "Person Two",
+        "photos": 1250,
+        "videos": 30,
+        "usage": 12000000000,
+        "quotaSizeInBytes": null
+      }
+    ]
+  }
+}

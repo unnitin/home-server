@@ -45,6 +45,7 @@ services:
     health: { http: "http://localhost:2283/api/server/ping", expect: 200 }
     depends_on: [colima, faststore]
     launchd: io.homelab.compose.immich
+    api: { base: "http://localhost:2283/api", secret: immich_api_key }
   plex:
     kind: native_app
     app: Plex Media Server
@@ -54,6 +55,7 @@ services:
     health: { http: "http://localhost:32400/identity", expect: 200 }
     depends_on: [faststore, warmstore]
     launchd: io.homelab.plex
+    api: { base: "http://localhost:32400", secret: plex_token }
   jellyfin:
     kind: native_app
     app: Jellyfin
@@ -63,6 +65,7 @@ services:
     health: { http: "http://localhost:8096/health", expect: 200 }
     depends_on: [faststore, warmstore]
     launchd: io.homelab.jellyfin
+    api: { base: "http://localhost:8096", secret: jellyfin_api_key }
   landing:
     kind: process
     ports: [8080]

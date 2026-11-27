@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "json": {
+    "LocalAddress": "http://127.0.0.1:8096",
+    "ServerName": "mini",
+    "Version": "10.11.2",
+    "ProductName": "Jellyfin Server",
+    "Id": "00000000000000000000000000000000",
+    "StartupWizardCompleted": true
+  }
+}

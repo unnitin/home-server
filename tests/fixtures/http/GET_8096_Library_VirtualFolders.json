@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "json": [
+    {
+      "Name": "Movies",
+      "Locations": [
+        "/Volumes/warmstore/movies"
+      ],
+      "CollectionType": "movies",
+      "ItemId": "a"
+    },
+    {
+      "Name": "Shows",
+      "Locations": [
+        "/Volumes/warmstore/tv-shows"
+      ],
+      "CollectionType": "tvshows",
+      "ItemId": "b"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "status": 200,
+  "json": {
+    "thumbnailGeneration": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    },
+    "metadataExtraction": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    },
+    "smartSearch": {
+      "jobCounts": {
+        "active": 1,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 120,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": true,
+        "isPaused": false
+      }
+    },
+    "faceDetection": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 3,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    },
+    "duplicateDetection": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    },
+    "library": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    },
+    "backgroundTask": {
+      "jobCounts": {
+        "active": 0,
+        "completed": 0,
+        "failed": 0,
+        "delayed": 0,
+        "waiting": 0,
+        "paused": 0
+      },
+      "queueStatus": {
+        "isActive": false,
+        "isPaused": false
+      }
+    }
+  }
+}
