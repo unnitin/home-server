@@ -45,7 +45,8 @@ def test_a_strange_user_name_is_refused():
     "argv,allowed",
     [
         (["sudo", "-n", "/usr/bin/pmset", "-a", "sleep", "0"], True),
-        (["sudo", "-n", "-l", "/usr/bin/pmset", "-a", "womp", "1"], True),
+        (["sudo", "-n", "-l"], True),  # what may run: the check reads it
+        (["sudo", "-n", "-l", "/usr/bin/pmset", "-a", "womp", "1"], False),
         (["sudo", "/usr/bin/pmset", "-a", "sleep", "0"], False),  # could prompt
         (["sudo", "-n", "/usr/bin/pmset", "-a", "sleep", "10"], False),  # not ours
         (["sudo", "-n", "/usr/bin/pmset", "-a", "hibernatemode", "0"], False),
@@ -63,3 +64,37 @@ def test_exec_allows_sudo_only_for_the_rule(argv, allowed):
     else:
         with pytest.raises(hexec.ExecRefused):
             hexec.check(argv)
+
+
+LISTING = """Matching Defaults entries for admin on mini:
+    env_reset, env_keep+=BLOCKSIZE
+
+User admin may run the following commands on mini:
+    (ALL) ALL
+    (root) NOPASSWD: /usr/bin/pmset -a sleep 0, /usr/bin/pmset -a displaysleep 1,
+    /usr/bin/pmset -a disksleep 0
+    (root) NOPASSWD: SETENV: /usr/bin/pmset -a womp 1, /usr/bin/pmset -a powernap 0
+"""
+
+
+def test_only_nopasswd_entries_count():
+    """An admin may run anything with a password: that's not the rule."""
+    have = sudoers.nopasswd_commands(LISTING)
+    assert "/usr/bin/pmset -a sleep 0" in have and "/usr/bin/pmset -a womp 1" in have
+    assert "ALL" not in have and not any("diskutil" in c for c in have)
+
+
+def test_missing_names_what_the_listing_lacks():
+    missing = sudoers.missing(LISTING)
+    assert "/usr/bin/pmset -a standby 0" in missing
+    assert "/usr/bin/pmset -a sleep 0" not in missing
+    full = "    (root) NOPASSWD: " + ", ".join(" ".join(r) for r in sudoers.rules())
+    assert sudoers.missing(full) == []
+    assert len(sudoers.missing("")) == len(sudoers.rules())  # sudo couldn't list
+
+
+def test_the_rule_spells_out_every_command():
+    text = sudoers.render("someone")
+    assert "Cmnd_Alias" not in text  # sudo -l would show the alias, not the commands
+    for rule in sudoers.rules():
+        assert " ".join(rule) in text

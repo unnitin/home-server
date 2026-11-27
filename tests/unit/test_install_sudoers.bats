@@ -26,7 +26,7 @@ STUB
     run "$SCRIPT" --print
     [ "$status" -eq 0 ]
     [[ "$output" == *"/usr/bin/pmset -a sleep 0"* ]]
-    [[ "$output" == *"someone ALL = (root) NOPASSWD: HOMELAB_POWER"* ]]
+    [[ "$output" == *"someone ALL = (root) NOPASSWD:"* ]]
     rules=$(grep -v '^#' <<<"$output")   # the comments say why diskutil is absent
     [[ "$rules" != *"*"* ]]
     [[ "$rules" != *"diskutil"* ]]
