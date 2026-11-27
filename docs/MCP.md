@@ -64,9 +64,24 @@ All of them are read-only: they look, and change nothing.
 | `media_library_stats` | — | Plex sections and Jellyfin libraries: item counts, folders (flagged if outside the manifest), last scan, recent additions. Needs their API keys |
 | `photos_stats` | — | Immich version, photo and video totals (never per person), library size, job backlog and failures, the photo tier's free space. Needs an admin's API key |
 | `updates_check` | — | Outdated Homebrew packages, Immich running vs latest (a major version is flagged; the moving `release` tag too), Plex and Jellyfin versions. Reports only |
+| `history_query` | `metric`, `since="7d"`, `bucket="1h"`, `above`, `below` | A metric's series from the 15-minute snapshots: points, min/max, trend per day, and when it last crossed a threshold ("when did warmstore last pass 80%?") |
+| `incident_list` | `status` (`open`, `resolved`, `all`), `limit=20` | Incidents the snapshots opened (a component started failing) or a person opened, with their latest events |
+| `memory_recall` | `query`, `component`, `kinds`, `limit=5` | Kept notes, and past incidents' causes and fixes, most relevant and recent first |
 | `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's diagnostics: the non-OK checks by default, every check with `verbose=true` |
 
 The API keys these need live in the Keychain: `python3 -m homelab secrets list` shows which are set ([homelab/README.md](../homelab/README.md#api-secrets)). Without one, a tool says which command sets it.
+
+### Record tools
+
+These write to the state database, never to the system: notes for later sessions and incident records. They're the only tools that change anything at all.
+
+| Tool | Arguments | Effect |
+|---|---|---|
+| `memory_note` | `body` (≤ 1,000 chars), `kind` (`fact`, `preference`, `decision`, `resolution`, `todo`), `component`, `tags`, `expires_in_days` | Keeps a note; a near-duplicate returns the one already kept. Redacted |
+| `memory_forget` | `note_id`, `reason` | Hides a note (kept, with the reason) |
+| `incident_open` | `component`, `title`, `severity` | Opens one by hand, for something the checks don't see |
+| `incident_update` | `incident_id`, `kind`, `body` | Adds an observation, action, hypothesis or note |
+| `incident_resolve` | `incident_id`, `root_cause`, `resolution` | Closes it; `memory_recall` finds the fix next time |
 
 `health_check` runs the diagnostics in JSON mode (`DIAG_FORMAT=json`, see [`diagnostics/README.md`](../diagnostics/README.md)). The others are the control plane's domains (`homelab/domains/`) over its read-only adapters. The same tools work from a shell: `python3 -m homelab status` and `python3 -m homelab tool NAME KEY=VALUE…`.
 
@@ -150,6 +165,8 @@ Node.js must be installed on the MacBook (`brew install node` if missing).
 | "Why hasn't my new movie shown up?" | `media_staging_list`, then `media_library_stats` |
 | "Is Immich still indexing?" | `photos_stats` |
 | "Anything to update?" | `updates_check` |
+| "When did warmstore last pass 80%?" | `history_query` with metric=storage.warmstore.used_pct, above=80 |
+| "Has this happened before?" | `memory_recall` with the symptom |
 | "Collect logs for support" | `collect_logs` |
 
 ---

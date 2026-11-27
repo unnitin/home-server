@@ -68,6 +68,12 @@ def overview(verbose: bool = False) -> dict:
             hints += [h for h in res[part]["hints"] if "truncated" not in h][:1] or [
                 tool
             ]
+    from homelab.domains import memory  # the state database: optional here
+
+    extra = memory.overview_extra()
+    data.update(extra)
+    if extra.get("incidents", {}).get("open"):
+        hints.append("incident_list()")
     up = sum(1 for s in svc_states.values() if s == "up")
     mounted = sum(1 for t in tiers.values() if t["mounted"])
     return R.make(

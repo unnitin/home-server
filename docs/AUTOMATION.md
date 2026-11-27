@@ -285,6 +285,20 @@ cd services/immich && docker compose restart
 
 ---
 
+### **io.homelab.snapshot.plist** - History and incidents
+Every 15 minutes, `python3 -m homelab snapshot` records what the system looks like in the state database (`~/Library/Application Support/homelab/state.db`, on the internal disk):
+- **metrics** for `history_query` (tier usage and mounts, each service up or down, the tailnet, Immich totals);
+- **incidents**: one opens when a component starts failing and resolves when it recovers, and a component that flaps within an hour reopens the same one;
+- **versions** of macOS, Tailscale, Immich, Plex and Jellyfin, when they change.
+
+It prunes as it goes (full snapshots for 14 days, then one a day; metrics hourly after 7 days, for a year), and once a day copies the database to `coldstore/homelab-backups/` when coldstore is mounted. It runs under the same Python as the MCP job, which can read the external volumes (D27).
+
+**Service**: `homelab/state/snapshot.py`
+**Trigger**: At load, then every 15 minutes (`StartInterval` 900)
+**Check**: `python3 -m homelab incidents`, `python3 -m homelab history storage.warmstore.used_pct`
+
+---
+
 ### **io.homelab.updatecheck.plist** - Maintenance
 
 **Purpose**: Weekly automated update checks

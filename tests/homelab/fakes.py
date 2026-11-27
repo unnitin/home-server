@@ -84,6 +84,11 @@ class Mini:
         monkeypatch.setenv("TEST_MODE", "1")
         monkeypatch.setenv("HOMELAB_EXEC_FIXTURES", str(ex))
         monkeypatch.setenv("HOMELAB_HTTP_FIXTURES", str(ht))
+        from homelab import secrets
+
+        for name in ("immich_api_key", "plex_token", "jellyfin_api_key"):
+            monkeypatch.setenv(secrets.env_name(name), f"{name}-0123456789")
+        secrets.forget_cache()
         self._ex, self._ht = ex, ht
         self._disks()
         self._launchd()
@@ -221,7 +226,10 @@ class Mini:
         for name, svc in M.services.items():
             if svc.health and svc.health.http:
                 down = name in self.http_down
-                self.get(svc.health.http, None if down else svc.health.expect, "ok")
+                body = "ok"
+                if svc.health.http.endswith("/identity"):  # Plex: its version too
+                    body = json.dumps({"MediaContainer": {"version": "1.42.2.10156"}})
+                self.get(svc.health.http, None if down else svc.health.expect, body)
             if svc.health and svc.health.cmd:
                 self.cmd(list(svc.health.cmd), "ok", rc=1 if self.docker_down else 0)
             for port in svc.all_ports():

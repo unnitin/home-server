@@ -219,6 +219,13 @@ def test_the_observe_tools_publish_envelopes_and_are_read_only(server):
         assert len(tool.description) < 400, name
 
 
+def test_record_tools_write_only_records(server):
+    tools = {t.name: t for t in asyncio.run(server.build_server().list_tools())}
+    for name in server.homelab_tools.WRITES:
+        a = tools[name].annotations
+        assert not a.readOnlyHint and not a.destructiveHint, name
+
+
 def test_tool_enums_come_from_the_manifest(server):
     tools = {t.name: t for t in asyncio.run(server.build_server().list_tools())}
     tier = tools["storage_status"].inputSchema["properties"]["tier"]

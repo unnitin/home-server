@@ -1,4 +1,7 @@
-"""The read-only (T0) tools, by name: what the MCP server and the CLI both call.
+"""The tools, by name: what the MCP server and the CLI both call.
+
+TOOLS only look (T0). WRITES add to the state database: notes and incident
+records, never anything on the system itself.
 
 `call` never raises: a bug or an unexpected state becomes an error result
 that says what failed, so a client always gets an envelope back.
@@ -11,7 +14,7 @@ import traceback
 from typing import Any, Callable
 
 from homelab import result as R
-from homelab.domains import health, logs, media, network, photos, services
+from homelab.domains import health, logs, media, memory, network, photos, services
 from homelab.domains import storage, system, updates
 
 TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
@@ -31,14 +34,27 @@ TOOLS: dict[str, Callable[..., dict[str, Any]]] = {
     "media_library_stats": media.library_stats,
     "photos_stats": photos.stats,
     "updates_check": updates.check,
+    "history_query": memory.history_query,
+    "incident_list": memory.incident_list,
+    "memory_recall": memory.memory_recall,
 }
+
+# Tools that write to the state database (notes, incidents), never the system.
+WRITES: dict[str, Callable[..., dict[str, Any]]] = {
+    "incident_open": memory.incident_open,
+    "incident_update": memory.incident_update,
+    "incident_resolve": memory.incident_resolve,
+    "memory_note": memory.memory_note,
+    "memory_forget": memory.memory_forget,
+}
+ALL = {**TOOLS, **WRITES}
 
 
 def call(name: str, **kwargs: Any) -> dict[str, Any]:
-    if name not in TOOLS:
+    if name not in ALL:
         return R.error(f"unknown tool {name!r}")
     try:
-        return TOOLS[name](**kwargs)
+        return ALL[name](**kwargs)
     except Exception as err:  # every failure becomes a result, never a crash
         traceback.print_exc(file=sys.stderr)
         return R.error(f"{name} failed: {type(err).__name__}: {err}")

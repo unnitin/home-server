@@ -45,7 +45,27 @@ python3 -m homelab tool storage_status tier=warmstore
 python3 -m homelab tool service_logs service=plex lines=50 grep=error
 ```
 
-The state database (history, incidents, memory) follows in Phase 2.
+## The state database
+
+`~/Library/Application Support/homelab/state.db` (the manifest's `storage.state_dir`), on the internal disk so it survives a RAID failure. SQLite with WAL; `homelab/state/migrations/` holds the schema, applied on open.
+
+| Module | What |
+|---|---|
+| `state/db.py` | open it, apply migrations (each whole or not at all) |
+| `state/snapshot.py` | `homelab snapshot` (io.homelab.snapshot, every 15 min): metrics, incidents, versions, pruning, the daily copy to coldstore |
+| `state/history.py` | `history_query`: series, range, trend, threshold crossings |
+| `state/incidents.py` | open, reopen (within an hour), resolve; one incident per failing component |
+| `state/memory.py` | notes (redacted, deduplicated, ≤ 1,000 chars) and recall (FTS5 + past fixes) |
+| `domains/memory.py` | those as tools |
+
+```bash
+python3 -m homelab snapshot                                   # one snapshot now
+python3 -m homelab incidents [--all]
+python3 -m homelab history storage.warmstore.used_pct --since 30d --above 80
+python3 -m homelab tool memory_note body="Immich pinned to v2.1.0 until we test 3.x" kind=decision
+```
+
+Tests never touch it: `HOMELAB_STATE_DB` points each one at its own file.
 
 ## The manifest
 

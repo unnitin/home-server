@@ -54,7 +54,7 @@ def staging_list(library: str = "all", include_failed: bool = True) -> dict:
                     "media.tier",
                     "fail",
                     f"{m.media.tier} is not mounted: staging lives on it",
-                    "media",
+                    m.media.tier,
                 )
             ],
             {"libraries": {}},

@@ -82,12 +82,15 @@ services:
   updatecheck:
     kind: job
     launchd: io.homelab.updatecheck
+  snapshot:
+    kind: job
+    launchd: io.homelab.snapshot           # every 15 min: history, incidents (homelab/state/)
   mcp:
     kind: process
     listen: "127.0.0.1:18765"            # loopback only; the tailnet reaches it on :8765 (remote_access)
     launchd: io.homelab.mcp
 
-boot_order: [storage, powermgmt, colima, immich, plex, jellyfin, landing, media_watcher, tailscale, updatecheck, mcp]
+boot_order: [storage, powermgmt, colima, immich, plex, jellyfin, landing, media_watcher, tailscale, updatecheck, snapshot, mcp]
 
 remote_access:
   # The ONLY list of tailnet mappings (D17). Serve, never Funnel: reachable from
