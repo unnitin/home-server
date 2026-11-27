@@ -16,7 +16,11 @@
 #   5. Reboot the VM (a clean shutdown, as you would reboot the mini), wait for
 #      the boot jobs, and record every job's exit status, the diagnostics, and
 #      whether MCP, Plex and Jellyfin answer.
-#   6. Guards: the VM's own faststore must be unchanged by the deploy and boot,
+#   6. Phase 2, when REF has the state database (homelab/state/): the snapshot
+#      job ran, the MCP server serves the Phase 2 surface, and the acceptance
+#      case: unmounting the VM's faststore opens an incident at the next
+#      snapshot, and remounting it resolves it (guest/phase2_checks.sh).
+#   7. Guards: the VM's own faststore must be unchanged by the deploy and boot,
 #      and the host's real data must be unchanged.
 #
 # Expected in a VM: colima and compose.immich fail (macOS VMs can't run
@@ -147,7 +151,14 @@ log_info "Waiting ${BOOT_SETTLE}s for boot jobs"
 sleep "$BOOT_SETTLE"
 vm_sh "$RUN" "bash $GUEST_KIT/report.sh 2-after-reboot $GUEST_OUT ~/home-server" >/dev/null || true
 
-# --- 6. guards ----------------------------------------------------------
+# --- 6. Phase 2 -----------------------------------------------------------
+if git -C "$REPO_ROOT" cat-file -e "$REF:homelab/state/snapshot.py" 2>/dev/null; then
+    log_info "Phase 2: snapshot job, MCP surface, unmount/remount incident"
+    vm_sh "$RUN" "bash $GUEST_KIT/phase2_checks.sh ~/home-server $GUEST_OUT" \
+        >"$OUT/phase2.txt" 2>&1 || true
+fi
+
+# --- 7. guards ----------------------------------------------------------
 vm_sh "$RUN" "/opt/homebrew/bin/python3.11 $GUEST_KIT/data_guard.py snapshot $GUEST_KIT/guard-after.json $VM_GUARD >/dev/null"
 vm_sh "$RUN" "/opt/homebrew/bin/python3.11 $GUEST_KIT/data_guard.py verify $GUEST_KIT/guard-before.json $GUEST_KIT/guard-after.json" \
     >"$OUT/vm-guard.txt" 2>&1 || true

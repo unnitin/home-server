@@ -124,3 +124,76 @@ def test_d19_not_reproduced_is_info_only(tmp_path):
     assert passed
     d19 = checks[0]
     assert d19["ok"] is False and not d19["required"]
+
+
+# --- Phase 2 ---------------------------------------------------------------------
+
+PHASE2 = {
+    "snapshots_by_job": 2,
+    "job_interval_900": True,
+    "unmounted": True,
+    "remounted": True,
+    "mcp": {
+        "instructions_words": 307,
+        "tools": sorted(ev.PHASE2_TOOLS | {"check_raid"}),
+        "calls": {
+            "system_overview": {"is_error": False, "status": "warn", "bytes": 1500},
+            "history_query": {"is_error": False, "status": "ok", "bytes": 900},
+        },
+        "resources": ["homelab://manifest", "homelab://topology"],
+        "prompts": ["triage", "weekly_maintenance"],
+    },
+    "opened": [3],
+    "resolved": [3],
+    "incidents": [
+        {"id": 1, "component": "warmstore", "status": "open", "title": "warmstore"},
+        {"id": 3, "component": "faststore", "status": "resolved", "title": "fast"},
+    ],
+    "history_samples": 4,
+}
+
+
+def with_phase2(tmp_path: Path, p2: dict) -> Path:
+    run = make_run(tmp_path)
+    d = run / "vm" / "phase2"
+    d.mkdir(parents=True)
+    (d / "phase2.json").write_text(json.dumps(p2))
+    return run
+
+
+def test_phase2_good_run_passes(tmp_path):
+    checks, passed = ev.evaluate(with_phase2(tmp_path, PHASE2))
+    assert passed, failed(checks)
+    names = {c["check"] for c in checks}
+    assert {"Unmounting faststore opens an incident", "Remounting resolves it"} <= names
+
+
+def test_phase2_without_its_output_is_not_judged(tmp_path):
+    checks, passed = ev.evaluate(make_run(tmp_path))
+    assert passed and not any("Snapshot job" in c["check"] for c in checks)
+
+
+def test_phase2_an_incident_that_never_opens_fails(tmp_path):
+    p2 = copy.deepcopy(PHASE2)
+    p2["opened"] = []
+    checks, passed = ev.evaluate(with_phase2(tmp_path, p2))
+    assert not passed
+    assert "Unmounting faststore opens an incident" in failed(checks)
+
+
+def test_phase2_an_incident_left_open_fails(tmp_path):
+    p2 = copy.deepcopy(PHASE2)
+    p2["resolved"] = []
+    checks, passed = ev.evaluate(with_phase2(tmp_path, p2))
+    assert failed(checks) == ["Remounting resolves it"]
+
+
+def test_phase2_missing_tools_or_a_tool_error_fails(tmp_path):
+    p2 = copy.deepcopy(PHASE2)
+    p2["mcp"]["tools"] = ["system_overview"]
+    p2["mcp"]["calls"]["history_query"]["status"] = "error"
+    checks, _ = ev.evaluate(with_phase2(tmp_path, p2))
+    assert {
+        "MCP serves the Phase 2 tools",
+        "Phase 2 tools answer with envelopes",
+    } <= set(failed(checks))
