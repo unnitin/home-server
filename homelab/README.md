@@ -8,8 +8,17 @@ The Python side of the home server (docs/mcp-refactor/02-architecture.md).
 | `envfile.py` | reads `config/homelab.env` with the standard library |
 | `exec.py` | the one way to run a program: allowlist, timeouts, TEST_MODE fixtures |
 | `redact.py` | removes secrets from anything a tool returns |
+| `adapters/diskutil.py` | RAID sets, members, volumes, usage, orphaned members (`diskutil -plist`) |
+| `adapters/launchd.py` | `io.homelab.*` jobs: loaded, held, pid, last exit, runs |
+| `adapters/tailscale.py` | connection, serve mappings, drift from the manifest, Funnel |
+| `adapters/docker.py` | compose project containers: state, health, restarts |
+| `adapters/brew.py` | outdated formulae and casks |
+| `adapters/system.py` | power settings, uptime, macOS version, SMART |
+| `adapters/http.py` | GET to services on the mini (localhost only) |
 
-Adapters, domains and the state database follow in Phase 2.
+The adapters are read-only and return plain dataclasses; tests run them against
+output recorded on the mini (`tests/fixtures/exec/`). Domains, the state database
+and the MCP tools built on them follow in Phase 2.
 
 ## The manifest
 

@@ -1,0 +1,56 @@
+{
+  "TCP": {
+    "2283": {
+      "HTTPS": true
+    },
+    "32400": {
+      "HTTPS": true
+    },
+    "443": {
+      "HTTPS": true
+    },
+    "8096": {
+      "HTTPS": true
+    },
+    "8765": {
+      "HTTPS": true
+    }
+  },
+  "Web": {
+    "mini.example.ts.net:2283": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://localhost:2283"
+        }
+      }
+    },
+    "mini.example.ts.net:32400": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://localhost:32400"
+        }
+      }
+    },
+    "mini.example.ts.net:443": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://localhost:8080"
+        }
+      }
+    },
+    "mini.example.ts.net:8096": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://localhost:8096"
+        }
+      }
+    },
+    "mini.example.ts.net:8765": {
+      "Handlers": {
+        "/": {
+          "Proxy": "http://127.0.0.1:18765"
+        }
+      }
+    }
+  }
+}

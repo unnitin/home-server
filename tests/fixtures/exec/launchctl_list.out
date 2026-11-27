@@ -1,0 +1,9 @@
+PID	Status	Label
+1227	0	com.apple.Finder
+14559	0	io.homelab.jellyfin
+23179	0	io.homelab.plex
+99123	0	io.homelab.mcp
+-	0	io.homelab.powermgmt
+-	0	io.homelab.storage
+-	0	io.homelab.updatecheck
+99064	0	io.homelab.landing

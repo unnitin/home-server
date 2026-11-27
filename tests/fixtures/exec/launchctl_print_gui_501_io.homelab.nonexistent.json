@@ -1,0 +1,5 @@
+{
+  "rc": 113,
+  "stdout": "",
+  "stderr": "Bad request.\nCould not find service \"io.homelab.nonexistent\" in domain for user gui: 501\n"
+}

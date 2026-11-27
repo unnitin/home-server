@@ -1,0 +1,79 @@
+[
+  {
+    "Name": "/immich-server",
+    "RestartCount": 0,
+    "Image": "sha256:72a9b9de6c6abfa7a9c9cdc244ae4d2bd9fea2ae00997f194cbd10aca72ea210",
+    "State": {
+      "Status": "running",
+      "StartedAt": "2026-11-04T06:22:21.222780555Z",
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Image": "ghcr.io/immich-app/immich-server:v2.1.0",
+      "Labels": {
+        "com.docker.compose.service": "immich-server"
+      }
+    }
+  },
+  {
+    "Name": "/immich-ml",
+    "RestartCount": 0,
+    "Image": "sha256:24bfef29bc5c0923c64c98810931eda1449a4b237e6704a715605761bc107ae4",
+    "State": {
+      "Status": "running",
+      "StartedAt": "2026-11-04T06:22:21.169912808Z",
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Image": "ghcr.io/immich-app/immich-machine-learning:v2.1.0",
+      "Labels": {
+        "com.docker.compose.service": "immich-machine-learning"
+      }
+    }
+  },
+  {
+    "Name": "/immich-redis",
+    "RestartCount": 0,
+    "Image": "sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f",
+    "State": {
+      "Status": "running",
+      "StartedAt": "2026-11-04T06:22:21.169691363Z",
+      "ExitCode": 0,
+      "OOMKilled": false
+    },
+    "Config": {
+      "Image": "redis:7-alpine",
+      "Labels": {
+        "com.docker.compose.service": "redis"
+      }
+    }
+  },
+  {
+    "Name": "/immich-db",
+    "RestartCount": 0,
+    "Image": "sha256:3de63e2eeedf1b95e3c2f1abb34a9672dd87d298215c96a7cf90cb30d07128f7",
+    "State": {
+      "Status": "running",
+      "StartedAt": "2026-11-04T06:21:43.704597273Z",
+      "ExitCode": 0,
+      "OOMKilled": false,
+      "Health": {
+        "Status": "healthy"
+      }
+    },
+    "Config": {
+      "Image": "ghcr.io/immich-app/postgres:16-vectorchord0.3.0-pgvectors0.2.1",
+      "Labels": {
+        "com.docker.compose.service": "database"
+      }
+    }
+  }
+]

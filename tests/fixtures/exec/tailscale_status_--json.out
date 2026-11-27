@@ -1,0 +1,70 @@
+{
+  "Version": "1.104.4-t938213198-gd38c96d6a",
+  "BackendState": "Running",
+  "TailscaleIPs": [
+    "100.64.0.1",
+    "fd7a:115c:a1e0::1"
+  ],
+  "Self": {
+    "HostName": "mini",
+    "DNSName": "mini.example.ts.net.",
+    "Online": true,
+    "OS": "macOS",
+    "TailscaleIPs": [
+      "100.64.0.1",
+      "fd7a:115c:a1e0::1"
+    ]
+  },
+  "Health": [],
+  "MagicDNSSuffix": "example.ts.net",
+  "CertDomains": [
+    "mini.example.ts.net"
+  ],
+  "Peer": {
+    "nodekey:peer0": {
+      "HostName": "device-0",
+      "DNSName": "device-0.example.ts.net.",
+      "Online": true,
+      "OS": "iOS",
+      "TailscaleIPs": [
+        "100.64.0.10"
+      ]
+    },
+    "nodekey:peer1": {
+      "HostName": "device-1",
+      "DNSName": "device-1.example.ts.net.",
+      "Online": false,
+      "OS": "iOS",
+      "TailscaleIPs": [
+        "100.64.0.11"
+      ]
+    },
+    "nodekey:peer2": {
+      "HostName": "device-2",
+      "DNSName": "device-2.example.ts.net.",
+      "Online": true,
+      "OS": "macOS",
+      "TailscaleIPs": [
+        "100.64.0.12"
+      ]
+    },
+    "nodekey:peer3": {
+      "HostName": "device-3",
+      "DNSName": "device-3.example.ts.net.",
+      "Online": false,
+      "OS": "iOS",
+      "TailscaleIPs": [
+        "100.64.0.13"
+      ]
+    },
+    "nodekey:peer4": {
+      "HostName": "device-4",
+      "DNSName": "device-4.example.ts.net.",
+      "Online": true,
+      "OS": "macOS",
+      "TailscaleIPs": [
+        "100.64.0.14"
+      ]
+    }
+  }
+}
