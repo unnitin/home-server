@@ -308,6 +308,7 @@ def test_http_is_localhost_only(url):
         hhttp.get(url)
 
 
-def test_http_no_answer_is_a_response_not_an_exception():
+def test_http_no_answer_is_a_response_not_an_exception(monkeypatch):
+    monkeypatch.delenv("TEST_MODE")
     r = hhttp.get("http://127.0.0.1:9/", timeout=1)  # discard port: nothing listens
     assert r.status is None and not r.ok and r.error

@@ -14,7 +14,11 @@ The Python side of the home server (docs/mcp-refactor/02-architecture.md).
 | `adapters/docker.py` | compose project containers: state, health, restarts |
 | `adapters/brew.py` | outdated formulae and casks |
 | `adapters/system.py` | power settings, uptime, macOS version, SMART |
-| `adapters/http.py` | GET to services on the mini (localhost only) |
+| `adapters/http.py` | HTTP to services on the mini (localhost only; fixtures under TEST_MODE) |
+| `adapters/immich_api.py` | Immich version, library totals, background job queues |
+| `adapters/plex_api.py` | Plex version, library sections with item counts, recently added |
+| `adapters/jellyfin_api.py` | Jellyfin version, item counts, libraries, last library scan |
+| `secrets.py` | API secrets in the login Keychain (service `homelab`) |
 
 The adapters are read-only and return plain dataclasses; tests run them against
 output recorded on the mini (`tests/fixtures/exec/`). Domains, the state database
@@ -52,6 +56,23 @@ Everything the control plane runs goes through `homelab.exec.run(argv)`:
   `diskutil erase*`/`appleRAID create|delete` are refused, always
   (`tests/homelab/test_exec.py`);
 - under `TEST_MODE=1` nothing runs: results come from `tests/fixtures/exec/`.
+
+## API secrets
+
+Immich, Plex and Jellyfin answer most API calls only with a key. The manifest names
+each one (`services.<name>.api.secret`); they live in the login Keychain:
+
+```bash
+python3 -m homelab secrets list               # which are set (never the values)
+python3 -m homelab secrets set immich_api_key # Immich: Account settings → API keys (an admin's)
+python3 -m homelab secrets set jellyfin_api_key  # Jellyfin: Dashboard → API Keys
+python3 -m homelab secrets import-plex        # copies Plex's own token from its preferences
+```
+
+`set` asks for the value without echoing it and passes it to `security` on stdin,
+so it never appears in `ps` or shell history. No MCP tool can write a secret. A
+value read is removed from every result (`redact.py`), and a tool that needs a
+missing one says which command sets it.
 
 ## Requirements
 

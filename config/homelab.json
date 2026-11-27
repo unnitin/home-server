@@ -84,7 +84,11 @@
       ],
       "compose_dir": "services/immich",
       "version_env": "IMMICH_VERSION",
-      "optional": false
+      "optional": false,
+      "api": {
+        "base": "http://localhost:2283/api",
+        "secret": "immich_api_key"
+      }
     },
     "plex": {
       "kind": "native_app",
@@ -103,7 +107,11 @@
       "app": "Plex Media Server",
       "optional": false,
       "data_tier": "faststore",
-      "data_dir": "plex"
+      "data_dir": "plex",
+      "api": {
+        "base": "http://localhost:32400",
+        "secret": "plex_token"
+      }
     },
     "jellyfin": {
       "kind": "native_app",
@@ -122,7 +130,11 @@
       "app": "Jellyfin",
       "optional": false,
       "data_tier": "faststore",
-      "data_dir": "jellyfin"
+      "data_dir": "jellyfin",
+      "api": {
+        "base": "http://localhost:8096",
+        "secret": "jellyfin_api_key"
+      }
     },
     "landing": {
       "kind": "process",

@@ -110,6 +110,29 @@ class Resources(Strict):
     disk_gb: int = Field(ge=10)
 
 
+class Api(Strict):
+    """A service's HTTP API on the mini, and the Keychain secret that unlocks it."""
+
+    base: str
+    secret: str  # a name for homelab/secrets.py, e.g. plex_token
+
+    @field_validator("base")
+    @classmethod
+    def local_base(cls, value: str) -> str:
+        if not re.fullmatch(
+            r"http://(localhost|127\.0\.0\.1):[0-9]{2,5}(/[a-z]+)*", value
+        ):
+            raise ValueError(f"an API base is a local http URL: {value!r}")
+        return value
+
+    @field_validator("secret")
+    @classmethod
+    def secret_name(cls, value: str) -> str:
+        if not NAME.match(value):
+            raise ValueError(f"secret names are lower_snake_case: {value!r}")
+        return value
+
+
 class Service(Strict):
     kind: Literal["job", "runtime", "compose", "native_app", "process", "daemon"]
     launchd: str
@@ -124,6 +147,7 @@ class Service(Strict):
     resources: Optional[Resources] = None
     data_tier: Optional[str] = None  # the tier that holds the app's own data
     data_dir: Optional[str] = None  # that data's folder on the tier
+    api: Optional[Api] = None
 
     @field_validator("data_dir")
     @classmethod

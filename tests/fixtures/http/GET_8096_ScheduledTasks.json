@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": [
+    {
+      "Name": "Clean Cache Directory",
+      "Key": "DeleteCacheFiles",
+      "State": "Idle",
+      "LastExecutionResult": {
+        "Status": "Completed",
+        "EndTimeUtc": "2026-11-26T03:00:00Z"
+      }
+    },
+    {
+      "Name": "Scan Media Library",
+      "Key": "RefreshLibrary",
+      "State": "Idle",
+      "LastExecutionResult": {
+        "Status": "Completed",
+        "EndTimeUtc": "2026-11-27T02:00:04Z"
+      }
+    }
+  ]
+}
