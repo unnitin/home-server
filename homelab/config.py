@@ -243,6 +243,17 @@ class Photos(Strict):
         return relative_dir(value)
 
 
+class Power(Strict):
+    """The 24/7 power profile: pmset settings the mini should keep."""
+
+    sleep: int = 0
+    displaysleep: int = 1
+    disksleep: int = 0
+    womp: int = 1
+    powernap: int = 0
+    standby: int = 0
+
+
 class Manifest(Strict):
     host: Host
     storage: Storage
@@ -251,6 +262,7 @@ class Manifest(Strict):
     remote_access: RemoteAccess
     media: Media
     photos: Photos
+    power: Power = Power()
 
     @model_validator(mode="after")
     def consistent(self) -> "Manifest":
@@ -455,6 +467,8 @@ def env_items(m: Manifest) -> list[tuple[str, str]]:
                 f"{root}/{m.media.staging}/{lib.staging}",
             ),
         ]
+    for setting, value in m.power.model_dump().items():
+        items.append((env_key("power", setting), str(value)))
     photos = m.storage.tiers[m.photos.tier].mount
     items += [
         (env_key("photos", "library"), f"{photos}/{m.photos.library}"),

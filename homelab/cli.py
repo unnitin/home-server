@@ -6,6 +6,8 @@ python3 -m homelab config get [SECTION]   print the manifest, or a section, as J
 python3 -m homelab secrets list           which API secrets are set (never their values)
 python3 -m homelab secrets set NAME       store one in the Keychain (not echoed)
 python3 -m homelab secrets import-plex    copy Plex's own token into the Keychain
+python3 -m homelab status [--json]         the system overview
+python3 -m homelab tool NAME [KEY=VALUE…]  run any read-only tool; `tool --list`
 """
 
 from __future__ import annotations
@@ -99,6 +101,52 @@ def cmd_secrets_import_plex(args: argparse.Namespace) -> int:
     return 0
 
 
+def _value(text: str):
+    """KEY=VALUE values: true/false, integers, a,b lists, else text."""
+    if text.lower() in ("true", "false"):
+        return text.lower() == "true"
+    if text.lstrip("-").isdigit():
+        return int(text)
+    if "," in text:
+        return [part for part in text.split(",") if part]
+    return text
+
+
+def render_text(res: dict) -> str:
+    lines = [f"{res['status'].upper()}: {res['summary']}"]
+    lines += [f"  [{c['status']}] {c['message']}" for c in res["checks"]]
+    lines += [f"  next: {h}" for h in res["hints"]]
+    return "\n".join(lines)
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call("system_overview", verbose=args.verbose)
+    print(json.dumps(res, indent=2) if args.json else render_text(res))
+    return 0 if res["status"] == "ok" else 1
+
+
+def cmd_tool(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    if args.list or not args.name:
+        for name, fn in tools.TOOLS.items():
+            doc = (fn.__doc__ or "").strip().splitlines()
+            print(f"{name:<24} {doc[0] if doc else ''}")
+        return 0
+    kwargs = {}
+    for pair in args.params:
+        key, sep, value = pair.partition("=")
+        if not sep:
+            print(f"parameters are KEY=VALUE: {pair!r}", file=sys.stderr)
+            return 2
+        kwargs[key] = _value(value)
+    res = tools.call(args.name, **kwargs)
+    print(json.dumps(res, indent=2))
+    return 0 if res["status"] in ("ok", "warn") else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="homelab")
     parser.add_argument(
@@ -124,6 +172,18 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "import-plex", help="copy Plex Media Server's own token into the Keychain"
     ).set_defaults(fn=cmd_secrets_import_plex)
+
+    st = top.add_parser("status", help="the system overview")
+    st.add_argument("--json", action="store_true")
+    st.add_argument(
+        "--verbose", action="store_true", help="every check, not just problems"
+    )
+    st.set_defaults(fn=cmd_status)
+    tl = top.add_parser("tool", help="run a read-only tool, as the MCP server does")
+    tl.add_argument("name", nargs="?")
+    tl.add_argument("params", nargs="*", metavar="KEY=VALUE")
+    tl.add_argument("--list", action="store_true")
+    tl.set_defaults(fn=cmd_tool)
     return parser
 
 

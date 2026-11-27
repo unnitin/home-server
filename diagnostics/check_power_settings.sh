@@ -9,12 +9,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/diag_lib.sh" # for DIAG_FORMAT=json; this script keeps its own text format
 
 # Expected values for headless server operation
-EXPECTED_SLEEP=0
-EXPECTED_DISPLAYSLEEP=1
-EXPECTED_DISKSLEEP=0
-EXPECTED_WOMP=1
-EXPECTED_POWERNAP=0
-EXPECTED_STANDBY=0
+EXPECTED_SLEEP="${HOMELAB_POWER_SLEEP:-0}"
+EXPECTED_DISPLAYSLEEP="${HOMELAB_POWER_DISPLAYSLEEP:-1}"
+EXPECTED_DISKSLEEP="${HOMELAB_POWER_DISKSLEEP:-0}"
+EXPECTED_WOMP="${HOMELAB_POWER_WOMP:-1}"
+EXPECTED_POWERNAP="${HOMELAB_POWER_POWERNAP:-0}"
+EXPECTED_STANDBY="${HOMELAB_POWER_STANDBY:-0}"
 
 # Colors for output (off when NO_COLOR is set or stdout isn't a terminal, as in diag_lib.sh)
 if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then

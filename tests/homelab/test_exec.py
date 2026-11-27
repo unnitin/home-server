@@ -48,6 +48,7 @@ ALLOWED = [
     ["smartctl", "-a", "--json", "/dev/disk5"],
     ["sysctl", "-n", "kern.boottime"],
     ["sw_vers", "-productVersion"],
+    ["ps", "-o", "etime=", "-p", "123"],
     ["bash", "diagnostics/check_storage.sh"],
     ["bash", str(REPO / "diagnostics" / "check_raid_status.sh")],
 ]
@@ -101,6 +102,8 @@ REFUSED = [
     ["sh", "-c", "true"],
     ["/usr/sbin/diskutil", "list"],  # a path, not a name from the allowlist
     ["python3", "-c", "print(1)"],
+    ["ps", "aux"],
+    ["ps", "-o", "command", "-p", "1;rm"],
 ]
 
 

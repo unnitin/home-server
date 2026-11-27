@@ -146,8 +146,8 @@ def dispatch(name, arguments=None):
     return "Unknown tool: {}".format(name)
 
 
-# --- Structured tools (Phase 1): health_check and system_overview -------------
-# They run diagnostics with DIAG_FORMAT=json and return the result envelope
+# --- health_check (Phase 1) ----------------------------------------------------
+# It runs diagnostics with DIAG_FORMAT=json and returns the result envelope
 # (envelope.py) instead of text. The tools above stay for existing clients.
 
 # health_check components (03-tool-catalog.md) and the diagnostics behind each:
@@ -173,28 +173,6 @@ COMPONENT_SCRIPTS = {
 }
 COMPONENTS = list(COMPONENT_SCRIPTS)
 COMPONENT_TIMEOUTS = {"all": 300}
-
-# What system_overview covers: every service and storage, in one call.
-OVERVIEW_COMPONENTS = [
-    "storage",
-    "raid",
-    "docker",
-    "immich",
-    "plex",
-    "jellyfin",
-    "tailscale",
-    "launchd",
-    "power",
-]
-OVERVIEW_MAX_CHECKS = 10  # keeps the overview small; health_check has the rest
-# tier -> its folder under /Volumes, from the manifest (coldstore is
-# /Volumes/coldstore since 2026-11-26, D25)
-TIERS = {
-    name: os.path.basename(
-        MANIFEST.get("HOMELAB_TIER_{}_MOUNT".format(name.upper()), name)
-    )
-    for name in MANIFEST.get("HOMELAB_TIERS", "faststore warmstore coldstore").split()
-}
 
 
 def run_json(script, args=(), timeout=DEFAULT_TIMEOUT):
@@ -253,73 +231,5 @@ def health_check(component="all", verbose=False):
     )
 
 
-def tier_usage(volumes_root=None):
-    """Each storage tier: mounted, and used % when it is."""
-    import shutil
-
-    root = volumes_root or os.environ.get("HOMELAB_VOLUMES_ROOT", "/Volumes")
-    tiers = {}
-    for name, folder in TIERS.items():
-        path = os.path.join(root, folder)
-        # ismount, not isdir: an empty mount-point folder is not a volume (D22)
-        mounted = os.path.ismount(path)
-        used = None
-        if mounted:
-            usage = shutil.disk_usage(path)
-            used = round(100 * usage.used / usage.total) if usage.total else None
-        tiers[name] = {"mounted": mounted, "used_pct": used}
-    return tiers
-
-
-def tier_records(tiers):
-    """Diagnostic-style records for tier mounts: faststore and warmstore must be
-    mounted (fail); coldstore is an archive no service needs (warn)."""
-    records, counts = [], {"ok": 0, "warn": 0, "fail": 0}
-    for name, tier in tiers.items():
-        if tier["mounted"]:
-            status = "ok"
-            message = "{} mounted, {}% used".format(name, tier["used_pct"])
-        else:
-            status = "warn" if name == "coldstore" else "fail"
-            message = "{} is not mounted".format(name)
-        counts[status] += 1
-        records.append(
-            {
-                "type": "check",
-                "id": "tiers.mount.{}".format(name),
-                "component": "tiers",
-                "status": status,
-                "message": message,
-            }
-        )
-    worst = "fail" if counts["fail"] else "warn" if counts["warn"] else "ok"
-    records.append(
-        {
-            "type": "summary",
-            "component": "tiers",
-            "status": worst,
-            "passed": counts["ok"],
-            "warnings": counts["warn"],
-            "failures": counts["fail"],
-            "exit_code": 0,
-        }
-    )
-    return records
-
-
-def system_overview(verbose=False):
-    """One call: every service's and tier's state, small enough for any model."""
-    import envelope
-
-    jobs = [job for comp in OVERVIEW_COMPONENTS for job in COMPONENT_SCRIPTS[comp]]
-    records, errors = _run_many(jobs, DEFAULT_TIMEOUT)
-    tiers = tier_usage()
-    records.extend(tier_records(tiers))
-    result = envelope.build(
-        records, verbose=verbose, errors=errors, data={"tiers": tiers}
-    )
-    if not verbose and len(result["checks"]) > OVERVIEW_MAX_CHECKS:
-        result["checks"] = result["checks"][:OVERVIEW_MAX_CHECKS]
-        result["truncated"] = True
-        result["hints"].append("health_check(component=...) lists every check")
-    return result
+# system_overview is homelab/domains/health.py: built on the adapters, not the
+# diagnostics (Phase 2).

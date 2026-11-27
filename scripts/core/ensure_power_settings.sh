@@ -4,10 +4,14 @@
 
 set -euo pipefail
 
-# Expected power settings for headless server
-EXPECTED_SLEEP=0
-EXPECTED_DISPLAYSLEEP=1
-EXPECTED_DISKSLEEP=0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=environment.sh
+source "${SCRIPT_DIR}/environment.sh"
+
+# Expected power settings for headless server: the manifest's power profile
+EXPECTED_SLEEP="${HOMELAB_POWER_SLEEP:-0}"
+EXPECTED_DISPLAYSLEEP="${HOMELAB_POWER_DISPLAYSLEEP:-1}"
+EXPECTED_DISKSLEEP="${HOMELAB_POWER_DISKSLEEP:-0}"
 
 main() {
     echo "$(date): Checking power management settings..."

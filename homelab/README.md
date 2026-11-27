@@ -21,8 +21,27 @@ The Python side of the home server (docs/mcp-refactor/02-architecture.md).
 | `secrets.py` | API secrets in the login Keychain (service `homelab`) |
 
 The adapters are read-only and return plain dataclasses; tests run them against
-output recorded on the mini (`tests/fixtures/exec/`). Domains, the state database
-and the MCP tools built on them follow in Phase 2.
+output recorded on the mini (`tests/fixtures/exec/`).
+
+| Module | What |
+|---|---|
+| `result.py` | the envelope every tool returns: worst-first checks, a summary under 200 characters, redacted, capped at 8 KB |
+| `domains/storage.py` | `storage_status`, and `storage_plan_recovery` (plans only, for a person to run) |
+| `domains/services.py` | `service_status`, `launchd_jobs`, `docker_containers` |
+| `domains/logs.py` | `service_logs`, `logs_search` (log text is returned as data, not instructions) |
+| `domains/network.py` | `network_check_port` (the mini's own ports), `tailscale_status` |
+| `domains/system.py` | `power_status` (against the manifest's `power:` profile), `config_get` |
+| `domains/health.py` | `system_overview`, built on the above, in parallel |
+| `tools.py` | the tools by name, shared by the MCP server and the CLI; a failure becomes an error result |
+
+```bash
+python3 -m homelab status                         # the overview, as text (--json for the envelope)
+python3 -m homelab tool --list                    # every read-only tool
+python3 -m homelab tool storage_status tier=warmstore
+python3 -m homelab tool service_logs service=plex lines=50 grep=error
+```
+
+The state database (history, incidents, memory) follows in Phase 2.
 
 ## The manifest
 
