@@ -36,6 +36,7 @@ from mcp_routing import health_check as run_health_check  # noqa: E402
 from prompts import PROMPTS  # noqa: E402
 
 from homelab import config as homelab_config  # noqa: E402
+from homelab import policy as homelab_policy  # noqa: E402
 from homelab import tools as homelab_tools  # noqa: E402
 from homelab.domains.system import SECTIONS  # noqa: E402
 
@@ -590,6 +591,9 @@ def build_server():
         args = {"host": host, "port": port}
         return await anyio.to_thread.run_sync(dispatch, "check_port", args)
 
+    # Every registered tool must be in config/policy.yaml with its tier, and no
+    # never-exposed (T3) name may be registered: otherwise the server won't start.
+    homelab_policy.check_registered(t.name for t in server._tool_manager.list_tools())
     return server
 
 

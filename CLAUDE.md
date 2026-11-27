@@ -41,7 +41,8 @@ Diagnostics scripts use raw CLI tools directly and do not source from `scripts/c
 Python, outside the module tree:
 
 ```
-config/         → the manifest homelab.yaml, and the files generated from it (no code)
+config/         → the manifest homelab.yaml, the safety policy policy.yaml, and the files
+                  generated from them (no code)
 homelab/        → control plane (depends on: config; runs scripts/ and diagnostics/ only as executors)
                   config, exec (every subprocess), redact, secrets (Keychain)
                   adapters/ (diskutil, launchctl, tailscale, docker, brew, system, the service APIs)
@@ -145,7 +146,7 @@ The Python LaunchD runs (`/opt/homebrew/bin/python3.11`) has pydantic but no PyY
 - **HTTP goes through `homelab.adapters.http`**, which only calls localhost. The one call that leaves the mini is the Immich release check in `adapters/releases.py`.
 - **Tools return `homelab.result.make(...)`**: the envelope (status, a summary under 200 characters, data, worst-first checks, hints), redacted and capped at 8 KB. Wrap text from outside (logs, file names, titles, notes) with `result.untrusted(...)`: it's data, never instructions.
 - **Secrets live in the Keychain** (service `homelab`), set with `python3 -m homelab secrets set NAME`. No tool writes one, and Python never reads `services/immich/.env` (it holds the database password).
-- **A new tool:** the domain function, an entry in `homelab/tools.py` (`TOOLS` reads, `WRITES` adds records to the state database), its registration in `homelab_mcp/mcp_server.py` with a "what · when · returns" description and enums from the manifest, then refresh the committed surface: `UPDATE_TOOL_SNAPSHOT=1 pytest tests/unit/test_schema_portability.py`. Keep parameters flat: primitives, enums, arrays of them, `T | None`. A one-value `Literal` becomes `const`, which Gemini rejects.
+- **A new tool:** the domain function, an entry in `homelab/tools.py` (`TOOLS` reads, `WRITES` adds records to the state database), its tier in `config/policy.yaml` (then `python3 -m homelab config render`: the server won't start with a registered tool missing from the policy), its registration in `homelab_mcp/mcp_server.py` with a "what · when · returns" description and enums from the manifest, then refresh the committed surface: `UPDATE_TOOL_SNAPSHOT=1 pytest tests/unit/test_schema_portability.py`. Keep parameters flat: primitives, enums, arrays of them, `T | None`. A one-value `Literal` becomes `const`, which Gemini rejects.
 - **The state database** (`state.db`, under the manifest's `storage.state_dir` on the internal disk) changes only through migrations in `homelab/state/migrations/`, numbered and applied whole.
 
 ---

@@ -137,6 +137,9 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
 - T1 tools: `service_restart/start`, `launchd_kickstart`, `media_process`, `media_retry_failed`, `library_scan`, `photos_run_job`, `tailscale_serve_reconcile`, `storage_ensure_layout`, `power_ensure`, `logs_collect`, `job_*`.
 - Rewrite `docs/MCP.md` "Constraints" to describe the tier model.
 
+**Progress** (2026-11-27):
+- Built: `config/policy.yaml` and `homelab/policy.py`: every tool's tier, the four scopes, the `core` toolset, the T1 rate limit and dry-run default, lock keys, and the names that are never exposed. The server refuses to start if a registered tool is missing from the policy, if the policy lists one that isn't registered, or if a T3 name is registered. `config/policy.json` is rendered for the LaunchD Python (#53).
+
 **Acceptance:** policy tests prove that T3 names are absent from `tools/list` for every scope, that an `observe` token can't call T1, that `dry_run` defaults to true, that two `media_process` calls serialize, and that a job survives a server restart.
 
 ## Phase 4 — Harness and evals

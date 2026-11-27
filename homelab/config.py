@@ -527,6 +527,10 @@ def outputs(config_dir: Path = CONFIG_DIR) -> dict[Path, str]:
         config_dir
         / JSON_FILE: render_json(base.model_dump(mode="json", exclude_none=True)),
     }
+    if (config_dir / "policy.yaml").exists():  # the safety policy (homelab/policy.py)
+        from homelab import policy
+
+        files[config_dir / policy.POLICY_JSON] = policy.render(config_dir)
     if (config_dir / LOCAL_MANIFEST).exists():
         before = dict(env_items(base))
         merged = load_yaml(config_dir)
