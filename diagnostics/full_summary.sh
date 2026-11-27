@@ -18,7 +18,7 @@ else
 fi
 
 echo -e "\n--- Storage mountpoints ---"
-for d in /Volumes/warmstore /Volumes/faststore /Volumes/Archive; do
+for d in "$(diag_tier_mount warmstore /Volumes/warmstore)" "$(diag_tier_mount faststore /Volumes/faststore)" "$(diag_tier_mount coldstore /Volumes/coldstore)"; do
   echo "Checking $d"
   df -h "$d" 2>/dev/null || echo "❌ Not mounted"
 done

@@ -34,6 +34,12 @@ stdout then carries one JSON object per check, and the stream ends with a summar
 
 Human output is unchanged when `DIAG_FORMAT` is unset.
 
+## Where the values come from
+
+`diag_lib.sh` reads `config/homelab.env`, the file generated from the manifest (`config/homelab.yaml`), directly: diagnostics never source anything from `scripts/`. So tier mounts (coldstore is `/Volumes/coldstore`), ports and each tier's warn and crit thresholds are the manifest's. A `HOMELAB_*` value set by the caller wins, and without the file each diagnostic uses its built-in default.
+
+A tier counts as mounted only when `diskutil` says so (`diag_is_mounted`). An empty mount-point folder isn't the volume, and `df` on one reports the internal disk (D31).
+
 ## 📋 Individual Diagnostic Scripts
 
 ### **check_raid_status.sh** - Storage Health

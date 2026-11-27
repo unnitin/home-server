@@ -2,7 +2,7 @@
 set -euo pipefail
 source "$(dirname "$0")/diag_lib.sh"
 
-JELLYFIN_URL="${JELLYFIN_URL:-http://localhost:8096}"
+JELLYFIN_URL="${JELLYFIN_URL:-http://localhost:${HOMELAB_SVC_JELLYFIN_PORTS:-8096}}"
 
 section "Jellyfin"
 

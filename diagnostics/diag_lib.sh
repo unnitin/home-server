@@ -4,6 +4,47 @@ set -euo pipefail
 # Diagnostic Library - Shared functions for homeserver diagnostics
 # Provides standardized output, checks, and utilities
 
+# The manifest's values (tier mounts, ports, health URLs), from config/homelab.env,
+# the file generated from config/homelab.yaml. Read directly, not through
+# scripts/core/environment.sh: diagnostics depend on nothing in scripts/. A
+# HOMELAB_* value the caller set wins; without the file, each diagnostic falls
+# back to its built-in default.
+_diag_load_manifest() {
+    local env_file saved=() name kv
+    env_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)/config/homelab.env"
+    [[ -f "$env_file" ]] || return 0
+    while IFS= read -r name; do
+        saved+=("$name=${!name}")
+    done < <(compgen -v | grep '^HOMELAB_' || true)
+    set -a
+    # shellcheck source=../config/homelab.env
+    source "$env_file"
+    set +a
+    for kv in ${saved[@]+"${saved[@]}"}; do
+        export "${kv%%=*}=${kv#*=}"
+    done
+}
+_diag_load_manifest
+
+# The mount point of a storage tier from the manifest, or the default given
+diag_tier_mount() {  # diag_tier_mount TIER DEFAULT
+    local var
+    var="HOMELAB_TIER_$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')_MOUNT"
+    printf '%s\n' "${!var:-$2}"
+}
+
+# True when a volume is mounted exactly at PATH. A folder under /Volumes is not
+# proof: macOS leaves empty mount-point folders behind, and df on one reports
+# the internal disk (D22). Only diskutil knows. (A copy of
+# scripts/core/environment.sh's homelab_is_mounted: diagnostics source nothing
+# from scripts/.)
+diag_is_mounted() {
+    local mount_point
+    mount_point=$(diskutil info -plist "${1:-}" 2>/dev/null |
+        plutil -extract MountPoint raw -o - - 2>/dev/null) || return 1
+    [[ -n "$mount_point" && "$mount_point" == "${1:-}" ]]
+}
+
 # Color definitions. Disabled when NO_COLOR is set or stdout isn't a terminal
 # (e.g. output captured by the MCP server), so callers never get escape codes.
 if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then

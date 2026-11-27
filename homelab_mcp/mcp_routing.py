@@ -15,6 +15,42 @@ ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIAG = os.path.join(BASE, "diagnostics")
+MANIFEST_ENV = os.path.join(BASE, "config", "homelab.env")
+
+
+def read_manifest_env(path=MANIFEST_ENV):
+    """The manifest's values (config/homelab.env, generated from homelab.yaml).
+
+    The standard library only: the Python LaunchD runs this with has pydantic
+    but no PyYAML, so the YAML itself is never read here. Lines are
+    KEY="value", with backslash, double quote, dollar and backtick escaped by a
+    backslash; a leading $HOME/ expands to the home folder.
+    """
+    values = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return values
+    for line in lines:
+        m = re.match(r'^(HOMELAB_[A-Z0-9_]+)="(.*)"$', line)
+        if not m:
+            continue
+        value = re.sub(r"\\([\\\"$`])", r"\1", m.group(2))
+        if m.group(2).startswith("$HOME/"):
+            value = os.path.join(os.path.expanduser("~"), value[len("$HOME/") :])
+        values[m.group(1)] = value
+    return values
+
+
+MANIFEST = read_manifest_env()
+
+
+def _port(service, default):
+    """A service's first port from the manifest, or the default."""
+    ports = MANIFEST.get("HOMELAB_SVC_{}_PORTS".format(service.upper()), "")
+    return ports.split()[0] if ports.split() else default
+
 
 TOOL_SCRIPTS = {
     "run_all_diagnostics": "run_all.sh",
@@ -128,9 +164,9 @@ COMPONENT_SCRIPTS = {
     "launchd": [("check_launchd.sh", ())],
     "power": [("check_power_settings.sh", ())],
     "network": [
-        ("network_port_check.sh", ("localhost", "2283")),
-        ("network_port_check.sh", ("localhost", "32400")),
-        ("network_port_check.sh", ("localhost", "8096")),
+        ("network_port_check.sh", ("localhost", _port("immich", "2283"))),
+        ("network_port_check.sh", ("localhost", _port("plex", "32400"))),
+        ("network_port_check.sh", ("localhost", _port("jellyfin", "8096"))),
     ],
     "prereqs": [("check_prereqs.sh", ())],
     "homebrew": [("check_homebrew.sh", ())],
@@ -151,7 +187,14 @@ OVERVIEW_COMPONENTS = [
     "power",
 ]
 OVERVIEW_MAX_CHECKS = 10  # keeps the overview small; health_check has the rest
-TIERS = {"faststore": "faststore", "warmstore": "warmstore", "coldstore": "Archive"}
+# tier -> its folder under /Volumes, from the manifest (coldstore is
+# /Volumes/coldstore since 2026-11-26, D25)
+TIERS = {
+    name: os.path.basename(
+        MANIFEST.get("HOMELAB_TIER_{}_MOUNT".format(name.upper()), name)
+    )
+    for name in MANIFEST.get("HOMELAB_TIERS", "faststore warmstore coldstore").split()
+}
 
 
 def run_json(script, args=(), timeout=DEFAULT_TIMEOUT):

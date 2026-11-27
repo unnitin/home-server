@@ -15,12 +15,12 @@ else
 fi
 
 # Check if Plex web interface is accessible
-http_probe "http://localhost:32400/web" || true
+http_probe "http://localhost:${HOMELAB_SVC_PLEX_PORTS:-32400}/web" || true
 
 # Check LaunchAgent status
 if [[ -f "$HOME/Library/LaunchAgents/com.plexapp.plexmediaserver.plist" ]]; then
     ok "LaunchAgent plist exists"
-    
+
     # Check if LaunchAgent is loaded
     if launchctl print "gui/$(id -u)/com.plexapp.plexmediaserver" >/dev/null 2>&1; then
         ok "LaunchAgent loaded and active"
@@ -35,7 +35,7 @@ fi
 plex_prefs="$HOME/Library/Application Support/Plex Media Server"
 if [[ -d "$plex_prefs" ]]; then
     ok "Plex preferences directory exists"
-    
+
     # Check if there are any libraries configured
     if [[ -f "$plex_prefs/Preferences.xml" ]]; then
         ok "Plex configuration file exists"
@@ -47,7 +47,7 @@ else
 fi
 
 # Check for media directories
-for media_dir in "/Volumes/warmstore" "/Volumes/faststore"; do
+for media_dir in "$(diag_tier_mount warmstore /Volumes/warmstore)" "$(diag_tier_mount faststore /Volumes/faststore)"; do
     if [[ -d "$media_dir" ]]; then
         ok "Media directory available: $media_dir"
     else
