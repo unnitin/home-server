@@ -36,6 +36,10 @@ except Exception:
 launchctl print "gui/$UIDN/io.homelab.snapshot" >"$OUT/snapshot-job.txt" 2>&1 || true
 by_job=$(count_snapshots)
 
+if [[ -f homelab/auth.py ]]; then  # from Phase 3 every request needs a token
+    MCP_TOKEN=$("$PY" -m homelab token create rehearsal-p2 --scope ops | awk '/hlk_/ {print $1}')
+    export MCP_TOKEN
+fi
 "$PY" "$HERE/mcp_probe.py" http://127.0.0.1:18765/mcp >"$OUT/mcp.json" 2>"$OUT/mcp.err" || true
 
 # --- the acceptance case -----------------------------------------------------

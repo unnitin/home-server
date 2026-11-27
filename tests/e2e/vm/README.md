@@ -96,11 +96,13 @@ after the move, followed by a power cycle. `evaluate.py` then checks:
 | Check | Pass when |
 |---|---|
 | Each `io.homelab.*` job after reboot | exit 0, never 126 or 127 |
-| MCP | `initialize` on `127.0.0.1:18765` returns 200 |
+| MCP | `initialize` on `127.0.0.1:18765` answers (200, or 401 from Phase 3: a token is needed) |
 | Plex, Jellyfin | answer, and the restored libraries are present |
 | Immich database folder | still 0700 |
 | VM faststore | `data_guard` finds no change from deploy and boot |
 | Mini's real data | `data_guard` finds no change during the run |
+| Phase 2 (`guest/phase2_checks.sh`) | the snapshot job ran; unmounting faststore opens an incident and remounting resolves it; history answers |
+| Phase 3 (`guest/phase3_checks.sh`) | 401 without a token; observe sees no T1 tool and can't call one; ops actions default to a dry run; `service_restart` restarts Jellyfin (new PID, healthy); a Plex restart job survives `kickstart -k` of the MCP server; every call is audited; the sudo rule installs and allows only the profile's `pmset` commands; `power_ensure` fixes a drifted setting; `logs_collect` builds a bundle; the Plex and Jellyfin jobs don't relaunch (D32) |
 
 `io.homelab.colima` and `io.homelab.compose.immich` can't pass in a VM, because
 macOS VMs can't run nested VMs and so have no Docker. `io.homelab.media.watcher`

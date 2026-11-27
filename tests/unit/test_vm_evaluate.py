@@ -197,3 +197,96 @@ def test_phase2_missing_tools_or_a_tool_error_fails(tmp_path):
         "MCP serves the Phase 2 tools",
         "Phase 2 tools answer with envelopes",
     } <= set(failed(checks))
+
+
+# --- Phase 3 ---------------------------------------------------------------------
+
+
+def _job(state):
+    return {"job": {"job": {"state": state, "result": {"content": {"bytes": 10}}}}}
+
+
+PHASE3 = {
+    "no_token_http": "401",
+    "scopes": {
+        "observe": {
+            "tools": ["system_overview"],
+            "t1_seen": [],
+            "restart_default": {"is_error": True},
+        },
+        "ops": {
+            "tools": ["system_overview"],
+            "t1_seen": sorted(ev.T1_PROBED),
+            "restart_default": {"is_error": False, "data": {"dry_run": True}},
+        },
+    },
+    "jellyfin": {
+        "pid_before": "100",
+        "pid_after": "200",
+        "health": "Healthy",
+        **_job("done"),
+    },
+    "plex": {"identity_http": "200", **_job("done")},
+    "sudoers": {
+        "install_rc": 0,
+        "check_rc": 0,
+        "diskutil_allowed": False,
+        "other_value_allowed": False,
+    },
+    "power": {
+        "dry": {"data": {"drift": {"displaysleep": {}}}},
+        "run": {"status": "ok"},
+        "displaysleep_after": "1",
+    },
+    "bundle": _job("done"),
+    "audit": {
+        "data": {
+            "calls": [
+                {"client": "rehearsal-observe", "outcome": "denied"},
+                {"client": "rehearsal-ops", "outcome": "ok"},
+            ]
+        }
+    },
+    "runs": {"plex": ["1", "1"], "jellyfin": ["1", "1"]},
+}
+
+
+def with_phase3(tmp_path: Path, p3: dict) -> Path:
+    run = make_run(tmp_path)
+    d = run / "vm" / "phase3"
+    d.mkdir(parents=True)
+    (d / "phase3.json").write_text(json.dumps(p3))
+    return run
+
+
+def test_phase3_good_run_passes(tmp_path):
+    checks, passed = ev.evaluate(with_phase3(tmp_path, PHASE3))
+    assert passed, failed(checks)
+    assert "A job survives an MCP server restart" in {c["check"] for c in checks}
+
+
+def test_phase3_a_restart_that_keeps_the_same_pid_fails(tmp_path):
+    p3 = copy.deepcopy(PHASE3)
+    p3["jellyfin"]["pid_after"] = "100"
+    checks, _ = ev.evaluate(with_phase3(tmp_path, p3))
+    assert failed(checks) == ["service_restart restarts Jellyfin"]
+
+
+def test_phase3_a_lost_job_or_a_leaky_scope_fails(tmp_path):
+    p3 = copy.deepcopy(PHASE3)
+    p3["plex"]["job"]["job"]["state"] = "lost"
+    p3["scopes"]["observe"]["t1_seen"] = ["service_restart"]
+    p3["sudoers"]["diskutil_allowed"] = True
+    checks, _ = ev.evaluate(with_phase3(tmp_path, p3))
+    assert {
+        "A job survives an MCP server restart",
+        "An observe token sees no T1 tool and can't call one",
+        "The sudo rule installs and allows pmset only",
+    } <= set(failed(checks))
+
+
+def test_phase3_a_job_that_keeps_relaunching_fails_d32(tmp_path):
+    p3 = copy.deepcopy(PHASE3)
+    p3["runs"]["plex"] = ["3", "5"]
+    checks, _ = ev.evaluate(with_phase3(tmp_path, p3))
+    assert failed(checks) == ["Plex and Jellyfin jobs stay in the foreground (D32)"]

@@ -122,6 +122,9 @@ def evaluate(run: Path) -> tuple[list[dict[str, Any]], bool]:
         after.get("immich_database_mode") == "700",
         f"mode {after.get('immich_database_mode')}",
     )
+    p3 = load(run / "vm" / "phase3" / "phase3.json")
+    if p3 is not None:
+        evaluate_phase3(p3, check)
     p2 = load(run / "vm" / "phase2" / "phase2.json")
     if p2 is not None:
         evaluate_phase2(p2, check)
@@ -219,6 +222,122 @@ def evaluate_phase2(p2: dict[str, Any], check) -> None:
         "History answers from the snapshots",
         (p2.get("history_samples") or 0) >= 2,
         f"{p2.get('history_samples')} samples of storage.faststore.mounted",
+    )
+
+
+T1_PROBED = {
+    "service_restart",
+    "service_start",
+    "media_process",
+    "power_ensure",
+    "logs_collect",
+    "memory_note",
+}
+
+
+def _job_state(block: dict) -> str:
+    return (((block or {}).get("job") or {}).get("job") or {}).get("state", "")
+
+
+def _int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return -1
+
+
+def evaluate_phase3(p3: dict[str, Any], check) -> None:
+    """The Phase 3 acceptance, as measured inside the VM (guest/phase3_checks.sh)."""
+    check(
+        "A request without a token is refused",
+        p3.get("no_token_http") == "401",
+        f"HTTP {p3.get('no_token_http')}",
+    )
+    sc = p3.get("scopes") or {}
+    obs, ops = sc.get("observe") or {}, sc.get("ops") or {}
+    obs_restart = obs.get("restart_default") or {}
+    check(
+        "An observe token sees no T1 tool and can't call one",
+        bool(obs.get("tools"))
+        and not obs.get("t1_seen")
+        and obs_restart.get("is_error"),
+        f"{len(obs.get('tools') or [])} tools, T1 seen: {obs.get('t1_seen')}, "
+        f"restart refused: {obs_restart.get('is_error')}",
+    )
+    ops_restart = ops.get("restart_default") or {}
+    check(
+        "An ops token sees the actions, and they default to a dry run",
+        set(ops.get("t1_seen") or []) == T1_PROBED
+        and (ops_restart.get("data") or {}).get("dry_run") is True,
+        f"T1 seen: {len(ops.get('t1_seen') or [])}/{len(T1_PROBED)}, default: "
+        f"{(ops_restart.get('data') or {}).get('dry_run')}",
+    )
+    jf = p3.get("jellyfin") or {}
+    check(
+        "service_restart restarts Jellyfin",
+        _job_state(jf) == "done"
+        and jf.get("pid_before") not in (None, "")
+        and jf.get("pid_after") not in (None, "", jf.get("pid_before"))
+        and "Healthy" in (jf.get("health") or ""),
+        f"job {_job_state(jf) or 'none'}, PID {jf.get('pid_before')} -> "
+        f"{jf.get('pid_after')}, health {jf.get('health')!r}",
+    )
+    px = p3.get("plex") or {}
+    check(
+        "A job survives an MCP server restart",
+        _job_state(px) == "done" and px.get("identity_http") == "200",
+        f"Plex restart job {_job_state(px) or 'none'} after kickstart -k of the "
+        f"server, Plex HTTP {px.get('identity_http')}",
+    )
+    rows = (((p3.get("audit") or {}).get("data") or {}).get("calls")) or []
+    clients = {r.get("client") for r in rows}
+    denied = [r for r in rows if r.get("outcome") == "denied"]
+    check(
+        "Every call is audited, refused ones too",
+        {"rehearsal-observe", "rehearsal-ops"} <= clients and bool(denied),
+        f"{len(rows)} rows, clients {sorted(c for c in clients if c)}, "
+        f"{len(denied)} denied",
+    )
+    su = p3.get("sudoers") or {}
+    check(
+        "The sudo rule installs and allows pmset only",
+        su.get("install_rc") == 0
+        and su.get("check_rc") == 0
+        and su.get("diskutil_allowed") is False
+        and su.get("other_value_allowed") is False,
+        f"install {su.get('install_rc')}, check {su.get('check_rc')}, diskutil "
+        f"allowed: {su.get('diskutil_allowed')}, other pmset value allowed: "
+        f"{su.get('other_value_allowed')}",
+    )
+    pw = p3.get("power") or {}
+    dry = (pw.get("dry") or {}).get("data") or {}
+    check(
+        "power_ensure puts a drifted setting back",
+        "displaysleep" in (dry.get("drift") or {})
+        and (pw.get("run") or {}).get("status") == "ok"
+        and pw.get("displaysleep_after") == "1",
+        f"drift {sorted(dry.get('drift') or [])}, run "
+        f"{(pw.get('run') or {}).get('status')}, displaysleep now "
+        f"{pw.get('displaysleep_after')}",
+    )
+    bundle = p3.get("bundle") or {}
+    result = ((bundle.get("job") or {}).get("job") or {}).get("result") or {}
+    check(
+        "logs_collect builds a bundle",
+        _job_state(bundle) == "done",
+        f"job {_job_state(bundle) or 'none'}"
+        + (f", {(result.get('content') or {}).get('bytes')} bytes" if result else ""),
+    )
+    runs = p3.get("runs") or {}
+    steady = all(
+        _int(a) > 0 and _int(a) == _int(b)
+        for a, b in (runs.get("plex", [None, None]), runs.get("jellyfin", [None, None]))
+    )
+    check(
+        "Plex and Jellyfin jobs stay in the foreground (D32)",
+        steady,
+        f"runs over the checks: plex {runs.get('plex')}, "
+        f"jellyfin {runs.get('jellyfin')}",
     )
 
 

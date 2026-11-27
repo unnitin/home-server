@@ -16,7 +16,11 @@
 #   5. Reboot the VM (a clean shutdown, as you would reboot the mini), wait for
 #      the boot jobs, and record every job's exit status, the diagnostics, and
 #      whether MCP, Plex and Jellyfin answer.
-#   6. Phase 2, when REF has the state database (homelab/state/): the snapshot
+#   6. Phase 3, when REF has tokens (homelab/auth.py): 401 without a token,
+#      what observe and ops see, a real Jellyfin restart, a Plex restart job
+#      that survives a restart of the MCP server, the audit log, the scoped
+#      sudo rule and power_ensure, a log bundle, and D32 (guest/phase3_checks.sh).
+#   7. Phase 2, when REF has the state database (homelab/state/): the snapshot
 #      job ran, the MCP server serves the Phase 2 surface, and the acceptance
 #      case: unmounting the VM's faststore opens an incident at the next
 #      snapshot, and remounting it resolves it (guest/phase2_checks.sh).
@@ -151,14 +155,21 @@ log_info "Waiting ${BOOT_SETTLE}s for boot jobs"
 sleep "$BOOT_SETTLE"
 vm_sh "$RUN" "bash $GUEST_KIT/report.sh 2-after-reboot $GUEST_OUT ~/home-server" >/dev/null || true
 
-# --- 6. Phase 2 -----------------------------------------------------------
+# --- 6. Phase 3 (before Phase 2's checks, which stop Plex and Jellyfin) ----
+if git -C "$REPO_ROOT" cat-file -e "$REF:homelab/auth.py" 2>/dev/null; then
+    log_info "Phase 3: tokens and scopes, real restarts, a job across a server restart, sudo rule, audit"
+    vm_sh "$RUN" "VM_PASSWORD='$VM_PASSWORD' bash $GUEST_KIT/phase3_checks.sh ~/home-server $GUEST_OUT" \
+        >"$OUT/phase3.txt" 2>&1 || true
+fi
+
+# --- 7. Phase 2 -----------------------------------------------------------
 if git -C "$REPO_ROOT" cat-file -e "$REF:homelab/state/snapshot.py" 2>/dev/null; then
     log_info "Phase 2: snapshot job, MCP surface, unmount/remount incident"
     vm_sh "$RUN" "bash $GUEST_KIT/phase2_checks.sh ~/home-server $GUEST_OUT" \
         >"$OUT/phase2.txt" 2>&1 || true
 fi
 
-# --- 7. guards ----------------------------------------------------------
+# --- 8. guards ----------------------------------------------------------
 vm_sh "$RUN" "/opt/homebrew/bin/python3.11 $GUEST_KIT/data_guard.py snapshot $GUEST_KIT/guard-after.json $VM_GUARD >/dev/null"
 vm_sh "$RUN" "/opt/homebrew/bin/python3.11 $GUEST_KIT/data_guard.py verify $GUEST_KIT/guard-before.json $GUEST_KIT/guard-after.json" \
     >"$OUT/vm-guard.txt" 2>&1 || true
