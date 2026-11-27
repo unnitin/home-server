@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Judge a Phase 0 rehearsal from its output folder.
+"""Judge a deploy rehearsal (Phase 0 onward) from its output folder.
 
   evaluate.py RUN_DIR
 
@@ -121,6 +121,9 @@ def evaluate(run: Path) -> tuple[list[dict[str, Any]], bool]:
         after.get("immich_database_mode") == "700",
         f"mode {after.get('immich_database_mode')}",
     )
+    p2 = load(run / "vm" / "phase2" / "phase2.json")
+    if p2 is not None:
+        evaluate_phase2(p2, check)
     vm_guard = guard_ok(run / "vm-guard.txt")
     check(
         "VM faststore unchanged by deploy and boot",
@@ -133,6 +136,89 @@ def evaluate(run: Path) -> tuple[list[dict[str, Any]], bool]:
 
     passed = all(c["ok"] for c in checks if c["required"])
     return checks, passed
+
+
+PHASE2_TOOLS = {
+    "system_overview",
+    "storage_status",
+    "storage_plan_recovery",
+    "service_status",
+    "history_query",
+    "incident_list",
+    "memory_recall",
+    "memory_note",
+    "docs_search",
+    "runbook_get",
+    "media_items",
+}
+
+
+def evaluate_phase2(p2: dict[str, Any], check) -> None:
+    """The Phase 2 acceptance, as measured inside the VM (guest/phase2_checks.sh)."""
+    check(
+        "Snapshot job wrote the state database",
+        p2.get("snapshots_by_job", 0) >= 1,
+        f"{p2.get('snapshots_by_job')} snapshots before the checks",
+    )
+    check(
+        "Snapshot job runs every 15 minutes",
+        p2.get("job_interval_900"),
+        "launchctl print: run interval = 900 seconds",
+    )
+    mcp = p2.get("mcp") or {}
+    missing = PHASE2_TOOLS - set(mcp.get("tools") or [])
+    check(
+        "MCP serves the Phase 2 tools",
+        bool(mcp) and not missing,
+        f"{len(mcp.get('tools') or [])} tools"
+        + (f", missing {sorted(missing)}" if missing else ""),
+    )
+    calls = mcp.get("calls") or {}
+    broken = sorted(
+        n
+        for n, c in calls.items()
+        if c.get("is_error") or c.get("status") in (None, "error")
+    )
+    check(
+        "Phase 2 tools answer with envelopes",
+        bool(calls) and not broken,
+        "all answered" if not broken else f"errors: {broken}",
+    )
+    overview = calls.get("system_overview") or {}
+    check(
+        "system_overview under 2 KB",
+        0 < (overview.get("bytes") or 0) < 2048,
+        f"{overview.get('bytes')} bytes",
+        required=False,
+    )
+    check(
+        "Instructions and context served",
+        (mcp.get("instructions_words") or 0) > 0
+        and "homelab://topology" in (mcp.get("resources") or [])
+        and "triage" in (mcp.get("prompts") or []),
+        f"{mcp.get('instructions_words')} words, {len(mcp.get('resources') or [])} "
+        f"resources, {len(mcp.get('prompts') or [])} prompts",
+    )
+    rows = {r["id"]: r for r in p2.get("incidents") or []}
+    opened = [rows.get(i) for i in p2.get("opened") or []]
+    fast = [r for r in opened if r and r["component"] == "faststore"]
+    check(
+        "Unmounting faststore opens an incident",
+        p2.get("unmounted") and bool(fast),
+        f"unmounted: {p2.get('unmounted')}, opened: "
+        + ", ".join(f"#{r['id']} {r['title']}" for r in opened if r),
+    )
+    resolved = set(p2.get("resolved") or [])
+    check(
+        "Remounting resolves it",
+        p2.get("remounted") and bool(fast) and all(r["id"] in resolved for r in fast),
+        f"remounted: {p2.get('remounted')}, resolved: {sorted(resolved)}",
+    )
+    check(
+        "History answers from the snapshots",
+        (p2.get("history_samples") or 0) >= 2,
+        f"{p2.get('history_samples')} samples of storage.faststore.mounted",
+    )
 
 
 def main() -> int:
