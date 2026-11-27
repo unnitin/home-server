@@ -67,7 +67,13 @@ All of them are read-only: they look, and change nothing.
 | `history_query` | `metric`, `since="7d"`, `bucket="1h"`, `above`, `below` | A metric's series from the 15-minute snapshots: points, min/max, trend per day, and when it last crossed a threshold ("when did warmstore last pass 80%?") |
 | `incident_list` | `status` (`open`, `resolved`, `all`), `limit=20` | Incidents the snapshots opened (a component started failing) or a person opened, with their latest events |
 | `memory_recall` | `query`, `component`, `kinds`, `limit=5` | Kept notes, and past incidents' causes and fixes, most relevant and recent first |
+| `photos_albums` | `filter` (`all`, `owned`, `shared`) | Immich albums: photo count, date span, shared or not |
+| `photos_album_profile` | `album` (id or name) | What its photos share: people (% of photos), places, months, photo/video mix |
+| `photos_unsorted` | `since="30d"` | Photos in no album, grouped by people, places and months: the size of the sorting job |
+| `media_items` | `library="movies"`, `filter` (`all`, `unmatched`, `mismatched`, `recent`, `unlabelled`), `limit=50` | Plex and Jellyfin joined by file: each movie's TMDB id on each server, labels, and matched, unmatched, mismatched or on one server only |
 | `health_check` | `component` (`all`, `storage`, `raid`, `docker`, `immich`, `plex`, `jellyfin`, `tailscale`, `launchd`, `power`, `network`, `prereqs`, `homebrew`), `verbose=false` | One component's diagnostics: the non-OK checks by default, every check with `verbose=true` |
+
+The curation reports (08) only read. Photo results carry ids, dates, city and country, and people's and album names, never GPS coordinates or images.
 
 The API keys these need live in the Keychain: `python3 -m homelab secrets list` shows which are set ([homelab/README.md](../homelab/README.md#api-secrets)). Without one, a tool says which command sets it.
 

@@ -473,6 +473,44 @@
     "read_only": true
   },
   {
+    "name": "media_items",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "movies",
+          "enum": [
+            "movies",
+            "tv"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "filter": {
+          "default": "all",
+          "enum": [
+            "all",
+            "unmatched",
+            "mismatched",
+            "recent",
+            "unlabelled"
+          ],
+          "title": "Filter",
+          "type": "string"
+        },
+        "limit": {
+          "default": 50,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "media_itemsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
     "name": "media_library_stats",
     "input": {
       "properties": {},
@@ -683,10 +721,62 @@
     "read_only": true
   },
   {
+    "name": "photos_album_profile",
+    "input": {
+      "properties": {
+        "album": {
+          "title": "Album",
+          "type": "string"
+        }
+      },
+      "required": [
+        "album"
+      ],
+      "title": "photos_album_profileArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_albums",
+    "input": {
+      "properties": {
+        "filter": {
+          "default": "all",
+          "enum": [
+            "all",
+            "owned",
+            "shared"
+          ],
+          "title": "Filter",
+          "type": "string"
+        }
+      },
+      "title": "photos_albumsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
     "name": "photos_stats",
     "input": {
       "properties": {},
       "title": "photos_statsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_unsorted",
+    "input": {
+      "properties": {
+        "since": {
+          "default": "30d",
+          "title": "Since",
+          "type": "string"
+        }
+      },
+      "title": "photos_unsortedArguments",
       "type": "object"
     },
     "read_only": true

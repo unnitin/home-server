@@ -1,0 +1,131 @@
+{
+  "status": 200,
+  "json": {
+    "MediaContainer": {
+      "size": 5,
+      "Metadata": [
+        {
+          "ratingKey": "101",
+          "title": "Arrival",
+          "year": 2016,
+          "guid": "plex://movie/101",
+          "Media": [
+            {
+              "Part": [
+                {
+                  "file": "/Volumes/warmstore/movies/Arrival (2016)/Arrival (2016).mkv"
+                }
+              ]
+            }
+          ],
+          "Label": [
+            {
+              "tag": "Family movie night"
+            }
+          ],
+          "addedAt": 1795000101,
+          "Guid": [
+            {
+              "id": "imdb://tt101"
+            },
+            {
+              "id": "tmdb://329865"
+            }
+          ]
+        },
+        {
+          "ratingKey": "102",
+          "title": "Dune",
+          "year": 2021,
+          "guid": "plex://movie/102",
+          "Media": [
+            {
+              "Part": [
+                {
+                  "file": "/Volumes/warmstore/movies/Dune (2021)/Dune (2021).mkv"
+                }
+              ]
+            }
+          ],
+          "Label": [],
+          "addedAt": 1795000102,
+          "Guid": [
+            {
+              "id": "imdb://tt102"
+            },
+            {
+              "id": "tmdb://438631"
+            }
+          ]
+        },
+        {
+          "ratingKey": "103",
+          "title": "The Thing",
+          "year": 1982,
+          "guid": "plex://movie/103",
+          "Media": [
+            {
+              "Part": [
+                {
+                  "file": "/Volumes/warmstore/movies/The Thing (1982)/The Thing (1982).mkv"
+                }
+              ]
+            }
+          ],
+          "Label": [],
+          "addedAt": 1795000103,
+          "Guid": [
+            {
+              "id": "imdb://tt103"
+            },
+            {
+              "id": "tmdb://1091"
+            }
+          ]
+        },
+        {
+          "ratingKey": "104",
+          "title": "Home Video 2019",
+          "year": null,
+          "guid": "local://104",
+          "Media": [
+            {
+              "Part": [
+                {
+                  "file": "/Volumes/warmstore/movies/Home Video 2019/clip.mkv"
+                }
+              ]
+            }
+          ],
+          "Label": [],
+          "addedAt": 1795000104
+        },
+        {
+          "ratingKey": "105",
+          "title": "Paddington",
+          "year": 2014,
+          "guid": "plex://movie/105",
+          "Media": [
+            {
+              "Part": [
+                {
+                  "file": "/Volumes/warmstore/movies/Paddington (2014)/Paddington (2014).mkv"
+                }
+              ]
+            }
+          ],
+          "Label": [],
+          "addedAt": 1795000105,
+          "Guid": [
+            {
+              "id": "imdb://tt105"
+            },
+            {
+              "id": "tmdb://116149"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

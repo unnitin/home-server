@@ -528,6 +528,46 @@ def build_server():
     async def runbook_get(topic: str) -> Envelope:
         return await run("runbook_get", topic=topic)
 
+    @observe(
+        "photos_albums",
+        "Immich albums: photo count, date span, shared or not. Use before "
+        "curating, to pick an album. Read-only.",
+    )
+    async def photos_albums(
+        filter: Literal["all", "owned", "shared"] = "all",
+    ) -> Envelope:
+        return await run("photos_albums", filter=filter)
+
+    @observe(
+        "photos_album_profile",
+        "What an album's photos have in common: people (% of photos), places, "
+        "months, photo/video mix. Never GPS or images. Read-only.",
+    )
+    async def photos_album_profile(album: str) -> Envelope:
+        return await run("photos_album_profile", album=album)
+
+    @observe(
+        "photos_unsorted",
+        "Photos and videos in no album taken within `since` (30d, 1y…), grouped "
+        "by people, places and months: the size of the sorting job. Read-only.",
+    )
+    async def photos_unsorted(since: str = "30d") -> Envelope:
+        return await run("photos_unsorted", since=since)
+
+    @observe(
+        "media_items",
+        "Movies in Plex and Jellyfin joined by file: title, year, TMDB id on "
+        "each, labels, and matched/unmatched/mismatched. Read-only.",
+    )
+    async def media_items(
+        library: Literal["movies", "tv"] = "movies",
+        filter: Literal[
+            "all", "unmatched", "mismatched", "recent", "unlabelled"
+        ] = "all",
+        limit: int = Field(50, ge=1, le=200),
+    ) -> Envelope:
+        return await run("media_items", library=library, filter=filter, limit=limit)
+
     register_context(server)
 
     @server.tool(

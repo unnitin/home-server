@@ -74,3 +74,98 @@ def queues(c: Optional[Client] = None) -> list[Queue]:
             )
         )
     return out
+
+
+# --- curation reports (read-only; 08-curation.md) --------------------------------
+# Only ids, dates, city/country, people's names and album names leave here:
+# never GPS coordinates, never an image.
+
+
+@dataclass(frozen=True)
+class Album:
+    id: str
+    name: str
+    assets: int
+    shared: bool
+    owned: bool
+    start: str  # ISO date of the earliest photo, "" when empty
+    end: str
+
+
+@dataclass(frozen=True)
+class Asset:
+    id: str
+    type: str  # IMAGE or VIDEO
+    taken: str  # ISO date-time
+    city: str
+    country: str
+    people: tuple[str, ...]
+
+
+def _album(a: dict, me: str) -> Album:
+    return Album(
+        id=a.get("id", ""),
+        name=a.get("albumName", ""),
+        assets=int(a.get("assetCount", 0)),
+        shared=bool(a.get("shared")),
+        owned=(a.get("ownerId") == me) if me else True,
+        start=(a.get("startDate") or "")[:10],
+        end=(a.get("endDate") or "")[:10],
+    )
+
+
+def _asset(a: dict) -> Asset:
+    exif = a.get("exifInfo") or {}
+    return Asset(
+        id=a.get("id", ""),
+        type=a.get("type", ""),
+        taken=exif.get("dateTimeOriginal") or a.get("fileCreatedAt") or "",
+        city=exif.get("city") or "",
+        country=exif.get("country") or "",
+        people=tuple(p.get("name") for p in a.get("people") or [] if p.get("name")),
+    )
+
+
+def me(c: Optional[Client] = None) -> str:
+    return (c or client()).get("/users/me").get("id", "")
+
+
+def albums(c: Optional[Client] = None) -> list[Album]:
+    c = c or client()
+    mine = me(c)
+    seen: dict[str, Album] = {}
+    for shared in ("false", "true"):
+        for a in c.get(f"/albums?shared={shared}"):
+            seen.setdefault(a.get("id", ""), _album(a, mine))
+    return sorted(seen.values(), key=lambda a: a.name.lower())
+
+
+def album_assets(
+    album_id: str, c: Optional[Client] = None
+) -> tuple[Album, list[Asset]]:
+    c = c or client()
+    a = c.get(f"/albums/{album_id}?withoutAssets=false")
+    return _album(a, ""), [_asset(x) for x in a.get("assets") or []]
+
+
+def not_in_album(taken_after: str, limit: int = 1000, c: Optional[Client] = None):
+    """Photos and videos in no album, taken after an ISO date (metadata search)."""
+    c = c or client()
+    found: list[Asset] = []
+    page = 1
+    while len(found) < limit:
+        body = {
+            "isNotInAlbum": True,
+            "takenAfter": taken_after,
+            "withExif": True,
+            "withPeople": True,
+            "size": min(250, limit - len(found)),
+            "page": page,
+        }
+        assets = c.post("/search/metadata", body).get("assets") or {}
+        found += [_asset(x) for x in assets.get("items") or []]
+        nxt = assets.get("nextPage")
+        if not nxt:
+            break
+        page = int(nxt)
+    return found
