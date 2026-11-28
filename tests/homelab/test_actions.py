@@ -129,15 +129,34 @@ def test_restarting_a_native_app_is_a_job_on_its_service_lock(box):
     assert job["argv"][2:] == ["plex"] and job["lock"] == "service:plex"
 
 
-def test_a_restart_is_refused_when_a_tier_it_needs_is_missing(box):
-    box.unmount("warmstore")
-    res = actions.service_restart("plex")
+def test_a_restart_is_refused_when_the_apps_data_tier_is_missing(box):
+    box.unmount("faststore")
+    res = actions.service_restart("plex", dry_run=False)
     assert res["status"] == "fail" and res["data"]["refused"]
     assert any(
-        c["id"] == "guard.warmstore.mounted" and c["status"] == "fail"
+        c["id"] == "guard.faststore.mounted" and c["status"] == "fail"
         for c in res["checks"]
     )
     assert box.submitted == []
+
+
+def test_a_restart_goes_ahead_without_the_media_tier_and_says_so(box):
+    """Plex starts with its data tier, as its LaunchD job does; with warmstore
+    away its libraries are offline (found in the VM rehearsal, and D21)."""
+    box.unmount("warmstore")
+    dry = actions.service_restart("plex")
+    assert dry["data"]["dry_run"] is True and dry["status"] == "warn"
+    assert any(
+        c["id"] == "guard.warmstore.mounted" and c["status"] == "warn"
+        for c in dry["checks"]
+    )
+    res = actions.service_restart("plex", dry_run=False)
+    assert res["status"] == "pending" and len(box.submitted) == 1
+
+
+def test_containers_still_need_everything_they_depend_on(box):
+    box.unmount("faststore")
+    assert actions.service_restart("immich")["status"] == "fail"
 
 
 @pytest.mark.parametrize(
@@ -385,3 +404,19 @@ def test_the_bundle_is_redacted(box, tmp_path):
         )
     assert "abcdef1234567890" not in text
     assert any(n.endswith("system_overview.json") for n in names)
+
+
+def test_power_ensure_skips_a_setting_this_machine_lacks(box):
+    del box.mini.pmset["womp"]  # a VM has no wake-on-network
+    box.mini.install(box.tmp, pytest.MonkeyPatch())
+    res = actions.power_ensure(dry_run=False)
+    assert res["status"] == "ok" and res["data"]["absent"] == ["womp"]
+    assert acted() == []
+
+
+def test_power_ensure_fails_when_the_value_does_not_change(box):
+    box.mini.pmset["sleep"] = "10"
+    box.mini.install(box.tmp, pytest.MonkeyPatch())
+    box.mini.cmd(["sudo", "-n", "/usr/bin/pmset", "-a", "sleep", "0"])  # "works"
+    res = actions.power_ensure(dry_run=False)  # pmset -g still says 10
+    assert res["status"] == "fail" and "sleep is 10" in res["checks"][0]["message"]

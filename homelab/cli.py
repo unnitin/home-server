@@ -291,14 +291,13 @@ def cmd_sudoers_render(args: argparse.Namespace) -> int:
 
 
 def cmd_sudoers_check(args: argparse.Namespace) -> int:
-    """Whether sudo allows each command without a password (sudo -n -l)."""
+    """Whether each command runs without a password: the NOPASSWD entries that
+    `sudo -n -l` lists. (Without any, sudo can't list without a password.)"""
     from homelab import exec as hexec
     from homelab import sudoers
 
-    missing = []
-    for rule in sudoers.rules():
-        if not hexec.run(["sudo", "-n", "-l", *rule], timeout=10).ok:
-            missing.append(" ".join(rule))
+    listed = hexec.run(["sudo", "-n", "-l"], timeout=10)
+    missing = sudoers.missing(listed.stdout if listed.ok else "")
     if missing:
         print("Not allowed without a password:")
         for line in missing:

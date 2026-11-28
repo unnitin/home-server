@@ -156,18 +156,19 @@ def _ps(args: Sequence[str]) -> bool:
 
 
 def _sudo(args: Sequence[str]) -> bool:
-    """`sudo -n CMD…` or `sudo -n -l CMD…` (is it allowed?), only for a command
-    in the scoped sudo rule (homelab/sudoers.py): never a shell, never
-    diskutil, never a value the manifest doesn't hold. -n: never ask for a
-    password, so a missing rule fails at once instead of hanging."""
+    """`sudo -n CMD…` only for a command in the scoped sudo rule
+    (homelab/sudoers.py): never a shell, never diskutil, never a value the
+    manifest doesn't hold. And `sudo -n -l`, which lists what may run. -n:
+    never ask for a password, so a missing rule fails at once instead of
+    hanging."""
     from homelab import sudoers
 
     rest = list(args)
     if rest[:1] != ["-n"]:
         return False
     rest = rest[1:]
-    if rest[:1] == ["-l"]:
-        rest = rest[1:]
+    if rest == ["-l"]:
+        return True
     return sudoers.allowed(rest)
 
 
