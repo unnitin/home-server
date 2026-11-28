@@ -13,7 +13,10 @@ from homelab.state import db, history
 
 
 def audit_recent(
-    limit: int = 20, tool: Optional[str] = None, since: str = "24h"
+    limit: int = 20,
+    tool: Optional[str] = None,
+    since: str = "24h",
+    client: Optional[str] = None,
 ) -> dict:
     try:
         window = history.seconds(since)
@@ -23,7 +26,9 @@ def audit_recent(
         "%Y-%m-%dT%H:%M:%SZ"
     )
     try:
-        rows = audit.recent(limit, tool=tool, since_ts=cut, conn=db.connect())
+        rows = audit.recent(
+            limit, tool=tool, client=client, since_ts=cut, conn=db.connect()
+        )
     except Exception as err:  # e.g. the database can't be opened
         return R.error(f"audit log unreadable: {err}")
     calls = []

@@ -26,6 +26,18 @@
           "default": "24h",
           "title": "Since",
           "type": "string"
+        },
+        "client": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Client"
         }
       },
       "title": "audit_recentArguments",
