@@ -89,7 +89,8 @@ bjob=$("$PY" -c 'import json,sys; print(json.load(open(sys.argv[1])).get("job_id
 [[ -n "$bjob" ]] && mcp wait "$URL" "$OPS" "$bjob" 180 >"$OUT/bundle-job.json" 2>&1
 
 mcp call "$URL" "$OPS" storage_ensure_layout '{}' >"$OUT/layout-dry.json" 2>&1
-mcp audit "$URL" "$OPS" >"$OUT/audit.json" 2>&1
+mcp audit "$URL" "$OPS" rehearsal-observe >"$OUT/audit-observe.json" 2>&1
+mcp audit "$URL" "$OPS" rehearsal-ops >"$OUT/audit-ops.json" 2>&1
 
 # D32: give the watchers time to show themselves, then count runs again
 elapsed=$(( $(date +%s) - started ))
@@ -122,7 +123,7 @@ summary = {
               "displaysleep_after": "$displaysleep"},
     "bundle": {"call": load("bundle.json"), "job": load("bundle-job.json")},
     "layout_dry": load("layout-dry.json"),
-    "audit": load("audit.json"),
+    "audit": {"observe": load("audit-observe.json"), "ops": load("audit-ops.json")},
     "runs": {"plex": ["$plex_runs_0", "$plex_runs_1"],
              "jellyfin": ["$jelly_runs_0", "$jelly_runs_1"]},
 }

@@ -7,8 +7,8 @@
       one call: status, summary, job_id, data
   mcp_actions.py wait URL TOKEN JOB_ID [TIMEOUT]
       poll job_status until the job finishes
-  mcp_actions.py audit URL TOKEN
-      audit_recent: who called what
+  mcp_actions.py audit URL TOKEN CLIENT
+      audit_recent for one client (token name)
 """
 
 import asyncio
@@ -103,8 +103,13 @@ async def main(argv):
         return await wait(
             url, argv[3], argv[4], float(argv[5]) if len(argv) > 5 else 240
         )
-    if mode == "audit":
-        return await call(url, argv[3], "audit_recent", {"limit": 100, "since": "1d"})
+    if mode == "audit":  # one client's calls: the whole log can exceed 8 KB
+        return await call(
+            url,
+            argv[3],
+            "audit_recent",
+            {"limit": 100, "since": "1d", "client": argv[4]},
+        )
     raise SystemExit(f"unknown mode {mode}")
 
 

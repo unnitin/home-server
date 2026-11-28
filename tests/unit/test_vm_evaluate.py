@@ -240,12 +240,10 @@ PHASE3 = {
     },
     "bundle": _job("done"),
     "audit": {
-        "data": {
-            "calls": [
-                {"client": "rehearsal-observe", "outcome": "denied"},
-                {"client": "rehearsal-ops", "outcome": "ok"},
-            ]
-        }
+        "observe": {
+            "data": {"calls": [{"client": "rehearsal-observe", "outcome": "denied"}]}
+        },
+        "ops": {"data": {"calls": [{"client": "rehearsal-ops", "outcome": "ok"}]}},
     },
     "runs": {"plex": ["1", "1"], "jellyfin": ["1", "1"]},
 }
@@ -290,3 +288,10 @@ def test_phase3_a_job_that_keeps_relaunching_fails_d32(tmp_path):
     p3["runs"]["plex"] = ["3", "5"]
     checks, _ = ev.evaluate(with_phase3(tmp_path, p3))
     assert failed(checks) == ["Plex and Jellyfin jobs stay in the foreground (D32)"]
+
+
+def test_phase3_a_refusal_missing_from_the_audit_fails(tmp_path):
+    p3 = copy.deepcopy(PHASE3)
+    p3["audit"]["observe"]["data"]["calls"] = []
+    checks, _ = ev.evaluate(with_phase3(tmp_path, p3))
+    assert failed(checks) == ["Every call is audited, refused ones too"]

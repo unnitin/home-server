@@ -289,7 +289,11 @@ def evaluate_phase3(p3: dict[str, Any], check) -> None:
         f"Plex restart job {_job_state(px) or 'none'} after kickstart -k of the "
         f"server, Plex HTTP {px.get('identity_http')}",
     )
-    rows = (((p3.get("audit") or {}).get("data") or {}).get("calls")) or []
+    rows = [
+        row
+        for part in ((p3.get("audit") or {}).get(k) for k in ("observe", "ops"))
+        for row in (((part or {}).get("data") or {}).get("calls") or [])
+    ]
     clients = {r.get("client") for r in rows}
     denied = [r for r in rows if r.get("outcome") == "denied"]
     check(
