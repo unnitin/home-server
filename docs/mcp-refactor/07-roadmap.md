@@ -148,6 +148,24 @@ Each phase ships on its own, keeps every existing LaunchD job working, and ends 
   - `service_restart` and `service_start` refused Plex and Jellyfin whenever warmstore was missing, though the apps start with only their data tier, as their LaunchD jobs do. With warmstore offline on the mini (D21), no restart would ever have run. They now refuse only without the data tier (or a service they need), and warn that the media libraries stay offline.
   - `homelab sudoers check` asked `sudo -n -l CMD`, which says whether a command is allowed at all, password or not. On an admin account that's everything, so it could pass without the rule. It now reads the NOPASSWD entries `sudo -n -l` lists, and the rule names each command instead of an alias, so they show up there.
   - `power_ensure` counted a setting the machine doesn't have (`womp` in a VM) as drift, and reported success without checking. It now skips settings `pmset` doesn't report, and fails if a value didn't change.
+- **Phase 3 is built and deployed (2026-11-27).**
+  - **Rehearsal:** the third VM rehearsal, of `a50fa86`, passed (run `homelab-rehearsal-20261127-163346`). The second had passed every case but the audit check, which read a result its 8 KB cap had cut short (#61). In the VM:
+    - 401 without a token; an observe token sees 47 tools, no T1, and its restart is refused; an ops token's actions are dry runs by default;
+    - `service_restart` restarted Jellyfin (new PID, healthy);
+    - **a Plex restart job finished across `launchctl kickstart -k` of the MCP server;**
+    - every call, the refusal too, is in the audit log;
+    - the sudo rule installed; without a password only its `pmset` commands run; `power_ensure` put drifted settings back with it;
+    - a log bundle; the Plex and Jellyfin jobs stayed at one run (D32); Phase 2's checks and both data guards passed.
+  - **Deploy:** the mini's `deployed` branch was fast-forwarded to `656b6ad` (tag `deploy-2026-11-27-p3`), the rehearsed tree, and `configure_launchd.sh plex jellyfin mcp` reloaded those three jobs. Plex (up since Nov 3) and Jellyfin kept running.
+  - **Checks:**
+    - No token: 401, on loopback and over the tailnet.
+    - Observe: 47 tools, no T1, its restart refused. Ops: 65 tools.
+    - Dry runs: power settings match the profile; every tailnet mapping matches the manifest; `storage_ensure_layout` finds nothing to create on faststore (so a script the server runs can read faststore under LaunchD); `media_process` and `library_scan` are refused while warmstore is offline (D21); Plex and Jellyfin restarts are allowed, with a warning.
+    - Real actions: the snapshot job kickstarted; a log bundle built as a job (171 KB, no tokens or addresses in it). The 11th T1 call in a minute was rate-limited.
+    - Every job exits 0. Plex and Jellyfin jobs watch in the foreground at one run each (D32 fixed).
+    - `run_all.sh`: 13 passed, 1 failed (warmstore offline, D21). `data_guard.py verify`: no unexpected changes.
+    - The check tokens are revoked. No client token exists yet.
+  - **Not done on the mini:** no live service was restarted (proved in the VM), and the sudo rule isn't installed: that needs your password.
 - Not in Phase 3, by design: T2 tools and `plan_*` (Phase 5), the `curator` tools beyond the read-only reports and the local-only photo listener (Phase 6), push notifications on job completion (with the Phase 5 push channel).
 
 **Acceptance:** policy tests prove that T3 names are absent from `tools/list` for every scope, that an `observe` token can't call T1, that `dry_run` defaults to true, that two `media_process` calls serialize, and that a job survives a server restart.
