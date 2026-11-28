@@ -5,7 +5,7 @@
 # Note: `[[ ]] || false` because bash 3.2 doesn't fail a test on a mid-test [[ ]].
 
 setup() {
-    ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
+    ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd -P)"   # physical, as configure_launchd.sh renders
     OUT="$BATS_TEST_TMPDIR/LaunchAgents"
     STUBS="$BATS_TEST_TMPDIR/stubs"
     mkdir -p "$STUBS"

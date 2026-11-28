@@ -54,7 +54,7 @@ fake_sysctl() {
 
 @test "guest scripts stop before any system change when not in a VM" {
     fake_sysctl 0
-    for f in provision_golden.sh seed_services.sh report.sh io_smoke.sh verify_golden.sh; do
+    for f in provision_golden.sh seed_services.sh report.sh io_smoke.sh verify_golden.sh phase2_checks.sh phase3_checks.sh; do
         DATA_DISK_BYTES=1 run bash "$KIT/guest/$f" phase "$BATS_TEST_TMPDIR/out"
         [ "$status" -eq 3 ] || { echo "$f exited $status"; false; }
     done
