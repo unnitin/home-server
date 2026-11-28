@@ -64,7 +64,7 @@ def _plan(
         {"dry_run": True, "plan": steps, **(data or {})},
         summary=summary,
         hints=[DRY_HINT],
-        status="ok",
+        status=None,  # ok, or warn when a guard warns (a soft tier missing)
     )
 
 
@@ -86,9 +86,14 @@ def _refused(
     )
 
 
-def _started(job: dict, summary: str, data: Optional[dict] = None) -> dict:
+def _started(
+    job: dict,
+    summary: str,
+    data: Optional[dict] = None,
+    checks: Optional[list] = None,
+) -> dict:
     res = R.make(
-        [],
+        [c for c in checks or [] if c["status"] != "ok"],  # warnings stay visible
         {"job": governance.job_view(job), **(data or {})},
         summary=summary,
         hints=[f"Call job_status(job_id='{job['id']}') in about a minute"],
@@ -118,9 +123,22 @@ def service_up(m: config.Manifest, name: str) -> bool:
     return False
 
 
-def guard_checks(m: config.Manifest, needs: list[str]) -> list[dict]:
-    """One check per dependency: a tier must be mounted, a service up."""
+def guard_checks(
+    m: config.Manifest, needs: list[str], soft: tuple | list = ()
+) -> list[dict]:
+    """One check per dependency: a tier must be mounted, a service up. A `soft`
+    tier missing is a warning: the action goes ahead without it."""
     checks = []
+    for need in dict.fromkeys(soft):
+        if need in m.storage.tiers and not _mounted(m, need):
+            checks.append(
+                R.check(
+                    f"guard.{need}.mounted",
+                    "warn",
+                    f"{need} is not mounted: what's on it stays offline",
+                    need,
+                )
+            )
     for need in dict.fromkeys(needs):  # in order, once each
         if need in m.storage.tiers:
             up = _mounted(m, need)
@@ -141,9 +159,23 @@ def _guards_fail(checks: list[dict]) -> bool:
     return any(c["status"] == "fail" for c in checks)
 
 
-def _needs(m: config.Manifest, name: str) -> list[str]:
+def _needs(m: config.Manifest, name: str) -> tuple[list[str], list[str]]:
+    """What starting the service requires, and what it uses but starts without.
+
+    A native app starts once its own data tier is mounted, as its LaunchD job
+    does (lib/native_app.sh): its media tier being away leaves those libraries
+    offline, nothing worse, and refusing would leave no way to restart it. Every
+    other kind needs everything it depends on.
+    """
     svc = m.services[name]
-    return list(svc.depends_on) + ([svc.data_tier] if svc.data_tier else [])
+    deps = list(svc.depends_on)
+    if svc.kind == "native_app":
+        hard = ([svc.data_tier] if svc.data_tier else []) + [
+            d for d in deps if d in m.services
+        ]
+        soft = [d for d in deps if d in m.storage.tiers and d != svc.data_tier]
+        return hard, soft
+    return deps + ([svc.data_tier] if svc.data_tier else []), []
 
 
 def _not_here(m: config.Manifest, tool: str, name: str) -> Optional[dict]:
@@ -223,7 +255,7 @@ def service_restart(service: str, dry_run: bool = True) -> dict:
     refused = _not_here(m, "service_restart", service)
     if refused:
         return refused
-    checks = guard_checks(m, _needs(m, service))
+    checks = guard_checks(m, *_needs(m, service))
     if _guards_fail(checks):
         return _refused(
             "service_restart", f"{service} needs what isn't there", checks=checks
@@ -276,7 +308,7 @@ def service_restart(service: str, dry_run: bool = True) -> dict:
         lock=lock,
         timeout=300,
     )
-    return _started(job, f"Restarting {service}: job {job['id']}")
+    return _started(job, f"Restarting {service}: job {job['id']}", checks=checks)
 
 
 def service_start(service: str, dry_run: bool = True) -> dict:
@@ -293,7 +325,7 @@ def service_start(service: str, dry_run: bool = True) -> dict:
             {"already_up": True},
             summary=f"{service} is already up: " "nothing to do",
         )
-    checks = guard_checks(m, _needs(m, service))
+    checks = guard_checks(m, *_needs(m, service))
     if _guards_fail(checks):
         return _refused(
             "service_start", f"{service} needs what isn't there", checks=checks
@@ -341,7 +373,7 @@ def service_start(service: str, dry_run: bool = True) -> dict:
         lock=lock,
         timeout=300,
     )
-    return _started(job, f"Starting {service}: job {job['id']}")
+    return _started(job, f"Starting {service}: job {job['id']}", checks=checks)
 
 
 def launchd_kickstart(label: str, dry_run: bool = True) -> dict:
@@ -769,13 +801,22 @@ def power_ensure(dry_run: bool = True) -> dict:
     m = config.load()
     current = system.pmset()
     wanted = {r[2]: r for r in sudo_rules(m)}
+    # A setting pmset doesn't report doesn't exist on this machine (a VM has no
+    # womp): nothing to put back.
+    absent = sorted(k for k in wanted if k not in current)
     drift = {
-        k: (current.get(k), r[3]) for k, r in wanted.items() if current.get(k) != r[3]
+        k: (current[k], r[3])
+        for k, r in wanted.items()
+        if k in current and current[k] != r[3]
     }
+    notes = [
+        R.check(f"power.{k}", "ok", f"{k}: not a setting on this machine", "power")
+        for k in absent
+    ]
     if not drift:
         return R.make(
-            [],
-            {"settings": {k: current.get(k) for k in wanted}},
+            notes,
+            {"settings": {k: current.get(k) for k in wanted}, "absent": absent},
             summary="Power settings match the 24/7 profile",
         )
     steps = [
@@ -813,9 +854,24 @@ def power_ensure(dry_run: bool = True) -> dict:
             else [],
         )
     after = system.pmset()
+    stuck = [k for k, (_, want) in drift.items() if after.get(k) != want]
+    if stuck:  # pmset said yes, but the value didn't change
+        return R.make(
+            [
+                R.check(
+                    f"power.{k}",
+                    "fail",
+                    f"{k} is {after.get(k)} after setting it to {drift[k][1]}",
+                    "power",
+                )
+                for k in stuck
+            ],
+            {"settings": {k: after.get(k) for k in wanted}},
+            status="fail",
+        )
     return R.make(
         [],
-        {"settings": {k: after.get(k) for k in wanted}},
+        {"settings": {k: after.get(k) for k in wanted}, "absent": absent},
         summary=f"Set {len(drift)} power settings back: " + ", ".join(drift),
     )
 
