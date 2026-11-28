@@ -234,3 +234,14 @@ def test_an_action_over_mcp_is_a_dry_run_and_its_job_names_the_token(
     res = s.call("logs_collect", dry_run=False)
     assert res["structuredContent"]["job_id"] and seen["by"] == "macbook-claude"
     assert audit.recent(1)[0]["job_id"] == "j-20261127-000000-0001"
+
+
+def test_audit_recent_narrows_to_one_client(app_client):
+    obs = Session(app_client, auth.create("dash", ["observe"]))
+    obs.call("memory_note", body="x", kind="fact")  # refused
+    ops = Session(app_client, auth.create("laptop", ["ops"]))
+    for _ in range(3):
+        ops.call("system_overview")
+    res = ops.call("audit_recent", client="dash")
+    calls = res["structuredContent"]["data"]["calls"]
+    assert [(c["client"], c["outcome"]) for c in calls] == [("dash", "denied")]
