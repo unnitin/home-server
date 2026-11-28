@@ -66,7 +66,7 @@ All of them are read-only: they look, and change nothing.
 | `updates_check` | — | Outdated Homebrew packages, Immich running vs latest (a major version is flagged; the moving `release` tag too), Plex and Jellyfin versions. Reports only |
 | `history_query` | `metric`, `since="7d"`, `bucket="1h"`, `above`, `below` | A metric's series from the 15-minute snapshots: points, min/max, trend per day, and when it last crossed a threshold ("when did warmstore last pass 80%?") |
 | `incident_list` | `status` (`open`, `resolved`, `all`), `limit=20` | Incidents the snapshots opened (a component started failing) or a person opened, with their latest events |
-| `audit_recent` | `limit=20`, `tool`, `since="24h"` | The server's recent tool calls: when, which token and model, the tool, its tier and the outcome. Arguments come back as data |
+| `audit_recent` | `limit=20`, `tool`, `since="24h"`, `client` | The server's recent tool calls: when, which token and model, the tool, its tier and the outcome. Arguments come back as data |
 | `memory_recall` | `query`, `component`, `kinds`, `limit=5` | Kept notes, and past incidents' causes and fixes, most relevant and recent first |
 | `photos_albums` | `filter` (`all`, `owned`, `shared`) | Immich albums: photo count, date span, shared or not |
 | `photos_album_profile` | `album` (id or name) | What its photos share: people (% of photos), places, months, photo/video mix |
