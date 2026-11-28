@@ -12,7 +12,7 @@ Plex Media Server runs **natively** on macOS (not in Docker) for optimal perform
 
 ### Automated Installation
 ```bash
-./scripts/31_install_native_plex.sh
+./scripts/services/install_plex.sh
 ```
 
 ### What Gets Installed
@@ -41,20 +41,20 @@ Open http://localhost:32400/web
 
 **Recommended folder structure**:
 ```
-/Volumes/Media/
-├── Movies/
+/Volumes/warmstore/           # the folders in config/homelab.yaml (media)
+├── movies/
 │   ├── Avatar (2009)/
 │   │   └── Avatar (2009).mkv
 │   └── Inception (2010)/
 │       └── Inception (2010).mkv
-├── TV/
+├── tv-shows/
 │   ├── Breaking Bad/
 │   │   ├── Season 01/
 │   │   └── Season 02/
 │   └── The Office/
 │       ├── Season 01/
 │       └── Season 02/
-└── Music/
+└── music/
     ├── Artist Name/
     │   └── Album Name/
     └── Various Artists/
@@ -62,9 +62,9 @@ Open http://localhost:32400/web
 
 **Add libraries**:
 1. Settings → Libraries → Add Library
-2. **Movies**: `/Volumes/Media/Movies`
-3. **TV Shows**: `/Volumes/Media/TV`  
-4. **Music**: `/Volumes/Media/Music`
+2. **Movies**: `/Volumes/warmstore/movies`
+3. **TV Shows**: `/Volumes/warmstore/tv-shows`  
+4. **Music**: `/Volumes/warmstore/music`
 
 ---
 
@@ -124,11 +124,7 @@ sudo tailscale serve --https=32400 http://localhost:32400
 - **Web**: `https://your-macmini.your-tailnet.ts.net:32400`
 - **Mobile apps**: Use server IP `your-macmini.your-tailnet.ts.net:32400`
 
-### Reverse Proxy Access
-
-**With Caddy reverse proxy enabled**:
-- **Web**: `https://your-macmini.your-tailnet.ts.net/plex`
-- **Direct link**: `https://your-macmini.your-tailnet.ts.net/plex/web`
+There is no reverse proxy (Caddy was removed): Plex has its own tailnet port, set in `config/tailscale_serve.txt` and applied by `scripts/infrastructure/apply_tailscale_serve.sh`.
 
 ### Plex Relay (Fallback)
 
@@ -217,11 +213,10 @@ Artist Name/Album Name/## - Track Name.ext
 **For large collections**:
 ```bash
 # Use rsync for efficient copying
-rsync -av --progress /source/Movies/ /Volumes/Media/Movies/
+rsync -av --progress /source/Movies/ /Volumes/warmstore/movies/
 
-# Maintain permissions
-chown -R $(whoami):staff /Volumes/Media/
-chmod -R 755 /Volumes/Media/
+# No chown -R or chmod -R afterwards: that rewrites every file's owner and mode
+# on the volume. rsync -a already keeps them.
 ```
 
 ---
@@ -255,7 +250,7 @@ grep ERROR ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Server.log
 ### Storage Usage
 ```bash
 # Check media storage
-du -sh /Volumes/Media/*
+du -sh /Volumes/warmstore/*
 
 # Check metadata storage  
 du -sh ~/Library/Application\ Support/Plex\ Media\ Server/
@@ -289,7 +284,7 @@ launchctl load ~/Library/LaunchAgents/com.plexapp.plexmediaserver.plist
 
 **Library not updating**:
 1. Settings → Library → Scan Library Files
-2. Check folder permissions on `/Volumes/Media`
+2. Check folder permissions on `/Volumes/warmstore`
 3. Verify file naming conventions
 
 ### Performance Issues
@@ -331,7 +326,7 @@ grep -i "network\|connection" ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Se
 
 **Separate user content**:
 ```bash
-/Volumes/Media/
+/Volumes/warmstore/
 ├── Kids/
 │   ├── Movies/
 │   └── TV/
@@ -390,7 +385,7 @@ grep -i "network\|connection" ~/Library/Logs/Plex\ Media\ Server/Plex\ Media\ Se
 ./diagnostics/check_plex_native.sh
 
 # Monitor storage usage
-df -h /Volumes/Media
+df -h /Volumes/warmstore
 ```
 
 **Monthly**:
@@ -408,7 +403,7 @@ df -h /Volumes/Media
 **Media backup**:
 ```bash
 # Backup to external drive
-rsync -av --progress /Volumes/Media/ /Volumes/MyBackup/MediaBackup/
+rsync -av --progress /Volumes/warmstore/ /Volumes/MyBackup/MediaBackup/
 ```
 
 **Metadata backup**:

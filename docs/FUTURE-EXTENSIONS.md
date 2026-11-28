@@ -40,6 +40,8 @@ sudo tailscale cert plex.yourdomain.com
 ```
 
 #### 4. Reverse Proxy Updates
+> Written when Caddy fronted the services. Caddy has since been removed, and remote access is `tailscale serve` (`config/tailscale_serve.txt`), so a custom-domain design would start there. The original sketch:
+
 Update `services/caddy/Caddyfile`:
 ```caddyfile
 photos.yourdomain.com {
@@ -81,21 +83,21 @@ echo -e "nameserver 100.100.100.100\nport 53" | sudo tee /etc/resolver/yourdomai
 
 ### Required Script Updates
 
-#### New Script: `scripts/95_configure_custom_domain.sh`
+#### New Script: `scripts/infrastructure/configure_custom_domain.sh`
 ```bash
 #!/usr/bin/env bash
 # Configure custom domain for homeserver services
 
 # Validate domain ownership
 # Request Tailscale certificates
-# Update Caddy configuration
+# Update the tailscale serve mappings
 # Configure DNS resolvers
 # Test custom domain access
 ```
 
 #### Updated Scripts
-- `scripts/91_configure_https_dns.sh`: Add custom domain resolver support
-- `scripts/37_enable_simple_landing.sh`: Support custom domain configuration
+- `scripts/infrastructure/configure_https.sh`: Add custom domain resolver support
+- `scripts/services/enable_landing.sh`: Support custom domain configuration
 - `docs/NETWORKING.md`: Document custom domain architecture
 
 ### Security Considerations

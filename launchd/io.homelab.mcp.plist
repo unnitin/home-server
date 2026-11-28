@@ -8,17 +8,31 @@
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/bin/python3.11</string>
-        <string>mcp/mcp_server.py</string>
+        <string>__REPO__/homelab_mcp/mcp_server.py</string>
     </array>
     <key>WorkingDirectory</key>
-    <string>/Users/nitinsrivastava/Documents/home-server</string>
+    <string>__REPO__</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <!-- LaunchD's default PATH hides docker, colima and other Homebrew tools -->
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>NO_COLOR</key>
+        <string>1</string>
+        <!-- Loopback only; tailnet devices reach it on :8765 via tailscale serve -->
+        <key>HOMELAB_MCP_HOST</key>
+        <string>127.0.0.1</string>
+        <key>HOMELAB_MCP_PORT</key>
+        <string>18765</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <!-- /tmp like the other jobs: warmstore may not be mounted yet at login (#17) -->
     <key>StandardOutPath</key>
-    <string>/tmp/io.homelab.mcp.log</string>
+    <string>/tmp/homelab-mcp.out</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/io.homelab.mcp.error.log</string>
+    <string>/tmp/homelab-mcp.err</string>
 </dict>
 </plist>

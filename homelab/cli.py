@@ -1,0 +1,415 @@
+"""`python3 -m homelab ...`: the control plane's command line.
+
+python3 -m homelab config validate        check config/homelab.yaml (+ local overrides)
+python3 -m homelab config render [--check] write (or check) generated files
+python3 -m homelab config get [SECTION]   print the manifest, or a section, as JSON
+python3 -m homelab secrets list           which API secrets are set (never their values)
+python3 -m homelab secrets set NAME       store one in the Keychain (not echoed)
+python3 -m homelab secrets import-plex    copy Plex's own token into the Keychain
+python3 -m homelab status [--json]         the system overview
+python3 -m homelab tool NAME [KEY=VALUE…]  run any tool; `tool --list`
+python3 -m homelab snapshot               record one snapshot (io.homelab.snapshot)
+python3 -m homelab history METRIC [--since 7d] [--above N]
+python3 -m homelab incidents [--all]
+python3 -m homelab token create NAME --scope ops [--toolset core] [--expires-days N]
+python3 -m homelab token list|revoke NAME  MCP client tokens (shown once, kept hashed)
+python3 -m homelab audit [--limit N]       the MCP server's recent tool calls
+python3 -m homelab jobs [--state S]        long-running jobs; `jobs --cancel ID`
+python3 -m homelab sudoers render|check    the scoped sudo rule (install_sudoers.sh)
+python3 -m homelab bundle [--since 24h]    a redacted log bundle (the logs_collect job)
+"""
+
+from __future__ import annotations
+
+import argparse
+import getpass
+import json
+import sys
+from pathlib import Path
+from typing import Optional
+
+from pydantic import ValidationError
+
+from homelab import config, secrets
+
+SECTIONS = [
+    "host",
+    "storage",
+    "services",
+    "boot_order",
+    "remote_access",
+    "media",
+    "photos",
+]
+
+
+def _rel(path: Path) -> str:
+    try:
+        return str(path.relative_to(config.REPO))
+    except ValueError:
+        return str(path)
+
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    manifest = config.load(args.config_dir)
+    print(
+        f"OK: {len(manifest.services)} services, {len(manifest.storage.tiers)} tiers, "
+        f"{len(manifest.remote_access.tailscale_serve)} tailnet mappings"
+    )
+    return 0
+
+
+def cmd_render(args: argparse.Namespace) -> int:
+    if args.check:
+        stale = config.stale(args.config_dir)
+        for path in stale:
+            print(f"stale: {_rel(path)} (run: python3 -m homelab config render)")
+        return 1 if stale else 0
+    for path in config.write(args.config_dir):
+        print(f"wrote {_rel(path)}")
+    return 0
+
+
+def cmd_get(args: argparse.Namespace) -> int:
+    data = config.load(args.config_dir).model_dump(mode="json", exclude_none=True)
+    print(json.dumps(data[args.section] if args.section else data, indent=2))
+    return 0
+
+
+def secret_names(config_dir: Path) -> dict[str, str]:
+    """Secret name -> the service that uses it, from the manifest."""
+    services = config.load(config_dir).services
+    return {s.api.secret: name for name, s in services.items() if s.api}
+
+
+def cmd_secrets_list(args: argparse.Namespace) -> int:
+    for secret, service in sorted(secret_names(args.config_dir).items()):
+        state = "set" if secrets.get(secret) else "not set"
+        print(f"{secret:<20} {service:<10} {state}")
+    return 0
+
+
+def cmd_secrets_set(args: argparse.Namespace) -> int:
+    known = secret_names(args.config_dir)
+    if args.name not in known:
+        print(f"unknown secret {args.name!r}; the manifest's: {', '.join(known)}")
+        return 2
+    value = getpass.getpass(f"{args.name} for {known[args.name]} (not echoed): ")
+    secrets.store(args.name, value.strip())
+    print(f"stored {args.name} in the login Keychain (service: {secrets.SERVICE})")
+    return 0
+
+
+def cmd_secrets_import_plex(args: argparse.Namespace) -> int:
+    token = secrets.plex_token_from_preferences()
+    if token is None:
+        print("no PlexOnlineToken in Plex's preferences: sign the server in first")
+        return 1
+    secrets.store("plex_token", token)
+    print("stored plex_token in the login Keychain")
+    return 0
+
+
+def _value(text: str):
+    """KEY=VALUE values: true/false, integers, a,b lists, else text."""
+    if text.lower() in ("true", "false"):
+        return text.lower() == "true"
+    if text.lstrip("-").isdigit():
+        return int(text)
+    if "," in text:
+        return [part for part in text.split(",") if part]
+    return text
+
+
+def render_text(res: dict) -> str:
+    lines = [f"{res['status'].upper()}: {res['summary']}"]
+    lines += [f"  [{c['status']}] {c['message']}" for c in res["checks"]]
+    lines += [f"  next: {h}" for h in res["hints"]]
+    return "\n".join(lines)
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call("system_overview", verbose=args.verbose)
+    print(json.dumps(res, indent=2) if args.json else render_text(res))
+    return 0 if res["status"] == "ok" else 1
+
+
+def cmd_tool(args: argparse.Namespace) -> int:
+    import inspect
+
+    from homelab import tools
+
+    if args.list or not args.name:
+        for name, fn in tools.ALL.items():
+            doc = (fn.__doc__ or "").strip().splitlines()
+            print(f"{name:<24} {doc[0] if doc else ''}")
+        return 0
+    kwargs = {}
+    for pair in args.params:
+        key, sep, value = pair.partition("=")
+        if not sep:
+            print(f"parameters are KEY=VALUE: {pair!r}", file=sys.stderr)
+            return 2
+        kwargs[key] = _value(value)
+    fn = tools.ALL.get(args.name)
+    if fn is not None and "actor" in inspect.signature(fn).parameters:
+        kwargs.setdefault("actor", "cli")
+    res = tools.call(args.name, **kwargs)
+    print(json.dumps(res, indent=2))
+    return 0 if res["status"] in ("ok", "warn") else 1
+
+
+def cmd_snapshot(args: argparse.Namespace) -> int:
+    from homelab.state import snapshot
+
+    out = snapshot.take()
+    print(json.dumps(out))
+    return 0
+
+
+def cmd_history(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call(
+        "history_query", metric=args.metric, since=args.since, above=args.above
+    )
+    print(json.dumps(res, indent=2) if args.json else render_text(res))
+    return 0 if res["status"] != "error" else 1
+
+
+def cmd_incidents(args: argparse.Namespace) -> int:
+    from homelab import tools
+
+    res = tools.call("incident_list", status="all" if args.all else "open")
+    if res["status"] == "error":
+        print(render_text(res))
+        return 1
+    for row in res["data"]["incidents"]["content"]:
+        closed = f" -> {row['closed']}" if row["closed"] else ""
+        print(f"#{row['id']} [{row['status']}] {row['component']}: {row['title']}")
+        print(f"    {row['opened']}{closed}")
+    return 0
+
+
+def cmd_token_create(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    scopes = [s.strip() for s in ",".join(args.scope).split(",") if s.strip()]
+    try:
+        token = auth.create(args.name, scopes, args.toolset, args.expires_days)
+    except auth.TokenError as err:
+        print(f"homelab: {err}", file=sys.stderr)
+        return 2
+    print(
+        f"Token for {args.name} (scopes: {', '.join(scopes)}). It isn't shown "
+        "again, and only its hash is kept:\n"
+    )
+    print(f"  {token}\n")
+    print("Clients send it as the header  Authorization: Bearer <token>")
+    return 0
+
+
+def cmd_token_list(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    rows = auth.tokens()
+    if not rows:
+        print("No tokens: homelab token create NAME --scope ops")
+    for r in rows:
+        state = f"revoked {r['revoked_at']}" if r["revoked_at"] else "active"
+        if not r["revoked_at"] and r["expires_at"]:
+            state += f", expires {r['expires_at']}"
+        extra = f", toolset {r['toolset']}" if r["toolset"] else ""
+        print(
+            f"{r['name']}: {r['scopes']}{extra} ({state}; last used "
+            f"{r['last_used_at'] or 'never'})"
+        )
+    return 0
+
+
+def cmd_token_revoke(args: argparse.Namespace) -> int:
+    from homelab import auth
+
+    if auth.revoke(args.name):
+        print(f"Revoked {args.name}: its next request is refused")
+        return 0
+    print(f"homelab: no active token named {args.name!r}", file=sys.stderr)
+    return 1
+
+
+def cmd_audit(args: argparse.Namespace) -> int:
+    from homelab import audit
+
+    for r in reversed(audit.recent(args.limit)):
+        who = r["client"] + (f" ({r['tailscale_user']})" if r["tailscale_user"] else "")
+        print(
+            f"{r['ts']} {who} {r['tool']} [{r['tier']}] -> {r['outcome']}: "
+            f"{r['summary'] or ''}"
+        )
+    return 0
+
+
+def cmd_job_run(args: argparse.Namespace) -> int:
+    from homelab import jobs
+
+    return jobs.supervise(args.job_id)
+
+
+def cmd_jobs(args: argparse.Namespace) -> int:
+    from homelab import jobs
+
+    jobs.reconcile()
+    if args.cancel:
+        job = jobs.cancel(args.cancel)
+        print(f"{job['id']}: {job['state']}")
+        return 0
+    for j in jobs.jobs(args.state, args.limit):
+        pct = f" {j['progress']:g}%" if j["progress"] is not None else ""
+        print(
+            f"{j['id']} {j['kind']} [{j['state']}{pct}] by "
+            f"{j['requested_by'] or '?'} at {j['created_at']}"
+            + (f": {j['error']}" if j["error"] else "")
+        )
+    return 0
+
+
+def cmd_bundle(args: argparse.Namespace) -> int:
+    from homelab import bundle
+
+    res = bundle.build(args.since)
+    print(f"Bundle: {res['path']} ({res['bytes']:,} bytes, {res['files']} files)")
+    return 0
+
+
+def cmd_sudoers_render(args: argparse.Namespace) -> int:
+    from homelab import sudoers
+
+    print(sudoers.render(args.user), end="")
+    return 0
+
+
+def cmd_sudoers_check(args: argparse.Namespace) -> int:
+    """Whether each command runs without a password: the NOPASSWD entries that
+    `sudo -n -l` lists. (Without any, sudo can't list without a password.)"""
+    from homelab import exec as hexec
+    from homelab import sudoers
+
+    listed = hexec.run(["sudo", "-n", "-l"], timeout=10)
+    missing = sudoers.missing(listed.stdout if listed.ok else "")
+    if missing:
+        print("Not allowed without a password:")
+        for line in missing:
+            print(f"  {line}")
+        print("Install the rule: sudo scripts/core/install_sudoers.sh")
+        return 1
+    print(f"The scoped sudo rule allows all {len(sudoers.rules())} commands")
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="homelab")
+    parser.add_argument(
+        "--config-dir", type=Path, default=config.CONFIG_DIR, help=argparse.SUPPRESS
+    )
+    top = parser.add_subparsers(dest="area", required=True)
+    cfg = top.add_parser("config", help="the manifest, config/homelab.yaml")
+    sub = cfg.add_subparsers(dest="command", required=True)
+    sub.add_parser("validate", help="check the manifest").set_defaults(fn=cmd_validate)
+    render = sub.add_parser("render", help="write the files bash reads")
+    render.add_argument("--check", action="store_true", help="exit 1 if any is stale")
+    render.set_defaults(fn=cmd_render)
+    get = sub.add_parser("get", help="print the manifest as JSON")
+    get.add_argument("section", nargs="?", choices=SECTIONS)
+    get.set_defaults(fn=cmd_get)
+
+    sec = top.add_parser("secrets", help="service API secrets in the Keychain")
+    sub = sec.add_subparsers(dest="command", required=True)
+    sub.add_parser("list", help="which are set").set_defaults(fn=cmd_secrets_list)
+    put = sub.add_parser("set", help="store one (you're asked for the value)")
+    put.add_argument("name")
+    put.set_defaults(fn=cmd_secrets_set)
+    sub.add_parser(
+        "import-plex", help="copy Plex Media Server's own token into the Keychain"
+    ).set_defaults(fn=cmd_secrets_import_plex)
+
+    st = top.add_parser("status", help="the system overview")
+    st.add_argument("--json", action="store_true")
+    st.add_argument(
+        "--verbose", action="store_true", help="every check, not just problems"
+    )
+    st.set_defaults(fn=cmd_status)
+    tl = top.add_parser("tool", help="run a read-only tool, as the MCP server does")
+    tl.add_argument("name", nargs="?")
+    tl.add_argument("params", nargs="*", metavar="KEY=VALUE")
+    tl.add_argument("--list", action="store_true")
+    tl.set_defaults(fn=cmd_tool)
+    top.add_parser("snapshot", help="record one snapshot").set_defaults(fn=cmd_snapshot)
+    hi = top.add_parser("history", help="a metric's history")
+    hi.add_argument("metric")
+    hi.add_argument("--since", default="7d")
+    hi.add_argument("--above", type=float)
+    hi.add_argument("--json", action="store_true")
+    hi.set_defaults(fn=cmd_history)
+    inc = top.add_parser("incidents", help="open incidents (--all for every one)")
+    inc.add_argument("--all", action="store_true")
+    inc.set_defaults(fn=cmd_incidents)
+
+    tok = top.add_parser("token", help="bearer tokens for MCP clients")
+    sub = tok.add_subparsers(dest="command", required=True)
+    mk = sub.add_parser("create", help="make one (printed once)")
+    mk.add_argument("name", help="the client, e.g. macbook-claude")
+    mk.add_argument(
+        "--scope",
+        action="append",
+        required=True,
+        help="observe, ops, admin or curator (repeat, or comma-separate)",
+    )
+    mk.add_argument("--toolset", help="narrow it to a toolset, e.g. core")
+    mk.add_argument("--expires-days", type=int)
+    mk.set_defaults(fn=cmd_token_create)
+    sub.add_parser("list", help="every token, never its value").set_defaults(
+        fn=cmd_token_list
+    )
+    rv = sub.add_parser("revoke", help="refuse a token from now on")
+    rv.add_argument("name")
+    rv.set_defaults(fn=cmd_token_revoke)
+    au = top.add_parser("audit", help="the MCP server's recent tool calls")
+    au.add_argument("--limit", type=int, default=30)
+    au.set_defaults(fn=cmd_audit)
+    jr = top.add_parser("job-run", help=argparse.SUPPRESS)  # a job's supervisor
+    jr.add_argument("job_id")
+    jr.set_defaults(fn=cmd_job_run)
+    jb = top.add_parser("jobs", help="long-running jobs")
+    jb.add_argument(
+        "--state", choices=["queued", "running", "done", "failed", "cancelled", "lost"]
+    )
+    jb.add_argument("--limit", type=int, default=20)
+    jb.add_argument("--cancel", metavar="JOB_ID")
+    jb.set_defaults(fn=cmd_jobs)
+    bd = top.add_parser("bundle", help="a redacted log bundle (logs_collect)")
+    bd.add_argument("--since", default="24h")
+    bd.set_defaults(fn=cmd_bundle)
+    sd = top.add_parser("sudoers", help="the scoped sudo rule for pmset")
+    sub = sd.add_subparsers(dest="command", required=True)
+    rd = sub.add_parser("render", help="print /etc/sudoers.d/homelab")
+    rd.add_argument("--user", help="default: $SUDO_USER, else you")
+    rd.set_defaults(fn=cmd_sudoers_render)
+    sub.add_parser("check", help="is it installed and current?").set_defaults(
+        fn=cmd_sudoers_check
+    )
+    return parser
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        return args.fn(args)
+    except (ValidationError, ValueError, OSError, RuntimeError) as err:
+        print(f"homelab: {err}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

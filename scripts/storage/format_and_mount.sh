@@ -1,180 +1,168 @@
 #!/usr/bin/env bash
-# Format and mount AppleRAID sets to expected mountpoints.
-# - SSD array name:   warmstore  -> /Volumes/warmstore
-# - NVMe array name:  faststore  -> /Volumes/faststore
-# - HDD/cold array:   coldstore  -> /Volumes/Archive
-# Idempotent: if already APFS and mounted at the right place, it skips.
+# Mount each storage tier's AppleRAID set where the manifest (config/homelab.yaml)
+# says. Formats a set only when it holds no file system and you confirm data loss.
+#
+#   ./scripts/storage/format_and_mount.sh
+#   RAID_I_UNDERSTAND_DATA_LOSS=1 ./scripts/storage/format_and_mount.sh   # may erase a BLANK set
+#
+# For each tier whose RAID set exists (sets are named after their tier):
+#   - APFS, mounted where the manifest says: nothing to do
+#   - APFS, not mounted: diskutil mount (diskutil makes the mount point)
+#   - APFS, volume named differently: says how to rename it (diskutil mounts a
+#     volume at /Volumes/<its name>)
+#   - APFS, but its volume can't be found: refuses. Never erases it (D29)
+#   - any other file system: refuses. It holds data
+#   - no file system at all: erases it as APFS, only with RAID_I_UNDERSTAND_DATA_LOSS=1
+#
+# Never creates a folder where a volume should be (D25).
+# TEST_MODE=1 prints the mount and erase commands instead of running them.
+# Exit: 0 = every present set is mounted where the manifest says; 1 = anything else.
 
 set -euo pipefail
 
-ensure_dir() { [[ -d "$1" ]] || sudo mkdir -p "$1"; }
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "${SCRIPT_DIR}/../core/environment.sh"
 
-# Return BSD device of the RAID set by name (e.g., disk8), or empty if not found.
-bsd_for_raid_name() {
-  local name="$1"
-  /usr/sbin/diskutil appleRAID list | /usr/bin/awk -v tgt="$name" '
-    # if Name == tgt, mark that the next matching field belongs to it
-    /^ *Name:/ {
-      nm=$0
-      sub(/^ *Name:[ ]*/,"",nm)
-      if (nm==tgt) hit=1; else hit=0
-      next
-    }
-    hit && /^ *Device Node:/ {
-      dev=$0
-      sub(/^ *Device Node:[ ]*/,"",dev)
-      print dev
-      exit
-    }
-  '
-}
+APFS_GUID="7C3457EF-0000-11AA-AA11-00306543ECAC"
+problems=0
 
-# Return "APFS" if device contains APFS; else empty
-is_apfs() {
-  local devnode="$1"
-  /usr/sbin/diskutil info "$devnode" 2>/dev/null | /usr/bin/awk '
-    /^ *Type \(Bundle\):/ { t=$0; sub(/^ *Type \(Bundle\):[ ]*/, "", t); if (t=="apfs") {print "APFS"} }
-  '
-}
-
-# Note: Service coordination not needed since storage setup happens before services start
-
-format_and_mount() {
-  local raid_name="$1" vol_label="$2" mountpoint="$3"
-
-  echo "-- Handling RAID '${raid_name}' -> ${mountpoint} (label: ${vol_label})"
-
-  local bsd devnode
-  bsd="$(bsd_for_raid_name "$raid_name" || true)"
-  if [[ -z "$bsd" ]]; then
-    echo "   (skip) RAID set '${raid_name}' not present. Continuing."
-    return 0
-  fi
-  devnode="/dev/${bsd}"
-
-  ensure_dir "$mountpoint"
-
-  if [[ -n "$(is_apfs "$devnode")" ]]; then
-    # Already APFS; find the synthesized volume and remount at correct location
-    echo "   Found existing APFS container. Locating volume..."
-    
-    # Find the synthesized container device (e.g., disk5 from disk4)
-    local container_dev volume_dev current_mount raid_disk
-    # Extract just the disk name (e.g., "disk4" from "/dev/disk4")
-    raid_disk="${bsd}"
-    
-    container_dev="$(/usr/sbin/diskutil list | /usr/bin/awk -v raid="$raid_disk" '
-      /synthesized/ { 
-        # Found synthesized container, extract device name (e.g., disk5)
-        sub(/.*\/dev\//, "", $0)
-        sub(/[[:space:]].*/, "", $0)
-        container = $0
-      }
-      /Physical Store/ && $0 ~ raid && container {
-        # Found Physical Store line matching our RAID device
-        print container
-        exit
-      }
-    ')"
-    
-    if [[ -n "$container_dev" ]]; then
-      # Find first APFS volume in the container
-      volume_dev="$(/usr/sbin/diskutil list "$container_dev" | /usr/bin/awk '
-        /^ *[0-9].*APFS Volume/ { print $NF; exit }
-      ')"
-      
-      if [[ -n "$volume_dev" ]]; then
-        echo "   Found APFS volume: $volume_dev"
-        
-        # Check current mount point
-        current_mount="$(mount | /usr/bin/grep "/dev/$volume_dev" | /usr/bin/awk '{print $3}' || true)"
-        
-        if [[ "$current_mount" == "$mountpoint" ]]; then
-          echo "   Already mounted at correct location: $mountpoint"
-          return 0
-        elif [[ -n "$current_mount" ]]; then
-          echo "   Remounting from $current_mount to $mountpoint..."
-          /usr/sbin/diskutil umount "/dev/$volume_dev" >/dev/null 2>&1 || true
-        fi
-        
-        # Mount at correct location
-        ensure_dir "$mountpoint"
-        /usr/sbin/diskutil mount -mountPoint "$mountpoint" "/dev/$volume_dev" || {
-          echo "   ❌ Failed to mount $volume_dev at $mountpoint"
-          return 1
-        }
-        
-        echo "   ✅ APFS volume mounted at $mountpoint"
-        return 0
-      fi
-    fi
-    
-    echo "   ⚠️ Could not locate APFS volume, will reformat..."
-  fi
-
-  # Not APFS yet (or no APFS volumes found): erase the RAID device as APFS
-  echo "   Erasing ${devnode} as APFS (${vol_label}) and mounting at ${mountpoint}…"
-  /usr/sbin/diskutil eraseVolume APFS "${vol_label}" "${devnode}"
-  /usr/sbin/diskutil mount -mountPoint "${mountpoint}" "${devnode}" >/dev/null 2>&1 || true
-  echo "   Done."
-}
-
-# Process the desired RAID->mount mappings without arrays (Bash 3.2-friendly)
-while IFS='|' read -r name label mnt; do
-  [[ -z "${name}" ]] && continue
-  format_and_mount "$name" "$label" "$mnt"
-done <<'MAP'
-warmstore|warmstore|/Volumes/warmstore
-faststore|faststore|/Volumes/faststore
-coldstore|Archive|/Volumes/Archive
-MAP
-
-# Validate all mount operations completed successfully
-validate_mount_setup() {
-  local all_good=true
-  
-  echo
-  echo "=== Validating Mount Setup ==="
-  
-  for mount_info in "warmstore:/Volumes/warmstore:warmstore" "faststore:/Volumes/faststore:faststore" "Archive:/Volumes/Archive:coldstore"; do
-    IFS=':' read -r purpose mountpoint expected_tier <<< "$mount_info"
-    
-    if [[ -n "$(bsd_for_raid_name "$expected_tier" || true)" ]]; then
-      # RAID exists, check if properly mounted
-      if df -h "$mountpoint" >/dev/null 2>&1; then
-        local size usage
-        size=$(df -h "$mountpoint" | tail -n1 | awk '{print $2}')
-        usage=$(df -h "$mountpoint" | tail -n1 | awk '{print $5}')
-        echo "✅ $purpose: $mountpoint ($size, $usage used)"
-        
-        # Test write permissions
-        if touch "$mountpoint/.mount_test_$$" 2>/dev/null; then
-          rm -f "$mountpoint/.mount_test_$$"
-          echo "   ✅ Write permissions OK"
-        else
-          echo "   ❌ Write permissions FAILED"
-          all_good=false
-        fi
-      else
-        echo "❌ $purpose: $mountpoint (NOT MOUNTED)"
-        all_good=false
-      fi
+# Destructive or state-changing diskutil calls go through here.
+run_disk() {
+    if [[ "${TEST_MODE:-0}" == "1" ]]; then
+        echo "   TEST_MODE: would run: diskutil $*"
     else
-      echo "⚪ $purpose: $expected_tier (RAID not present, skipping)"
+        diskutil "$@"
     fi
-  done
-  
-  if $all_good; then
-    echo "✅ All available storage properly mounted and accessible!"
-  else
-    echo "❌ Some mount issues detected. Check logs above."
-    return 1
-  fi
 }
 
-echo "✅ Format & mount complete."
-validate_mount_setup
+plist_get() {  # plist_get KEYPATH  (plist on stdin); prints nothing on failure
+    local out
+    # plutil reports a parse error on stdout, so keep its output only on success
+    out=$(plutil -extract "$1" raw -o - - 2>/dev/null) || return 1
+    printf '%s\n' "$out"
+}
+
+# BSD device of the RAID set with this name (e.g. disk8), or nothing
+raid_device() {
+    diskutil appleRAID list 2>/dev/null | awk -v want="$1" '
+        /^ *Name:/        { name = $0; sub(/^ *Name:[ ]*/, "", name); hit = (name == want); next }
+        hit && /^ *Device Node:/ { dev = $0; sub(/^ *Device Node:[ ]*/, "", dev); print dev; exit }'
+}
+
+# "apfs", another file system type, or nothing when the set is blank
+filesystem_of() {
+    local info content fs
+    info=$(diskutil info -plist "/dev/$1" 2>/dev/null) || return 0
+    content=$(plist_get Content <<<"$info" || true)
+    fs=$(plist_get FilesystemType <<<"$info" || true)
+    if [[ "$content" == "$APFS_GUID" || "$fs" == apfs ]]; then
+        echo apfs
+    else
+        echo "${fs:-}"
+    fi
+}
+
+# "DEVICE NAME" of the first volume in the APFS container on this physical store
+apfs_volume_on() {
+    local store="$1" list i j k dev
+    list=$(diskutil apfs list -plist 2>/dev/null) || return 0
+    for ((i = 0; ; i++)); do
+        plist_get "Containers.$i.ContainerReference" <<<"$list" >/dev/null || return 0
+        for ((j = 0; ; j++)); do
+            dev=$(plist_get "Containers.$i.PhysicalStores.$j.DeviceIdentifier" <<<"$list") || break
+            [[ "$dev" == "$store" ]] || continue
+            for ((k = 0; ; k++)); do
+                dev=$(plist_get "Containers.$i.Volumes.$k.DeviceIdentifier" <<<"$list") || return 0
+                echo "$dev $(plist_get "Containers.$i.Volumes.$k.Name" <<<"$list" || true)"
+                return 0
+            done
+        done
+    done
+}
+
+handle_tier() {
+    local tier="$1" mount dev fs vol name current
+    mount=$(homelab_tier_mount "$tier")
+    echo "-- $tier: RAID set '$tier' -> $mount"
+
+    dev=$(raid_device "$tier")
+    if [[ -z "$dev" ]]; then
+        echo "   (skip) no RAID set named '$tier'"
+        return 0
+    fi
+
+    fs=$(filesystem_of "$dev")
+    case "$fs" in
+        apfs)
+            read -r vol name <<<"$(apfs_volume_on "$dev")"
+            if [[ -z "${vol:-}" ]]; then
+                echo "   ❌ /dev/$dev holds APFS, but no volume was found on it. Not erasing it."
+                echo "      Look with: diskutil apfs list"
+                problems=$((problems + 1))
+                return 0
+            fi
+            current=$(diskutil info -plist "/dev/$vol" 2>/dev/null | plist_get MountPoint || true)
+            if [[ "$current" == "$mount" ]]; then
+                echo "   ✅ $vol ('$name') is mounted at $mount"
+            elif [[ "$name" != "$(basename "$mount")" ]]; then
+                echo "   ⚠️  $vol is named '$name', so it mounts at /Volumes/$name, not $mount."
+                echo "      Rename it (keeps the data): diskutil rename /dev/$vol $(basename "$mount")"
+                problems=$((problems + 1))
+            elif [[ -n "$current" ]]; then
+                echo "   ⚠️  $vol is mounted at $current, not $mount. Unmount it and run this again."
+                problems=$((problems + 1))
+            else
+                echo "   Mounting $vol ('$name')..."
+                run_disk mount "/dev/$vol" || { echo "   ❌ mount failed"; problems=$((problems + 1)); }
+            fi
+            ;;
+        "")
+            if [[ "${RAID_I_UNDERSTAND_DATA_LOSS:-0}" != "1" ]]; then
+                echo "   ❌ /dev/$dev has no file system. Formatting it erases the set."
+                echo "      To format it: RAID_I_UNDERSTAND_DATA_LOSS=1 $0"
+                problems=$((problems + 1))
+                return 0
+            fi
+            echo "   Erasing blank /dev/$dev as APFS '$tier'..."
+            run_disk eraseVolume APFS "$tier" "/dev/$dev" ||
+                { echo "   ❌ erase failed"; problems=$((problems + 1)); }
+            ;;
+        *)
+            echo "   ❌ /dev/$dev holds $fs, not APFS. It holds data: not erasing it."
+            problems=$((problems + 1))
+            ;;
+    esac
+}
+
+for tier in $HOMELAB_TIERS; do
+    handle_tier "$tier"
+done
+
+echo ""
+echo "=== Mounts ==="
+for tier in $HOMELAB_TIERS; do
+    mount=$(homelab_tier_mount "$tier")
+    if [[ -z "$(raid_device "$tier")" ]]; then
+        echo "⚪ $tier: no RAID set"
+    elif [[ "${TEST_MODE:-0}" == "1" ]] || homelab_is_mounted "$mount"; then
+        echo "✅ $tier: $mount"
+    else
+        echo "❌ $tier: not mounted at $mount"
+        problems=$((problems + 1))
+    fi
+done
 
 echo ""
 echo "Setting up directory structure..."
-./scripts/storage/setup_direct_mounts.sh
+if [[ "${TEST_MODE:-0}" == "1" ]]; then
+    "$SCRIPT_DIR/setup_direct_mounts.sh" --dry-run || problems=$((problems + 1))
+else
+    "$SCRIPT_DIR/setup_direct_mounts.sh" || problems=$((problems + 1))
+fi
+
+if ((problems)); then
+    echo "❌ $problems problem(s) above"
+    exit 1
+fi
+echo "✅ Every present RAID set is mounted where the manifest says"

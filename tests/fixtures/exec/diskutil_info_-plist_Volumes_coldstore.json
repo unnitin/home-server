@@ -1,0 +1,5 @@
+{
+  "rc": 1,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>Error</key>\n\t<true/>\n\t<key>ErrorMessage</key>\n\t<string>Could not find disk: /Volumes/coldstore</string>\n\t<key>ExitCode</key>\n\t<integer>1</integer>\n</dict>\n</plist>\n",
+  "stderr": ""
+}

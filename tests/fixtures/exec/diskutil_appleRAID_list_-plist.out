@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AppleRAIDSets</key>
+	<array>
+		<dict>
+			<key>AppleRAIDSetUUID</key>
+			<string>00000000-0000-0000-0000-000000000001</string>
+			<key>BSD Name</key>
+			<string>disk8</string>
+			<key>ChunkCount</key>
+			<integer>62501961</integer>
+			<key>ChunkSize</key>
+			<integer>32768</integer>
+			<key>Content</key>
+			<string>00000000-0000-0000-0000-000000000002</string>
+			<key>Level</key>
+			<string>Mirror</string>
+			<key>Members</key>
+			<array>
+				<dict>
+					<key>AppleRAIDMemberUUID</key>
+					<string>00000000-0000-0000-0000-000000000003</string>
+					<key>BSD Name</key>
+					<string>disk7s2</string>
+					<key>MemberStatus</key>
+					<string>Online</string>
+				</dict>
+				<dict>
+					<key>AppleRAIDMemberUUID</key>
+					<string>00000000-0000-0000-0000-000000000004</string>
+					<key>BSD Name</key>
+					<string>disk6s2</string>
+					<key>MemberStatus</key>
+					<string>Online</string>
+				</dict>
+			</array>
+			<key>Name</key>
+			<string>faststore</string>
+			<key>Rebuild</key>
+			<string>Manual</string>
+			<key>Size</key>
+			<integer>2048064258048</integer>
+			<key>Spares</key>
+			<array/>
+			<key>Status</key>
+			<string>Online</string>
+		</dict>
+	</array>
+</dict>
+</plist>

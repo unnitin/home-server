@@ -7,9 +7,14 @@ if [[ ${EUID:-0} -eq 0 ]]; then
   exit 2
 fi
 
-CPU="${COLIMA_CPU:-4}"
-MEM="${COLIMA_MEM:-6}"
-DISK="${COLIMA_DISK:-60}"   # desired minimum; existing VMs won't be shrunk
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "${SCRIPT_DIR}/../core/environment.sh"
+
+# The VM's size, from the manifest (services.colima.resources); COLIMA_* override it
+CPU="${COLIMA_CPU:-$HOMELAB_SVC_COLIMA_CPU}"
+MEM="${COLIMA_MEM:-$HOMELAB_SVC_COLIMA_MEMORY_GB}"
+DISK="${COLIMA_DISK:-$HOMELAB_SVC_COLIMA_DISK_GB}"   # desired minimum; existing VMs won't be shrunk
 
 # Pick the right --arch for the host CPU
 ARCH_FLAG="--arch aarch64"

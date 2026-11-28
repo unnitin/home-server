@@ -73,20 +73,20 @@ Runs everything automatically (requires environment variables set).
 **Option C: Manual Step-by-Step**
 ```bash
 # Docker runtime
-./scripts/20_install_colima_docker.sh
-./scripts/21_start_colima.sh
+./scripts/infrastructure/install_docker.sh
+./scripts/infrastructure/start_docker.sh
 
 # Deploy Immich
-./scripts/30_deploy_services.sh
+./scripts/services/deploy_containers.sh
 
 # Install Plex natively  
-./scripts/31_install_native_plex.sh
+./scripts/services/install_plex.sh
 
 # Set up autostart
-sudo ./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 
 # Install Tailscale
-./scripts/90_install_tailscale.sh
+./scripts/infrastructure/install_tailscale.sh
 ```
 
 ### 4. Configure Remote Access (5 minutes)
@@ -105,7 +105,7 @@ sudo tailscale serve --https=32400 http://localhost:32400      # Plex
 For single-URL access in browsers:
 
 ```bash
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 ```
 
 ## ✅ Verify Your Setup
@@ -135,7 +135,7 @@ For single-URL access in browsers:
 ### Plex Setup
 1. Open http://localhost:32400/web
 2. Sign in with your Plex account
-3. Add media libraries pointing to `/Volumes/Media`
+3. Add media libraries pointing to `/Volumes/warmstore/movies` and `/Volumes/warmstore/tv-shows`
 4. Enable hardware transcoding in Settings → Transcoder
 
 > 📖 **Detailed Guide**: [Plex Setup & Usage](PLEX.md)
@@ -151,7 +151,7 @@ For single-URL access in browsers:
 ### Google Photos Import
 ```bash
 # Import Google Takeout to Immich
-./scripts/70_takeout_to_immich.sh ~/Downloads/takeout-photos.zip
+./scripts/takeout/enhanced_takeout_import.sh ~/Downloads/takeout-photos.zip
 ```
 
 > 📖 **Import Guide**: [Google Takeout Import](IMMICH.md#google-takeout-import)
@@ -166,10 +166,10 @@ For single-URL access in browsers:
 ### Regular Maintenance
 ```bash
 # Check for updates (weekly automatic checks are enabled)
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Apply updates when ready
-./scripts/80_check_updates.sh --apply
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ## 🔧 Common Issues

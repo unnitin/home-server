@@ -1,0 +1,1462 @@
+[
+  {
+    "name": "audit_recent",
+    "input": {
+      "properties": {
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool"
+        },
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        },
+        "client": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Client"
+        }
+      },
+      "title": "audit_recentArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "check_colima_docker",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_docker_services",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_homebrew",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_immich",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_jellyfin",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_launchd",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_plex",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_port",
+    "input": {
+      "properties": {
+        "port": {
+          "title": "Port",
+          "type": "integer"
+        },
+        "host": {
+          "default": "localhost",
+          "title": "Host",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "check_portArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_prereqs",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_raid",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_remote_access",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_reverse_proxy",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_storage",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "check_tailscale",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "collect_logs",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "config_get",
+    "input": {
+      "properties": {
+        "section": {
+          "anyOf": [
+            {
+              "enum": [
+                "host",
+                "storage",
+                "services",
+                "boot_order",
+                "remote_access",
+                "media",
+                "photos",
+                "power"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section"
+        }
+      },
+      "title": "config_getArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "docker_containers",
+    "input": {
+      "properties": {},
+      "title": "docker_containersArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "docs_search",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "limit": {
+          "default": 5,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "docs_searchArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "health_check",
+    "input": {
+      "properties": {
+        "component": {
+          "default": "all",
+          "enum": [
+            "all",
+            "storage",
+            "raid",
+            "docker",
+            "immich",
+            "plex",
+            "jellyfin",
+            "tailscale",
+            "launchd",
+            "power",
+            "network",
+            "prereqs",
+            "homebrew"
+          ],
+          "title": "Component",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "health_checkArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "history_query",
+    "input": {
+      "properties": {
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "since": {
+          "default": "7d",
+          "title": "Since",
+          "type": "string"
+        },
+        "bucket": {
+          "default": "1h",
+          "title": "Bucket",
+          "type": "string"
+        },
+        "above": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Above"
+        },
+        "below": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Below"
+        }
+      },
+      "required": [
+        "metric"
+      ],
+      "title": "history_queryArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "incident_list",
+    "input": {
+      "properties": {
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "resolved",
+            "all"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 50,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "incident_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "incident_open",
+    "input": {
+      "properties": {
+        "component": {
+          "title": "Component",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "severity": {
+          "default": "warn",
+          "enum": [
+            "fail",
+            "warn"
+          ],
+          "title": "Severity",
+          "type": "string"
+        }
+      },
+      "required": [
+        "component",
+        "title"
+      ],
+      "title": "incident_openArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "incident_resolve",
+    "input": {
+      "properties": {
+        "incident_id": {
+          "title": "Incident Id",
+          "type": "integer"
+        },
+        "root_cause": {
+          "title": "Root Cause",
+          "type": "string"
+        },
+        "resolution": {
+          "title": "Resolution",
+          "type": "string"
+        }
+      },
+      "required": [
+        "incident_id",
+        "root_cause",
+        "resolution"
+      ],
+      "title": "incident_resolveArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "incident_update",
+    "input": {
+      "properties": {
+        "incident_id": {
+          "title": "Incident Id",
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "observation",
+            "action",
+            "hypothesis",
+            "note"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "body": {
+          "title": "Body",
+          "type": "string"
+        }
+      },
+      "required": [
+        "incident_id",
+        "kind",
+        "body"
+      ],
+      "title": "incident_updateArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "job_cancel",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_cancelArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "job_list",
+    "input": {
+      "properties": {
+        "state": {
+          "default": "all",
+          "enum": [
+            "all",
+            "queued",
+            "running",
+            "done",
+            "failed",
+            "cancelled",
+            "lost"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "limit": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "job_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "job_logs",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "lines": {
+          "default": 50,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Lines",
+          "type": "integer"
+        },
+        "offset": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Offset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_logsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "job_status",
+    "input": {
+      "properties": {
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id"
+      ],
+      "title": "job_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "launchd_jobs",
+    "input": {
+      "properties": {
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "launchd_jobsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "launchd_kickstart",
+    "input": {
+      "properties": {
+        "label": {
+          "enum": [
+            "io.homelab.storage",
+            "io.homelab.powermgmt",
+            "io.homelab.colima",
+            "io.homelab.compose.immich",
+            "io.homelab.plex",
+            "io.homelab.jellyfin",
+            "io.homelab.landing",
+            "io.homelab.media.watcher",
+            "io.homelab.tailscale",
+            "io.homelab.updatecheck",
+            "io.homelab.snapshot",
+            "io.homelab.mcp"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "title": "launchd_kickstartArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "library_scan",
+    "input": {
+      "properties": {
+        "server": {
+          "default": "both",
+          "enum": [
+            "both",
+            "plex",
+            "jellyfin"
+          ],
+          "title": "Server",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "library_scanArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "logs_collect",
+    "input": {
+      "properties": {
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "logs_collectArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "logs_search",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "since": {
+          "default": "24h",
+          "title": "Since",
+          "type": "string"
+        },
+        "sources": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "launchd",
+                  "modules"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sources"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "logs_searchArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "media_items",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "movies",
+          "enum": [
+            "movies",
+            "tv"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "filter": {
+          "default": "all",
+          "enum": [
+            "all",
+            "unmatched",
+            "mismatched",
+            "recent",
+            "unlabelled"
+          ],
+          "title": "Filter",
+          "type": "string"
+        },
+        "limit": {
+          "default": 50,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "title": "media_itemsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "media_library_stats",
+    "input": {
+      "properties": {},
+      "title": "media_library_statsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "media_process",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "all",
+          "enum": [
+            "all",
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "media_processArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "media_retry_failed",
+    "input": {
+      "properties": {
+        "library": {
+          "enum": [
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "library"
+      ],
+      "title": "media_retry_failedArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "media_staging_list",
+    "input": {
+      "properties": {
+        "library": {
+          "default": "all",
+          "enum": [
+            "all",
+            "movies",
+            "tv",
+            "collections"
+          ],
+          "title": "Library",
+          "type": "string"
+        },
+        "include_failed": {
+          "default": true,
+          "title": "Include Failed",
+          "type": "boolean"
+        }
+      },
+      "title": "media_staging_listArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "memory_forget",
+    "input": {
+      "properties": {
+        "note_id": {
+          "title": "Note Id",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "note_id",
+        "reason"
+      ],
+      "title": "memory_forgetArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "memory_note",
+    "input": {
+      "properties": {
+        "body": {
+          "title": "Body",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "fact",
+            "preference",
+            "decision",
+            "resolution",
+            "todo"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Component"
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tags"
+        },
+        "expires_in_days": {
+          "anyOf": [
+            {
+              "maximum": 3650,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires In Days"
+        }
+      },
+      "required": [
+        "body",
+        "kind"
+      ],
+      "title": "memory_noteArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "memory_recall",
+    "input": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Component"
+        },
+        "kinds": {
+          "anyOf": [
+            {
+              "items": {
+                "enum": [
+                  "fact",
+                  "preference",
+                  "decision",
+                  "resolution",
+                  "todo"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kinds"
+        },
+        "limit": {
+          "default": 5,
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "memory_recallArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "network_check_port",
+    "input": {
+      "properties": {
+        "port": {
+          "maximum": 65535,
+          "minimum": 1,
+          "title": "Port",
+          "type": "integer"
+        },
+        "host": {
+          "default": "localhost",
+          "enum": [
+            "localhost",
+            "127.0.0.1"
+          ],
+          "title": "Host",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "network_check_portArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_album_profile",
+    "input": {
+      "properties": {
+        "album": {
+          "title": "Album",
+          "type": "string"
+        }
+      },
+      "required": [
+        "album"
+      ],
+      "title": "photos_album_profileArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_albums",
+    "input": {
+      "properties": {
+        "filter": {
+          "default": "all",
+          "enum": [
+            "all",
+            "owned",
+            "shared"
+          ],
+          "title": "Filter",
+          "type": "string"
+        }
+      },
+      "title": "photos_albumsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_run_job",
+    "input": {
+      "properties": {
+        "job": {
+          "enum": [
+            "thumbnailGeneration",
+            "metadataExtraction",
+            "smartSearch",
+            "faceDetection",
+            "duplicateDetection"
+          ],
+          "title": "Job",
+          "type": "string"
+        },
+        "mode": {
+          "default": "missing",
+          "enum": [
+            "missing",
+            "all"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "title": "photos_run_jobArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "photos_stats",
+    "input": {
+      "properties": {},
+      "title": "photos_statsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "photos_unsorted",
+    "input": {
+      "properties": {
+        "since": {
+          "default": "30d",
+          "title": "Since",
+          "type": "string"
+        }
+      },
+      "title": "photos_unsortedArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "power_ensure",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "power_ensureArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "power_status",
+    "input": {
+      "properties": {},
+      "title": "power_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "quick_summary",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "run_all_diagnostics",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "runbook_get",
+    "input": {
+      "properties": {
+        "topic": {
+          "title": "Topic",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topic"
+      ],
+      "title": "runbook_getArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "service_logs",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "lines": {
+          "default": 100,
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Lines",
+          "type": "integer"
+        },
+        "grep": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grep"
+        },
+        "container": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Container"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_logsArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "service_restart",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_restartArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "service_start",
+    "input": {
+      "properties": {
+        "service": {
+          "enum": [
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "title": "service_startArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "service_status",
+    "input": {
+      "properties": {
+        "service": {
+          "default": "all",
+          "enum": [
+            "all",
+            "storage",
+            "powermgmt",
+            "colima",
+            "immich",
+            "plex",
+            "jellyfin",
+            "landing",
+            "media_watcher",
+            "tailscale",
+            "updatecheck",
+            "snapshot",
+            "mcp"
+          ],
+          "title": "Service",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "service_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "storage_ensure_layout",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "storage_ensure_layoutArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "storage_plan_recovery",
+    "input": {
+      "properties": {
+        "tier": {
+          "enum": [
+            "faststore",
+            "warmstore",
+            "coldstore"
+          ],
+          "title": "Tier",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tier"
+      ],
+      "title": "storage_plan_recoveryArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "storage_status",
+    "input": {
+      "properties": {
+        "tier": {
+          "default": "all",
+          "enum": [
+            "all",
+            "faststore",
+            "warmstore",
+            "coldstore"
+          ],
+          "title": "Tier",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "storage_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "system_overview",
+    "input": {
+      "properties": {
+        "verbose": {
+          "default": false,
+          "title": "Verbose",
+          "type": "boolean"
+        }
+      },
+      "title": "system_overviewArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "tailscale_serve_reconcile",
+    "input": {
+      "properties": {
+        "dry_run": {
+          "default": true,
+          "title": "Dry Run",
+          "type": "boolean"
+        }
+      },
+      "title": "tailscale_serve_reconcileArguments",
+      "type": "object"
+    },
+    "read_only": false
+  },
+  {
+    "name": "tailscale_status",
+    "input": {
+      "properties": {},
+      "title": "tailscale_statusArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "updates_check",
+    "input": {
+      "properties": {},
+      "title": "updates_checkArguments",
+      "type": "object"
+    },
+    "read_only": true
+  },
+  {
+    "name": "verify_media_paths",
+    "input": {
+      "properties": {},
+      "title": "tool_fnArguments",
+      "type": "object"
+    },
+    "read_only": false
+  }
+]

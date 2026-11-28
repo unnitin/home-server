@@ -1,0 +1,14 @@
+# Tailnet HTTPS mappings (tailscale serve). Generated from config/homelab.yaml
+# (remote_access.tailscale_serve) by `python3 -m homelab config render`: edit
+# the manifest, not this file. Applied by
+# scripts/infrastructure/apply_tailscale_serve.sh and verified by
+# diagnostics/check_remote_access.sh.
+#
+# Serve only, never Funnel: these are reachable from tailnet devices, not the internet.
+#
+# https_port  backend                  service
+443           http://localhost:8080    landing
+2283          http://localhost:2283    immich
+32400         http://localhost:32400   plex
+8096          http://localhost:8096    jellyfin
+8765          http://127.0.0.1:18765   mcp

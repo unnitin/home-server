@@ -1,0 +1,60 @@
+{
+  "formulae": [
+    {
+      "name": "colima",
+      "installed_versions": [
+        "0.8.4"
+      ],
+      "current_version": "0.10.3",
+      "pinned": false,
+      "pinned_version": null
+    },
+    {
+      "name": "docker",
+      "installed_versions": [
+        "28.4.0"
+      ],
+      "current_version": "29.10.1",
+      "pinned": false,
+      "pinned_version": null
+    },
+    {
+      "name": "docker-compose",
+      "installed_versions": [
+        "2.39.3"
+      ],
+      "current_version": "5.8.0",
+      "pinned": false,
+      "pinned_version": null
+    },
+    {
+      "name": "ffmpeg",
+      "installed_versions": [
+        "8.0_1"
+      ],
+      "current_version": "9.1",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ],
+  "casks": [
+    {
+      "name": "jellyfin",
+      "installed_versions": [
+        "10.11.2"
+      ],
+      "current_version": "12.4",
+      "pinned": false,
+      "pinned_version": null
+    },
+    {
+      "name": "plex-media-server",
+      "installed_versions": [
+        "1.42.2.10156,f737b826c"
+      ],
+      "current_version": "1.43.5.11079,b3b13e506",
+      "pinned": false,
+      "pinned_version": null
+    }
+  ]
+}

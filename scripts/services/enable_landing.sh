@@ -1,162 +1,83 @@
 #!/usr/bin/env bash
-# Enable simple landing page with direct service access
-# Enhanced for graceful permission handling with fallback guidance
+# Start the landing page and publish services to the tailnet.
+#
+# The landing page is served on 127.0.0.1, on the manifest's landing port (8080). Tailnet HTTPS for it and every
+# other service comes from scripts/infrastructure/apply_tailscale_serve.sh, which
+# applies config/tailscale_serve.txt. This script used to run `tailscale serve reset`,
+# which wiped every other mapping (Jellyfin's, and any MCP mapping) at each boot.
 
 set -euo pipefail
 
-# Simple banner function
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=../core/environment.sh
+source "$REPO_ROOT/scripts/core/environment.sh"
+# shellcheck source=../infrastructure/lib/tailscale.sh
+source "$REPO_ROOT/scripts/infrastructure/lib/tailscale.sh"
+PORT="${HOMELAB_SVC_LANDING_PORTS%% *}"
+
 banner() { echo; echo "=== $* ==="; }
 
-# Support setup mode (skip service waiting) vs automation mode
-SETUP_MODE=false
-if [[ "${1:-}" == "--setup-mode" ]]; then
-    SETUP_MODE=true
+# --setup-mode: don't wait for services that aren't up yet (setup runs before they start)
+# --foreground: stay running for as long as the landing server does. The LaunchD
+#   job uses it: the job has KeepAlive, so a script that returns after starting
+#   the server in the background is relaunched, and restarts the server, every
+#   cycle (D28).
+WAIT=90
+FOREGROUND=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --setup-mode) WAIT=0 ;;
+        --foreground) FOREGROUND=true ;;
+        *) echo "Unknown option: $1" >&2; exit 2 ;;
+    esac
     shift
-fi
+done
 
-banner "Configuring Simple Landing Page with Direct Service Access"
+banner "Landing page and tailnet HTTPS"
 
-# Get Tailscale hostname for URL display
-TAILSCALE_HOSTNAME=$(tailscale status --json | grep '"DNSName"' | cut -d'"' -f4 | sed 's/\.$//' 2>/dev/null || echo "your-device.your-tailnet.ts.net")
+TAILSCALE_HOSTNAME=$(ts_hostname)
+TAILSCALE_HOSTNAME="${TAILSCALE_HOSTNAME:-your-device.your-tailnet.ts.net}"
+echo "Tailscale hostname: $TAILSCALE_HOSTNAME"
 
-echo "Tailscale Hostname: $TAILSCALE_HOSTNAME"
-
-# Stop any existing HTTP server on port 8080
-echo "Stopping any existing HTTP server..."
-pkill -f "python3 -m http.server 8080" 2>/dev/null || true
-
-# Start simple HTTP server for landing page (always works)
-echo "Starting HTTP server for landing page..."
-cd "$(dirname "$0")/../../web"
-nohup python3 -m http.server 8080 --bind 127.0.0.1 > /dev/null 2>&1 &
-PYTHON_PID=$!
-echo "✅ Started HTTP server (PID: $PYTHON_PID)"
-
-# Wait for HTTP server to start
+echo "Restarting landing page server on 127.0.0.1:$PORT..."
+# Stop the landing server already listening on its port, whatever its interpreter is
+# called (a server started by hand may show as ".../Python -m http.server <port>").
+# Only the listener is considered: a pattern match on command lines would also
+# kill any shell or editor that merely mentions it (D28).
+for pid in $(lsof -nP -tiTCP:"$PORT" -sTCP:LISTEN 2>/dev/null || true); do
+    if ps -o command= -p "$pid" 2>/dev/null | grep -q -- "-m http[.]server $PORT"; then
+        echo "Stopping the previous landing server (PID $pid)"
+        kill "$pid" 2>/dev/null || true
+        sleep 1
+    fi
+done
+cd "$REPO_ROOT/web"
+nohup python3 -m http.server "$PORT" --bind 127.0.0.1 > /dev/null 2>&1 &
+SERVER_PID=$!
+echo "✅ Started landing page server (PID: $SERVER_PID)"
 sleep 2
 
-# Graceful Tailscale HTTPS configuration
 echo ""
-echo "🔧 Configuring Tailscale HTTPS serving..."
-
-# Track configuration success
-TAILSCALE_SUCCESS=true
-MANUAL_COMMANDS=()
-
-# Reset Tailscale serve configuration
-if sudo tailscale serve reset >/dev/null 2>&1; then
-    echo "  ✅ Reset existing Tailscale configuration"
+echo "🔧 Applying tailnet HTTPS mappings from config/tailscale_serve.txt..."
+if "$REPO_ROOT/scripts/infrastructure/apply_tailscale_serve.sh" --wait "$WAIT"; then
+    echo "🎉 Landing page setup complete"
 else
-    echo "  ⚠️  Could not reset Tailscale configuration (continuing...)"
-fi
-
-# Configure landing page HTTPS
-if sudo tailscale serve --bg --https=443 http://localhost:8080 >/dev/null 2>&1; then
-    echo "  ✅ Landing page HTTPS configured"
-else
-    echo "  ⚠️  Landing page HTTPS failed (permission denied)"
-    TAILSCALE_SUCCESS=false
-    MANUAL_COMMANDS+=("sudo tailscale serve --bg --https=443 http://localhost:8080")
-fi
-
-# Wait for services if not in setup mode
-if ! $SETUP_MODE; then
-    echo "  🔍 Waiting for services to be available..."
-    
-    # Wait for Immich (with timeout)
-    IMMICH_READY=false
-    for i in {1..30}; do
-        if curl -s http://localhost:2283 >/dev/null 2>&1; then
-            IMMICH_READY=true
-            break
-        fi
-        sleep 2
-    done
-    
-    # Wait for Plex (with timeout)
-    PLEX_READY=false
-    for i in {1..30}; do
-        if curl -s http://localhost:32400 >/dev/null 2>&1; then
-            PLEX_READY=true
-            break
-        fi
-        sleep 2
-    done
-else
-    # In setup mode, assume services will be available
-    IMMICH_READY=true
-    PLEX_READY=true
-fi
-
-# Configure Immich HTTPS if available
-if $IMMICH_READY; then
-    if sudo tailscale serve --bg --https=2283 http://localhost:2283 >/dev/null 2>&1; then
-        echo "  ✅ Immich HTTPS configured"
-    else
-        echo "  ⚠️  Immich HTTPS failed (permission denied)"
-        TAILSCALE_SUCCESS=false
-        MANUAL_COMMANDS+=("sudo tailscale serve --bg --https=2283 http://localhost:2283")
-    fi
-else
-    echo "  ⚠️  Immich not available yet, skipping HTTPS setup"
-    MANUAL_COMMANDS+=("sudo tailscale serve --bg --https=2283 http://localhost:2283")
-fi
-
-# Configure Plex HTTPS if available
-if $PLEX_READY; then
-    if sudo tailscale serve --bg --https=32400 http://localhost:32400 >/dev/null 2>&1; then
-        echo "  ✅ Plex HTTPS configured"
-    else
-        echo "  ⚠️  Plex HTTPS failed (permission denied)"
-        TAILSCALE_SUCCESS=false
-        MANUAL_COMMANDS+=("sudo tailscale serve --bg --https=32400 http://localhost:32400")
-    fi
-else
-    echo "  ⚠️  Plex not available yet, skipping HTTPS setup"
-    MANUAL_COMMANDS+=("sudo tailscale serve --bg --https=32400 http://localhost:32400")
-fi
-
-# Show current configuration (best effort)
-echo ""
-if sudo tailscale serve status >/dev/null 2>&1; then
-    echo "📊 Current Tailscale serve configuration:"
-    sudo tailscale serve status 2>/dev/null || echo "  Status unavailable"
-else
-    echo "📊 Tailscale serve status unavailable (permission denied)"
+    echo "⚠️  Some mappings could not be applied. Re-run: scripts/infrastructure/apply_tailscale_serve.sh"
 fi
 
 echo ""
-if $TAILSCALE_SUCCESS; then
-    echo "🎉 Landing page setup complete!"
+echo "🌐 Tailnet URLs:"
+echo "   📍 Landing page: https://$TAILSCALE_HOSTNAME"
+echo "   📸 Immich:       https://$TAILSCALE_HOSTNAME:2283"
+echo "   🎬 Plex:         https://$TAILSCALE_HOSTNAME:32400"
+echo "   🎞️  Jellyfin:     https://$TAILSCALE_HOSTNAME:8096"
+
+if $FOREGROUND; then
     echo ""
-    echo "🌐 ACCESSIBLE URLS:"
-    echo "   📍 Landing Page: https://$TAILSCALE_HOSTNAME"
-    echo "   📸 Immich (Photos): https://$TAILSCALE_HOSTNAME:2283"
-    echo "   🎬 Plex (Media): https://$TAILSCALE_HOSTNAME:32400"
-    echo ""
-    echo "💡 The landing page provides buttons to access each service directly."
-else
-    echo "⚠️  Landing page HTTP server running, but HTTPS setup needs manual intervention"
-    echo ""
-    echo "🌐 CURRENTLY ACCESSIBLE:"
-    echo "   📍 Landing Page: http://localhost:8080 (local only)"
-    echo ""
-    echo "🔧 MANUAL SETUP NEEDED FOR HTTPS ACCESS:"
-    echo "   Run these commands to enable Tailscale HTTPS:"
-    for cmd in "${MANUAL_COMMANDS[@]}"; do
-        echo "   $cmd"
-    done
-    echo ""
-    echo "   After running those commands, you'll have:"
-    echo "   📍 Landing Page: https://$TAILSCALE_HOSTNAME"
-    echo "   📸 Immich (Photos): https://$TAILSCALE_HOSTNAME:2283"
-    echo "   🎬 Plex (Media): https://$TAILSCALE_HOSTNAME:32400"
-    echo ""
-    echo "🚀 QUICK RECOVERY:"
-    printf "   "
-    printf "%s && " "${MANUAL_COMMANDS[@]}"
-    echo "echo '🎉 HTTPS setup complete!'"
+    echo "Serving in the foreground until the landing server exits (PID $SERVER_PID)"
+    rc=0
+    wait "$SERVER_PID" || rc=$?
+    echo "$(date): landing page server exited ($rc)"
+    exit "$rc"
 fi
-echo ""
-echo "💡 The landing page provides buttons to access each service directly."
-echo "   No complex reverse proxy - just simple, reliable access!"

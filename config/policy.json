@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "tiers": {
+    "T0": {
+      "approval": "none"
+    },
+    "T1": {
+      "approval": "none",
+      "dry_run_default": true,
+      "rate_limit": "10/min"
+    },
+    "T2": {
+      "approval": "out_of_band",
+      "plan_ttl": "15m"
+    }
+  },
+  "scopes": {
+    "observe": {
+      "tiers": [
+        "T0"
+      ]
+    },
+    "ops": {
+      "tiers": [
+        "T0",
+        "T1"
+      ]
+    },
+    "admin": {
+      "tiers": [
+        "T0",
+        "T1",
+        "T2"
+      ]
+    },
+    "curator": {
+      "tiers": [
+        "T0",
+        "T1",
+        "T2"
+      ],
+      "only": [
+        "photos_albums",
+        "photos_album_profile",
+        "photos_unsorted",
+        "media_items",
+        "memory_recall",
+        "job_status"
+      ]
+    }
+  },
+  "toolsets": {
+    "core": [
+      "system_overview",
+      "health_check",
+      "storage_status",
+      "service_status",
+      "service_logs",
+      "launchd_jobs",
+      "tailscale_status",
+      "media_staging_list",
+      "photos_stats",
+      "memory_recall",
+      "runbook_get",
+      "job_status"
+    ]
+  },
+  "jobs": {
+    "max_running": 2
+  },
+  "never": [
+    "create_raid",
+    "delete_raid",
+    "format_and_mount",
+    "preclean_disks",
+    "cleanup_disks",
+    "rebuild_storage",
+    "disk_erase",
+    "raid_create",
+    "raid_delete",
+    "setup_flags",
+    "shell_run",
+    "photos_delete",
+    "photos_trash",
+    "album_delete",
+    "album_share",
+    "people_merge",
+    "media_delete"
+  ],
+  "tools": {
+    "system_overview": "T0",
+    "health_check": "T0",
+    "storage_status": "T0",
+    "storage_plan_recovery": "T0",
+    "service_status": "T0",
+    "service_logs": "T0",
+    "logs_search": "T0",
+    "launchd_jobs": "T0",
+    "docker_containers": "T0",
+    "network_check_port": "T0",
+    "tailscale_status": "T0",
+    "power_status": "T0",
+    "config_get": "T0",
+    "media_staging_list": "T0",
+    "media_library_stats": "T0",
+    "photos_stats": "T0",
+    "updates_check": "T0",
+    "history_query": "T0",
+    "incident_list": "T0",
+    "memory_recall": "T0",
+    "docs_search": "T0",
+    "runbook_get": "T0",
+    "photos_albums": "T0",
+    "photos_album_profile": "T0",
+    "photos_unsorted": "T0",
+    "media_items": "T0",
+    "audit_recent": "T0",
+    "job_status": "T0",
+    "job_logs": "T0",
+    "job_list": "T0",
+    "run_all_diagnostics": "T0",
+    "quick_summary": "T0",
+    "check_prereqs": "T0",
+    "check_homebrew": "T0",
+    "check_raid": "T0",
+    "check_storage": "T0",
+    "verify_media_paths": "T0",
+    "check_colima_docker": "T0",
+    "check_docker_services": "T0",
+    "check_immich": "T0",
+    "check_plex": "T0",
+    "check_jellyfin": "T0",
+    "check_tailscale": "T0",
+    "check_remote_access": "T0",
+    "check_reverse_proxy": "T0",
+    "check_launchd": "T0",
+    "check_port": "T0",
+    "memory_note": "T1",
+    "memory_forget": "T1",
+    "incident_open": "T1",
+    "incident_update": "T1",
+    "incident_resolve": "T1",
+    "collect_logs": "T1",
+    "service_restart": {
+      "tier": "T1",
+      "lock": "service:{service}"
+    },
+    "service_start": {
+      "tier": "T1",
+      "lock": "service:{service}"
+    },
+    "launchd_kickstart": "T1",
+    "media_process": {
+      "tier": "T1",
+      "lock": "media"
+    },
+    "media_retry_failed": {
+      "tier": "T1",
+      "lock": "media"
+    },
+    "library_scan": "T1",
+    "photos_run_job": "T1",
+    "tailscale_serve_reconcile": {
+      "tier": "T1",
+      "lock": "serve"
+    },
+    "storage_ensure_layout": {
+      "tier": "T1",
+      "lock": "storage"
+    },
+    "power_ensure": {
+      "tier": "T1",
+      "lock": "power"
+    },
+    "logs_collect": {
+      "tier": "T1",
+      "lock": "bundle"
+    },
+    "job_cancel": "T1"
+  }
+}

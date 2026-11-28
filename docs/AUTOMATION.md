@@ -14,7 +14,7 @@ Your home server has **secure automation** installed and active. The system atte
 When your Mac mini reboots, the following happens automatically:
 
 **Immediate (0-30s after login):**
-- 🔧 **Storage service** checks and creates mount points (`/Volumes/warmstore`, `/Volumes/faststore`, `/Volumes/Archive`)
+- 🔧 **Storage service** creates the folder layout on the tiers that are mounted (`/Volumes/faststore`, `/Volumes/warmstore`, `/Volumes/coldstore`); it never creates a mount point
 - 🌐 **Tailscale service** maintains VPN connectivity  
 - 📊 **Update check service** monitors for system updates
 - ⚡ **Power management service** monitors and maintains server power settings
@@ -75,16 +75,16 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 #### **🏥 Health Check & Recovery**
 ```bash
 # Check system status:
-./scripts/post_boot_health_check.sh
+./scripts/core/health_check.sh
 
 # Automatic recovery for any issues:
-./scripts/post_boot_health_check.sh --auto-recover
+./scripts/core/health_check.sh --auto-recover
 ```
 
 #### **👀 What to Expect After Reboot**
 1. **Login to your Mac mini** → LaunchAgents activate automatically
 2. **Wait 2-3 minutes** → All services start in sequence
-3. **Check status**: Run `./scripts/post_boot_health_check.sh`
+3. **Check status**: Run `./scripts/core/health_check.sh`
 4. **Access services**:
    - 📍 **Landing Page**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net
    - 📸 **Immich**: https://YOUR-DEVICE.YOUR-TAILNET.ts.net:2283
@@ -93,7 +93,7 @@ SYSTEM BOOT → USER LOGIN → LaunchAgents Start
 #### **🔧 If Something Doesn't Start**
 The automation system provides graceful fallback handling:
 - Services that need `sudo` will show manual commands if automation fails
-- Run `./scripts/post_boot_health_check.sh --auto-recover` for automatic fixes
+- Run `./scripts/core/health_check.sh --auto-recover` for automatic fixes
 - Check logs: `tail -f /Volumes/warmstore/logs/{storage,colima,immich,plex,landing}/*.{out,err}`
 
 ---
@@ -285,6 +285,20 @@ cd services/immich && docker compose restart
 
 ---
 
+### **io.homelab.snapshot.plist** - History and incidents
+Every 15 minutes, `python3 -m homelab snapshot` records what the system looks like in the state database (`~/Library/Application Support/homelab/state.db`, on the internal disk):
+- **metrics** for `history_query` (tier usage and mounts, each service up or down, the tailnet, Immich totals);
+- **incidents**: one opens when a component starts failing and resolves when it recovers, and a component that flaps within an hour reopens the same one;
+- **versions** of macOS, Tailscale, Immich, Plex and Jellyfin, when they change.
+
+It prunes as it goes (full snapshots for 14 days, then one a day; metrics hourly after 7 days, for a year), and once a day copies the database to `coldstore/homelab-backups/` when coldstore is mounted. It runs under the same Python as the MCP job, which can read the external volumes (D27).
+
+**Service**: `homelab/state/snapshot.py`
+**Trigger**: At load, then every 15 minutes (`StartInterval` 900)
+**Check**: `python3 -m homelab incidents`, `python3 -m homelab history storage.warmstore.used_pct`
+
+---
+
 ### **io.homelab.updatecheck.plist** - Maintenance
 
 **Purpose**: Weekly automated update checks
@@ -311,8 +325,8 @@ cd services/immich && docker compose restart
 
 **Manual execution**:
 ```bash
-./scripts/80_check_updates.sh
-./scripts/80_check_updates.sh --apply  # Apply updates
+./scripts/automation/check_updates.sh
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ---
@@ -342,22 +356,20 @@ sudo tailscale down
 
 ### **io.homelab.storage.plist** - Storage Mount Management
 
-**Purpose**: Ensures proper mount point structure for interim configuration
+**Purpose**: Creates the expected folder layout on each mounted storage tier
 
-**What it does**:
-- Waits for `/Volumes/warmstore` to be available
-- Creates `/Volumes/warmstore/Movies` → `/Volumes/warmstore/Movies` symlink
-- Creates `/Volumes/warmstore/TV` → `/Volumes/warmstore/TV Shows` symlink  
-- Creates `/Volumes/faststore` → `/Volumes/warmstore/Photos` symlink
-- Creates `/Volumes/Archive` placeholder directory
+**What it does** (`scripts/storage/setup_direct_mounts.sh`):
+- Works only on tiers that `diskutil` reports as mounted; an empty mount-point folder is skipped (D22)
+- Creates missing folders only, from the manifest's media layout (`movies`, `tv-shows`, `staging/...`) and Immich's and Plex's own folders
+- Never creates a mount point, never uses sudo, and never changes the owner or mode of existing files
 
 **Management**:
 ```bash
 # Manual execution
-./scripts/ensure_storage_mounts.sh
+./scripts/storage/setup_direct_mounts.sh
 
 # Check mount status
-ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
+ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/coldstore
 ```
 
 ### **io.homelab.plex.plist** - Native Plex Service
@@ -373,7 +385,7 @@ ls -la /Volumes/warmstore/ /Volumes/faststore /Volumes/Archive
 **Management**:
 ```bash
 # Manual safe startup
-./scripts/start_plex_safe.sh
+./scripts/services/start_plex_safe.sh
 
 # Check Plex status
 curl -I http://localhost:32400
@@ -392,7 +404,7 @@ curl -I http://localhost:32400
 **Management**:
 ```bash
 # Manual startup
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 
 # Check server status
 curl -I http://localhost:8080
@@ -411,7 +423,7 @@ curl -I http://localhost:8080
 **Management**:
 ```bash
 # Manual configuration
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 
 # Check serving status
 sudo tailscale serve status
@@ -437,7 +449,7 @@ sudo tailscale serve status
 **Management**:
 ```bash
 # Manual power configuration
-./scripts/92_configure_power.sh
+./scripts/infrastructure/configure_power.sh
 
 # Check current power settings
 pmset -g | grep -E "(sleep|displaysleep|disksleep)"
@@ -451,7 +463,7 @@ tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 **Purpose**: Monitors Staging directories for new media files and automatically processes them according to Plex naming conventions
 
 **Features**:
-- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Real-time monitoring of `/Volumes/warmstore/staging/{movies,tv-shows,collections}/`
 - Automatic file organization using Plex naming standards
 - Preserves folder structure for Collections
 - Graceful error handling with failed files moved to staging/failed/
@@ -467,22 +479,22 @@ tail -f /Volumes/warmstore/logs/powermgmt/powermgmt.out
 **Management**:
 ```bash
 # Check media watcher status
-./scripts/media_watcher.sh status
+./scripts/media/watcher.sh status
 
 # Start/stop media watcher
-./scripts/media_watcher.sh start
-./scripts/media_watcher.sh stop
+./scripts/media/watcher.sh start
+./scripts/media/watcher.sh stop
 
 # Manual processing
-./scripts/media_processor.sh
-./scripts/media_processor.sh --movies-only
-./scripts/media_processor.sh --collections-only
+./scripts/media/processor.sh
+./scripts/media/processor.sh --movies-only
+./scripts/media/processor.sh --collections-only
 
 # View processing logs
 tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
 
 # Check failed files
-ls -la /Volumes/warmstore/Staging/failed/
+ls -la /Volumes/warmstore/staging/failed/
 ```
 
 **Automatic cleanup**:
@@ -559,13 +571,13 @@ docker ps > /dev/null 2>&1 && echo "Docker ready"
 **Manual update process**:
 ```bash
 # Check for updates
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Review available updates
 cat /tmp/update-check.log
 
 # Apply updates when ready
-./scripts/80_check_updates.sh --apply
+./scripts/automation/check_updates.sh   # report only: --apply is disabled until Phase 5 (D11)
 ```
 
 ### Custom Maintenance Tasks
@@ -579,7 +591,7 @@ cat /tmp/update-check.log
 echo "$(date): Running custom maintenance" >> /tmp/custom_maintenance.log
 
 # Example maintenance tasks (customize as needed)
-./scripts/80_check_updates.sh >> /tmp/custom_maintenance.log
+./scripts/automation/check_updates.sh >> /tmp/custom_maintenance.log
 ./diagnostics/check_raid_status.sh >> /tmp/custom_maintenance.log
 ./diagnostics/check_docker_services.sh >> /tmp/custom_maintenance.log
 ```

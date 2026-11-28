@@ -17,11 +17,11 @@ safe_copy() {
     local source="$1"
     local dest="$2"
     local description="$3"
-    
+
     if [[ -f "$source" ]]; then
         cp "$source" "$dest" 2>/dev/null && ok "Collected: $description" || warn "Failed to copy: $description"
     elif [[ -d "$source" ]]; then
-        cp -r "$source" "$dest" 2>/dev/null && ok "Collected: $description" || warn "Failed to copy: $description"  
+        cp -r "$source" "$dest" 2>/dev/null && ok "Collected: $description" || warn "Failed to copy: $description"
     else
         warn "Not found: $description ($source)"
     fi
@@ -32,7 +32,7 @@ capture_command() {
     local command="$1"
     local output_file="$2"
     local description="$3"
-    
+
     if eval "$command" > "$output_file" 2>&1; then
         ok "Captured: $description"
     else
@@ -113,10 +113,9 @@ if command -v brew >/dev/null 2>&1; then
     capture_command "brew list --formula" "$OUTPUT_DIR/brew_packages.txt" "Installed packages"
 fi
 
-# Collect Caddy logs
-if command -v caddy >/dev/null 2>&1; then
-    capture_command "caddy version" "$OUTPUT_DIR/caddy_version.txt" "Caddy version"
-    safe_copy "/opt/homebrew/var/log/caddy.log" "$OUTPUT_DIR/" "Caddy access log"
+# Remote access: tailscale serve mappings (Caddy is no longer used)
+if command -v tailscale >/dev/null 2>&1; then
+    capture_command "tailscale serve status" "$OUTPUT_DIR/tailscale_serve.txt" "Tailscale serve mappings"
 fi
 
 # Collect system logs (recent errors)
@@ -128,15 +127,15 @@ ok "Creating compressed archive..."
 cd /tmp
 if tar -czf "$ARCHIVE_FILE" "homeserver-logs-$TIMESTAMP/" 2>/dev/null; then
     ok "Archive created: $ARCHIVE_FILE"
-    
+
     # Get archive size
     archive_size=$(du -h "$ARCHIVE_FILE" | cut -f1)
     ok "Archive size: $archive_size"
-    
+
     # Clean up temporary directory
     rm -rf "$OUTPUT_DIR"
     ok "Cleaned up temporary files"
-    
+
     echo -e "\n${GREEN}✅ Log collection complete!${NC}"
     echo "Archive: $ARCHIVE_FILE"
     echo ""
@@ -144,7 +143,7 @@ if tar -czf "$ARCHIVE_FILE" "homeserver-logs-$TIMESTAMP/" 2>/dev/null; then
     echo "   - Review logs: tar -tzf $ARCHIVE_FILE"
     echo "   - Extract: tar -xzf $ARCHIVE_FILE"
     echo "   - Send for support: Upload the .tgz file"
-    
+
 else
     fail "Failed to create archive"
     warn "Logs available in: $OUTPUT_DIR"

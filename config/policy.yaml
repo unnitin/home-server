@@ -1,0 +1,147 @@
+# The MCP server's safety policy (docs/mcp-refactor/05-safety-and-jobs.md).
+#
+# The server enforces all of it: nothing here depends on a model following a
+# prompt. Every tool the server registers is listed under `tools` with its
+# tier, and the server refuses to start if one is missing, if one listed here
+# isn't registered, or if a registered name is one that's never exposed
+# (tests/homelab/test_policy.py).
+#
+# After editing, run `python3 -m homelab config render` and commit the
+# regenerated config/policy.json with it (the LaunchD Python has no PyYAML).
+# There is no per-machine override: the policy is the same on every machine.
+
+version: 1
+
+tiers:
+  T0: { approval: none }                                        # observe
+  T1: { approval: none, dry_run_default: true, rate_limit: 10/min }  # safe, reversible actions
+  T2: { approval: out_of_band, plan_ttl: 15m }                  # changes: a person approves (Phase 5)
+  # T3 is never exposed: see `never`.
+
+# What a token's scope sees in tools/list and may call (checked again at every
+# call). A token can also be narrowed to a toolset.
+scopes:
+  observe: { tiers: [T0] }
+  ops: { tiers: [T0, T1] }
+  admin: { tiers: [T0, T1, T2] }
+  curator:                                                      # docs/mcp-refactor/08
+    tiers: [T0, T1, T2]
+    only: [photos_albums, photos_album_profile, photos_unsorted, media_items, memory_recall, job_status]
+
+toolsets:
+  # For small models on small context windows (03): the dozen tools that
+  # answer most questions.
+  core:
+    - system_overview
+    - health_check
+    - storage_status
+    - service_status
+    - service_logs
+    - launchd_jobs
+    - tailscale_status
+    - media_staging_list
+    - photos_stats
+    - memory_recall
+    - runbook_get
+    - job_status
+
+jobs:
+  max_running: 2          # the mini also runs Plex transcoding and Immich ML
+
+# Names that are never registered, whatever the tier (T3). Any name matching
+# homelab.exec.T3_SCRIPT (create_*_raid, format_and_mount …) is refused too.
+never:
+  - create_raid
+  - delete_raid
+  - format_and_mount
+  - preclean_disks
+  - cleanup_disks
+  - rebuild_storage
+  - disk_erase
+  - raid_create
+  - raid_delete
+  - setup_flags
+  - shell_run
+  - photos_delete
+  - photos_trash
+  - album_delete
+  - album_share
+  - people_merge
+  - media_delete
+
+tools:
+  # T0: observe
+  system_overview: T0
+  health_check: T0
+  storage_status: T0
+  storage_plan_recovery: T0
+  service_status: T0
+  service_logs: T0
+  logs_search: T0
+  launchd_jobs: T0
+  docker_containers: T0
+  network_check_port: T0
+  tailscale_status: T0
+  power_status: T0
+  config_get: T0
+  media_staging_list: T0
+  media_library_stats: T0
+  photos_stats: T0
+  updates_check: T0
+  history_query: T0
+  incident_list: T0
+  memory_recall: T0
+  docs_search: T0
+  runbook_get: T0
+  photos_albums: T0
+  photos_album_profile: T0
+  photos_unsorted: T0
+  media_items: T0
+  audit_recent: T0
+  job_status: T0
+  job_logs: T0
+  job_list: T0
+
+  # T0: the old text tools, kept for existing clients (each names its replacement)
+  run_all_diagnostics: T0
+  quick_summary: T0
+  check_prereqs: T0
+  check_homebrew: T0
+  check_raid: T0
+  check_storage: T0
+  verify_media_paths: T0
+  check_colima_docker: T0
+  check_docker_services: T0
+  check_immich: T0
+  check_plex: T0
+  check_jellyfin: T0
+  check_tailscale: T0
+  check_remote_access: T0
+  check_reverse_proxy: T0
+  check_launchd: T0
+  check_port: T0
+
+  # T1: records in the state database, never the system
+  memory_note: T1
+  memory_forget: T1
+  incident_open: T1
+  incident_update: T1
+  incident_resolve: T1
+
+  # T1: writes a log bundle under /tmp (old text tool)
+  collect_logs: T1
+
+  # T1: actions on the system. Each takes dry_run, true by default. A lock
+  # lets one run at a time per key: a job queues behind the running one.
+  service_restart: { tier: T1, lock: "service:{service}" }
+  service_start: { tier: T1, lock: "service:{service}" }
+  launchd_kickstart: T1
+  media_process: { tier: T1, lock: media }
+  media_retry_failed: { tier: T1, lock: media }
+  library_scan: T1
+  photos_run_job: T1
+  tailscale_serve_reconcile: { tier: T1, lock: serve }
+  storage_ensure_layout: { tier: T1, lock: storage }
+  power_ensure: { tier: T1, lock: power }
+  logs_collect: { tier: T1, lock: bundle }
+  job_cancel: T1

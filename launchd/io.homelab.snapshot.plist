@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Every 15 minutes: record a snapshot in the state database (history,
+         incidents, versions), prune old rows, copy the DB to coldstore once a
+         day when it's mounted. The Python the MCP job uses: it can read the
+         external volumes under LaunchD (D27), and needs only pydantic. -->
+    <key>Label</key>
+    <string>io.homelab.snapshot</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/python3.11</string>
+        <string>-m</string>
+        <string>homelab</string>
+        <string>snapshot</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>__REPO__</string>
+    <key>StartInterval</key>
+    <integer>900</integer>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/homelab-snapshot.out</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/homelab-snapshot.err</string>
+</dict>
+</plist>

@@ -1,0 +1,4 @@
+{"Name": "immich-db", "Service": "database", "State": "running", "Health": "healthy", "Status": "Up 3 weeks (healthy)", "Image": "ghcr.io/immich-app/postgres:16-vectorchord0.3.0-pgvectors0.2.1", "ExitCode": 0, "CreatedAt": "2026-11-03 22:21:43 -0800 PST"}
+{"Name": "immich-ml", "Service": "immich-machine-learning", "State": "running", "Health": "healthy", "Status": "Up 3 weeks (healthy)", "Image": "ghcr.io/immich-app/immich-machine-learning:v2.1.0", "ExitCode": 0, "CreatedAt": "2026-11-03 22:22:21 -0800 PST"}
+{"Name": "immich-redis", "Service": "redis", "State": "running", "Health": "", "Status": "Up 3 weeks", "Image": "redis:7-alpine", "ExitCode": 0, "CreatedAt": "2026-11-03 22:22:21 -0800 PST"}
+{"Name": "immich-server", "Service": "immich-server", "State": "running", "Health": "healthy", "Status": "Up 3 weeks (healthy)", "Image": "ghcr.io/immich-app/immich-server:v2.1.0", "ExitCode": 0, "CreatedAt": "2026-11-03 22:22:21 -0800 PST"}

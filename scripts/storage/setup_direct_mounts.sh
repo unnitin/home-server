@@ -1,151 +1,130 @@
 #!/usr/bin/env bash
-# Setup direct mount directory structure (no symlinks)
-# Creates logical data organization within each storage tier
+# Create the expected folder layout on each storage tier, without symlinks.
+# Run at login by LaunchD (io.homelab.storage) and by setup_full.sh.
+#
+#   setup_direct_mounts.sh [--dry-run]
+#
+# Safe to run any time (D22):
+# - Works only on a volume that is actually mounted (diskutil). An empty
+#   mount-point folder is skipped, so nothing lands on the internal disk and
+#   Plex and Jellyfin never see an empty library in place of a missing one.
+# - Creates missing folders only. It never deletes anything and never changes
+#   the owner or mode of anything that already exists. A new Immich database
+#   folder is created 0700, which Postgres requires.
+# - Needs no sudo. Run as root (setup_full.sh uses sudo), it hands only the
+#   folders it created to the invoking user.
+#
+# Exits 0 when every mounted tier has its layout (a tier that isn't mounted is
+# reported and skipped), 1 when a folder could not be created on a mounted one.
 
 set -euo pipefail
 
-echo "=== Setting up Direct Mount Structure ==="
-echo "$(date): Creating clean directory structure without symlinks"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/mount_common.sh
+source "$SCRIPT_DIR/lib/mount_common.sh"
 
-# Function to create directory structure safely
-create_structure() {
-    local base_path="$1"
-    local description="$2"
-    shift 2
-    local directories=("$@")
-    
-    if [[ -d "$base_path" ]]; then
-        echo "Creating $description structure in $base_path..."
-        for dir in "${directories[@]}"; do
-            sudo mkdir -p "$base_path/$dir"
-            echo "  ✅ Created: $base_path/$dir"
-        done
-    else
-        echo "❌ ERROR: $base_path not found, cannot create $description structure"
-        echo "💡 Try: Check if RAID arrays are mounted with 'diskutil list'"
-        return 1
+log_info()  { echo "[INFO]  $(date '+%H:%M:%S') $*"; }
+log_warn()  { echo "[WARN]  $(date '+%H:%M:%S') $*" >&2; }
+log_error() { echo "[ERROR] $(date '+%H:%M:%S') $*" >&2; }
+
+DRY_RUN=0
+case "${1:-}" in
+    "") ;;
+    --dry-run) DRY_RUN=1 ;;
+    -h | --help)
+        sed -n '2,19p' "$0"
+        exit 0
+        ;;
+    *)
+        log_error "Unknown option: $1 (try --help)"
+        exit 2
+        ;;
+esac
+
+# Every folder to create, as absolute paths, parents before children: each is
+# created without -p, so every mode is chosen here. The media layout, the photo
+# library and the log root come from the manifest; Immich's and Plex's own
+# folders are theirs.
+WANT=()
+have() {
+    local x
+    for x in ${WANT[@]+"${WANT[@]}"}; do [[ "$x" == "$1" ]] && return 0; done
+    return 1
+}
+is_tier_root() {
+    local t
+    for t in $HOMELAB_TIERS; do [[ "$1" == "$(tier_path "$t")" ]] && return 0; done
+    return 1
+}
+want() {  # want PATH: adds PATH, after any parent below its tier's mount point
+    local parent
+    parent="$(dirname "$1")"
+    if [[ "$parent" != / ]] && ! is_tier_root "$parent"; then want "$parent"; fi
+    have "$1" || WANT+=("$1")
+}
+upper() { printf '%s' "$1" | tr '[:lower:]' '[:upper:]'; }
+
+for d in library upload thumbs encoded-video database; do
+    want "$HOMELAB_PHOTOS_LIBRARY/$d"
+done
+for d in metadata transcoding processing logs; do
+    want "$HOMELAB_SVC_PLEX_DATA_DIR/$d"   # Plex's own folders, where the manifest keeps its data
+done
+for lib in $HOMELAB_MEDIA_LIBRARIES; do
+    dir_var="HOMELAB_MEDIA_$(upper "$lib")_DIR"
+    want "${!dir_var}"
+done
+for lib in $HOMELAB_MEDIA_LIBRARIES; do
+    staging_var="HOMELAB_MEDIA_$(upper "$lib")_STAGING"
+    want "${!staging_var}"
+done
+want "$HOMELAB_MEDIA_FAILED"
+want "$HOMELAB_MEDIA_ROOT/music"      # optional Plex/Jellyfin library
+for module in media-watcher takeout; do
+    want "$HOMELAB_LOG_ROOT/$module"
+done
+
+failures=0
+created=0
+
+# ensure_layout TIER: create the wanted folders that live on that tier
+ensure_layout() {
+    local tier="$1" base path mode
+    base="$(tier_path "$tier")"
+    if ! is_mount_point "$base"; then
+        log_warn "$tier is not mounted at $base; skipping it (nothing created)"
+        return 0
     fi
+    for path in "${WANT[@]}"; do
+        [[ "$path" == "$base"/* && ! -e "$path" ]] || continue
+        mode=755
+        [[ "$path" == "$HOMELAB_PHOTOS_LIBRARY/database" ]] && mode=700
+        if ((DRY_RUN)); then
+            log_info "Would create $path (mode $mode)"
+            continue
+        fi
+        if mkdir -m "$mode" "$path"; then
+            if [[ $EUID -eq 0 && -n "${SUDO_USER:-}" ]]; then
+                chown "$SUDO_USER" "$path"
+            fi
+            log_info "Created $path (mode $mode)"
+            created=$((created + 1))
+        else
+            log_error "Could not create $path"
+            failures=$((failures + 1))
+        fi
+    done
 }
 
-# Create faststore directory structure (NVMe - High IOPS)
-FASTSTORE_DIRS=(
-    "immich"
-    "immich/library"
-    "immich/upload" 
-    "immich/thumbs"
-    "immich/encoded-video"
-    "immich/database"
-    "immich/logs"
-    "plex"
-    "plex/metadata"
-    "plex/transcoding"
-    "plex/processing"
-    "plex/logs"
-)
+for tier in $HOMELAB_TIERS; do
+    ensure_layout "$tier"
+done
 
-if ! create_structure "/Volumes/faststore" "faststore (NVMe)" "${FASTSTORE_DIRS[@]}"; then
-    echo "❌ Failed to create faststore directory structure"
-    echo "💡 Try: Ensure /Volumes/faststore is mounted before running this script"
+if ((DRY_RUN)); then
+    log_info "Dry run: nothing was changed"
+elif ((failures)); then
+    log_error "$failures folder(s) could not be created"
+    exit 1
+else
+    log_info "Storage layout complete ($created folder(s) created)"
 fi
-
-# Create warmstore directory structure (SSD - Sequential storage)
-WARMSTORE_DIRS=(
-    "movies"
-    "tv-shows" 
-    "music"
-    "collections"
-    "staging"
-    "staging/movies"
-    "staging/tv-shows"
-    "staging/collections"
-    "logs"
-    "logs/system"
-    "logs/media-processing"
-    "logs/web"
-)
-
-if ! create_structure "/Volumes/warmstore" "warmstore (SSD)" "${WARMSTORE_DIRS[@]}"; then
-    echo "❌ Failed to create warmstore directory structure"
-    echo "💡 Try: Ensure /Volumes/warmstore is mounted before running this script"
-fi
-
-# Set proper permissions (only on our application directories)
-echo "Setting permissions..."
-echo "  Setting ownership on application directories..."
-
-# Faststore directories
-for dir in /Volumes/faststore/immich /Volumes/faststore/plex; do
-    if [ -d "$dir" ]; then
-        if sudo chown -R $(whoami):staff "$dir" 2>/dev/null; then
-            echo "    ✅ Ownership set: $dir"
-        else
-            echo "    ⚠️  Could not set ownership: $dir"
-        fi
-    fi
-done
-
-# Warmstore directories
-for dir in /Volumes/warmstore/movies /Volumes/warmstore/tv-shows /Volumes/warmstore/music /Volumes/warmstore/collections /Volumes/warmstore/staging /Volumes/warmstore/logs; do
-    if [ -d "$dir" ]; then
-        # Check if directory has existing data (more than just .DS_Store)
-        file_count=$(find "$dir" -type f ! -name ".DS_Store" 2>/dev/null | wc -l)
-        if [ "$file_count" -gt 0 ]; then
-            echo "    ℹ️  Skipping ownership change (has data): $dir"
-        else
-            if sudo chown -R $(whoami):staff "$dir" 2>/dev/null; then
-                echo "    ✅ Ownership set: $dir"
-            else
-                echo "    ⚠️  Could not set ownership: $dir"
-            fi
-        fi
-    fi
-done
-
-echo "  Setting permissions on application directories..."
-
-# Faststore permissions
-for dir in /Volumes/faststore/immich /Volumes/faststore/plex; do
-    if [ -d "$dir" ]; then
-        if sudo chmod -R 755 "$dir" 2>/dev/null; then
-            echo "    ✅ Permissions set: $dir"
-        else
-            echo "    ⚠️  Could not set permissions: $dir"
-        fi
-    fi
-done
-
-# Warmstore permissions
-for dir in /Volumes/warmstore/movies /Volumes/warmstore/tv-shows /Volumes/warmstore/music /Volumes/warmstore/collections /Volumes/warmstore/staging /Volumes/warmstore/logs; do
-    if [ -d "$dir" ]; then
-        # Check if directory has existing data (more than just .DS_Store)
-        file_count=$(find "$dir" -type f ! -name ".DS_Store" 2>/dev/null | wc -l)
-        if [ "$file_count" -gt 0 ]; then
-            echo "    ℹ️  Skipping permission change (has data): $dir"
-        else
-            if sudo chmod -R 755 "$dir" 2>/dev/null; then
-                echo "    ✅ Permissions set: $dir"
-            else
-                echo "    ⚠️  Could not set permissions: $dir"
-            fi
-        fi
-    fi
-done
-
-# Summary
-echo ""
-echo "=== Direct Mount Structure Summary ==="
-echo "📊 Faststore (NVMe - High IOPS):"
-[[ -d "/Volumes/faststore" ]] && find /Volumes/faststore -type d -maxdepth 2 2>/dev/null | grep -v "\.Spotlight-V100\|\.fseventsd" | sort | sed 's/^/  /' || true
-
-echo ""
-echo "📊 Warmstore (SSD - Sequential):"  
-[[ -d "/Volumes/warmstore" ]] && find /Volumes/warmstore -type d -maxdepth 2 2>/dev/null | sort | sed 's/^/  /' || true
-
-echo ""
-echo "✅ Direct mount structure setup complete!"
-echo "🎯 Services can now use direct paths without symlinks"
-echo ""
-echo "📝 Next steps:"
-echo "  1. Configure Plex libraries to use /Volumes/warmstore/* paths"
-echo "  2. Verify Immich uses /Volumes/faststore/immich path"
-echo "  3. Update Plex metadata location to /Volumes/faststore/plex/metadata"

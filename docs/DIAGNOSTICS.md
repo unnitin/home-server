@@ -168,6 +168,13 @@ Comprehensive Immich service validation.
 
 ### **Application Service Checks**
 
+#### `check_jellyfin.sh` - Jellyfin Media Server
+Process, port 8096, the `/health` endpoint, version, and the `io.homelab.jellyfin` LaunchD job.
+
+```bash
+./diagnostics/check_jellyfin.sh
+```
+
 #### `check_plex_native.sh` - Plex Media Server
 Enhanced Plex monitoring with detailed diagnostics.
 
@@ -195,18 +202,18 @@ Tailscale connection and configuration validation.
 ```
 
 **Checks**:
-- Tailscale installation
+- Tailscale CLI (found on PATH or inside the Tailscale Mac app)
 - Connection status
 - IP assignment
-- HTTPS serving configuration
-- Network connectivity
 
-#### `check_reverse_proxy.sh` - Caddy Proxy
-Reverse proxy health and routing verification.
+#### `check_remote_access.sh` - Tailnet HTTPS (tailscale serve)
+Compares the live `tailscale serve` mappings with `config/tailscale_serve.txt` and checks that Funnel (public internet access) is off. Replaces the old Caddy check; Caddy is no longer part of the setup.
 
 ```bash
-./diagnostics/check_reverse_proxy.sh
+./diagnostics/check_remote_access.sh
 ```
+
+To fix missing or wrong mappings: `scripts/infrastructure/apply_tailscale_serve.sh` (add `--dry-run` to preview).
 
 #### `network_port_check.sh` - Port Connectivity
 Enhanced network connectivity testing.
@@ -217,7 +224,7 @@ Enhanced network connectivity testing.
 # Examples with service detection
 ./diagnostics/network_port_check.sh localhost 2283   # Immich
 ./diagnostics/network_port_check.sh localhost 32400  # Plex
-./diagnostics/network_port_check.sh localhost 8443   # Caddy
+./diagnostics/network_port_check.sh localhost 8096   # Jellyfin
 ```
 
 **Enhanced features**:
@@ -256,7 +263,7 @@ Enhanced log collection for troubleshooting support.
 
 **Improved features**:
 - **System information**: Hardware, OS version, processes
-- **Service logs**: Docker, Plex, Tailscale, Caddy
+- **Service logs**: Docker, Plex, Tailscale (including `tailscale serve` mappings)
 - **Configuration files**: Sanitized for privacy
 - **Recent error logs**: System and application errors
 - **Performance data**: Resource usage and metrics
@@ -297,11 +304,11 @@ docker stats --no-stream
 **Storage performance testing**:
 ```bash
 # Write speed test
-dd if=/dev/zero of=/Volumes/Photos/test_file bs=1m count=1000
-rm /Volumes/Photos/test_file
+dd if=/dev/zero of=/Volumes/faststore/test_file bs=1m count=1000
+rm /Volumes/faststore/test_file
 
 # Read speed test (use existing large file)
-dd if=/Volumes/Photos/large_file of=/dev/null bs=1m
+dd if=/Volumes/faststore/large_file of=/dev/null bs=1m
 ```
 
 ### Automated Monitoring
@@ -357,7 +364,7 @@ done
 ```bash
 # Disk usage across all storage tiers
 echo "Storage Usage:"
-df -h /Volumes/* 2>/dev/null | grep -E "(Media|Photos|Archive)" | while read line; do
+df -h /Volumes/* 2>/dev/null | grep -E "(faststore|warmstore|coldstore)" | while read line; do
     echo "  $line"
 done
 

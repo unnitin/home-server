@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "json": {
+    "MediaContainer": {
+      "size": 2,
+      "Metadata": [
+        {
+          "title": "Arrival",
+          "year": 2016,
+          "type": "movie",
+          "librarySectionTitle": "Movies",
+          "addedAt": 1795001000
+        },
+        {
+          "title": "Pilot",
+          "grandparentTitle": "Some Show",
+          "type": "episode",
+          "librarySectionTitle": "TV Shows",
+          "addedAt": 1795000900
+        }
+      ]
+    }
+  }
+}

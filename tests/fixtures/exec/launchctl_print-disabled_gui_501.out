@@ -1,0 +1,22 @@
+
+	disabled services = {
+		"io.homelab.tailscale" => enabled
+		"io.homelab.media.watcher" => disabled
+		"com.apple.ManagedClientAgent.enrollagent" => disabled
+		"io.homelab.compose.immich" => disabled
+		"io.homelab.jellyfin" => enabled
+		"com.apple.Siri.agent" => enabled
+		"io.homelab.storage" => enabled
+		"io.homelab.plex" => enabled
+		"io.homelab.powermgmt" => enabled
+		"io.homelab.mcp" => enabled
+		"homebrew.mxcl.caddy" => enabled
+		"io.homelab.updatecheck" => enabled
+		"com.apple.FolderActionsDispatcher" => disabled
+		"io.tailscale.ipn.macos.login-item-helper" => enabled
+		"io.homelab.landing" => enabled
+		"com.apple.appleseed.seedusaged.postinstall" => disabled
+		"io.homelab.colima" => disabled
+		"com.apple.ScriptMenuApp" => disabled
+		"com.logi.cp-dev-mgr" => enabled
+	}

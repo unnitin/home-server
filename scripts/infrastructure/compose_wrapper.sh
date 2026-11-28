@@ -53,6 +53,7 @@ fi
 # --- Env & project settings ---
 ABS_DIR="$(cd "$SERVICE_DIR" && pwd)"
 PROJECT_NAME="${PROJECT_NAME_OVERRIDE:-$(basename "$ABS_DIR")}"
+# bash 3.2 (LaunchD's) treats an empty array as unbound under set -u, hence the +"..." form below
 ENV_FILE_OPT=()
 if [[ -f "$ABS_DIR/.env" ]]; then
   ENV_FILE_OPT=(--env-file "$ABS_DIR/.env")
@@ -64,14 +65,14 @@ COMPOSE=$(compose_bin)
 cd "$ABS_DIR"
 case "$CMD" in
   up|down|restart|pull|build|ps|logs|config)
-    exec $COMPOSE -p "$PROJECT_NAME" "${ENV_FILE_OPT[@]}" $CMD "$@"
+    exec $COMPOSE -p "$PROJECT_NAME" ${ENV_FILE_OPT[@]+"${ENV_FILE_OPT[@]}"} $CMD "$@"
     ;;
   exec|run)
     if [[ $# -lt 1 ]]; then
       echo "Usage: compose_helper.sh $SERVICE_DIR $CMD <service> [args...]" >&2
       exit 2
     fi
-    exec $COMPOSE -p "$PROJECT_NAME" "${ENV_FILE_OPT[@]}" $CMD "$@"
+    exec $COMPOSE -p "$PROJECT_NAME" ${ENV_FILE_OPT[@]+"${ENV_FILE_OPT[@]}"} $CMD "$@"
     ;;
   *)
     usage; echo; echo "❌ Unknown cmd: $CMD" >&2; exit 2 ;;

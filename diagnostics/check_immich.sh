@@ -11,6 +11,6 @@ else
 fi
 
 tcp_open localhost 2283 || true
-http_probe "http://localhost:2283" || true
+http_probe "http://localhost:${HOMELAB_SVC_IMMICH_PORTS:-2283}" || true
 
 print_summary

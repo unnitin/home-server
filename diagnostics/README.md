@@ -10,6 +10,36 @@ These helper scripts let you quickly verify the health of your home server compo
 ./diagnostics/run_all.sh
 ```
 
+## Machine-readable output (JSON mode)
+
+Every diagnostic can report as JSON Lines for the MCP server and other tools:
+
+```bash
+DIAG_FORMAT=json ./diagnostics/check_immich.sh
+DIAG_FORMAT=json ./diagnostics/run_all.sh      # every diagnostic, one stream
+```
+
+stdout then carries one JSON object per check, and the stream ends with a summary object. Everything else the script prints goes to stderr.
+
+```json
+{"type":"check","id":"immich.main.1","component":"immich","section":"","status":"ok","message":"HTTP 200: http://localhost:2283/api/server/ping"}
+{"type":"summary","component":"immich","status":"ok","summary":"immich: 1 passed, 0 warnings, 0 failures","passed":1,"warnings":0,"failures":0,"exit_code":0}
+```
+
+- `status` on a check: `ok`, `warn` or `fail`.
+- `status` on a summary: `ok`, `warn`, `fail`, `error` (the script exited non-zero without recording a failure) or `unknown` (no checks ran).
+- `component` matches the MCP `health_check` components.
+- `run_all.sh` streams each diagnostic's records and ends with its own summary (component `all`).
+- `full_summary.sh` hands JSON mode over to `run_all.sh`.
+
+Human output is unchanged when `DIAG_FORMAT` is unset.
+
+## Where the values come from
+
+`diag_lib.sh` reads `config/homelab.env`, the file generated from the manifest (`config/homelab.yaml`), directly: diagnostics never source anything from `scripts/`. So tier mounts (coldstore is `/Volumes/coldstore`), ports and each tier's warn and crit thresholds are the manifest's. A `HOMELAB_*` value set by the caller wins, and without the file each diagnostic uses its built-in default.
+
+A tier counts as mounted only when `diskutil` says so (`diag_is_mounted`). An empty mount-point folder isn't the volume, and `df` on one reports the internal disk (D31).
+
 ## 📋 Individual Diagnostic Scripts
 
 ### **check_raid_status.sh** - Storage Health
@@ -23,6 +53,15 @@ Shows AppleRAID sets, members, and status for all storage arrays.
 - RAID array status (Online, Degraded, Failed)
 - Member disk health
 - Array capacity and usage
+
+---
+
+### **check_jellyfin.sh** - Jellyfin Service
+Confirms Jellyfin is running, port 8096 is open, `/health` reports Healthy, and shows the version and LaunchD job state.
+
+```bash
+./diagnostics/check_jellyfin.sh
+```
 
 ---
 
@@ -64,7 +103,7 @@ Checks that storage volumes are mounted and accessible with disk usage.
 **Checks**:
 - `/Volumes/warmstore` (warmstore)
 - `/Volumes/faststore` (faststore)  
-- `/Volumes/Archive` (coldstore)
+- `/Volumes/coldstore` (coldstore)
 - Mount permissions and disk usage
 
 ---
@@ -78,7 +117,7 @@ Tests whether services are reachable on expected ports.
 # Examples
 ./diagnostics/network_port_check.sh localhost 32400  # Plex
 ./diagnostics/network_port_check.sh localhost 2283   # Immich
-./diagnostics/network_port_check.sh localhost 8443   # Caddy
+./diagnostics/network_port_check.sh localhost 8096   # Jellyfin
 ```
 
 **Default**: Tests Immich on localhost:2283

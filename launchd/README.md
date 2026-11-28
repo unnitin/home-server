@@ -22,6 +22,20 @@ Starts Immich Docker containers after Colima is ready.
 
 ---
 
+### **io.homelab.snapshot.plist** - History and incidents
+Every 15 minutes, `python3 -m homelab snapshot` records what the system looks like in the state database (`~/Library/Application Support/homelab/state.db`, on the internal disk):
+- **metrics** for `history_query` (tier usage and mounts, each service up or down, the tailnet, Immich totals);
+- **incidents**: one opens when a component starts failing and resolves when it recovers, and a component that flaps within an hour reopens the same one;
+- **versions** of macOS, Tailscale, Immich, Plex and Jellyfin, when they change.
+
+It prunes as it goes (full snapshots for 14 days, then one a day; metrics hourly after 7 days, for a year), and once a day copies the database to `coldstore/homelab-backups/` when coldstore is mounted. It runs under the same Python as the MCP job, which can read the external volumes (D27).
+
+**Service**: `homelab/state/snapshot.py`
+**Trigger**: At load, then every 15 minutes (`StartInterval` 900)
+**Check**: `python3 -m homelab incidents`, `python3 -m homelab history storage.warmstore.used_pct`
+
+---
+
 ### **io.homelab.updatecheck.plist** - Maintenance
 Weekly automated update checks for all system components.
 
@@ -81,7 +95,7 @@ Monitors Staging directories for new media files and automatically processes the
 **Purpose**: Automated media file organization for Plex and Jellyfin Media Servers
 
 **Features**:
-- Real-time monitoring of `/Volumes/warmstore/Staging/{Movies,TV Shows,Collections}/`
+- Real-time monitoring of `/Volumes/warmstore/staging/{movies,tv-shows,collections}/`
 - Automatic file processing using Plex naming standards
 - Preserves folder structure for Collections
 - Graceful error handling with failed files moved to staging/failed/
@@ -94,11 +108,11 @@ Monitors Staging directories for new media files and automatically processes the
 **Management**:
 ```bash
 # Check watcher status
-./scripts/media_watcher.sh status
+./scripts/media/watcher.sh status
 
 # Start/stop watcher manually
-./scripts/media_watcher.sh start
-./scripts/media_watcher.sh stop
+./scripts/media/watcher.sh start
+./scripts/media/watcher.sh stop
 
 # View processing logs
 tail -f /Volumes/warmstore/logs/media-watcher/media_processor_*.log
@@ -144,7 +158,7 @@ sudo log show --predicate 'messageType == 16' --last 1h
 
 ### Automated Installation
 ```bash
-sudo ./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 ```
 
 ### Manual Installation

@@ -94,7 +94,7 @@ After RAID setup, you have three primary storage locations:
 |-------------|---------|-----------|--------|
 | `/Volumes/warmstore` | Plex media library | SSD Mirror/RAID10 | Movies, TV Shows, Music |
 | `/Volumes/faststore` | Immich photo storage | NVMe Mirror/RAID10 | Photos, videos, albums |
-| `/Volumes/Archive` | Long-term storage | HDD Single/Mirror | Backups, archives, old files |
+| `/Volumes/coldstore` | Long-term storage | HDD Single/Mirror | Backups, archives, old files |
 
 ### Ideal Folder Structure
 
@@ -164,12 +164,12 @@ After RAID setup, you have three primary storage locations:
     └── 2025/
 ```
 
-#### 🗄️ Archive Storage (`/Volumes/Archive`)
+#### 🗄️ Archive Storage (`/Volumes/coldstore`)
 
 **Long-term storage and backups:**
 
 ```bash
-/Volumes/Archive/
+/Volumes/coldstore/
 ├── Media Backups/
 │   ├── Old Movie Collection/
 │   ├── TV Show Archive/
@@ -223,16 +223,14 @@ sudo chmod -R 755 "/Volumes/faststore"
 #### 3. Create Archive Structure
 
 ```bash
-# Create archive organization
-sudo mkdir -p "/Volumes/Archive/Media Backups"
-sudo mkdir -p "/Volumes/Archive/Photo Backups"
-sudo mkdir -p "/Volumes/Archive/System Backups"
-sudo mkdir -p "/Volumes/Archive/Documents"
+# Only on the mounted volume: a folder made while it's offline lands on the internal disk (D22)
+diskutil info /Volumes/coldstore | grep -q "Mount Point: *\/Volumes\/coldstore" || { echo "coldstore is not mounted"; exit 1; }
 
-# Set permissions
-sudo chown -R $(whoami):staff "/Volumes/Archive"
-sudo chmod -R 755 "/Volumes/Archive"
+# Create archive organization (no sudo: you own the volume)
+mkdir -p "/Volumes/coldstore/Media Backups" "/Volumes/coldstore/Photo Backups" \
+         "/Volumes/coldstore/System Backups" "/Volumes/coldstore/Documents"
 ```
+Don't `chown -R` or `chmod -R` the volume: that rewrites the owner and mode of every file already on it.
 
 ### Media Management Best Practices
 
@@ -332,7 +330,7 @@ df -h /Volumes/*
 # Detailed usage by directory
 du -sh /Volumes/warmstore/* | sort -hr
 du -sh /Volumes/faststore/* | sort -hr
-du -sh /Volumes/Archive/* | sort -hr
+du -sh /Volumes/coldstore/* | sort -hr
 
 # Find large files
 find /Volumes/warmstore -size +5G -type f -exec ls -lh {} \;
@@ -522,7 +520,7 @@ sudo tailscale down && sudo tailscale up --accept-dns=true
 
 ```bash
 # Check for updates
-./scripts/80_check_updates.sh
+./scripts/automation/check_updates.sh
 
 # Update Homebrew packages
 brew update && brew upgrade
@@ -623,7 +621,7 @@ sudo launchctl load ~/Library/LaunchAgents/io.homelab.*
 diskutil appleRAID list | grep -E "(Status|Size)"
 
 # Check mount points
-mount | grep -E "(Media|Photos|Archive)"
+mount | grep -E "(faststore|warmstore|coldstore)"
 
 # Remount if needed
 sudo diskutil mount /dev/disk5s1
@@ -718,7 +716,7 @@ sudo tailscale up --accept-dns=true
 # Factory reset (DESTRUCTIVE - backup first!)
 # This is for complete rebuilds only
 export RAID_I_UNDERSTAND_DATA_LOSS=1
-./scripts/09_rebuild_storage.sh warmstore
+./scripts/storage/rebuild_storage.sh warmstore
 ```
 
 ---

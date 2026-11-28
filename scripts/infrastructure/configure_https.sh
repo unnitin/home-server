@@ -9,21 +9,28 @@ banner() { echo; echo "=== $* ==="; }
 
 banner "Configuring Tailscale HTTPS with DNS Fix"
 
-# Check if Tailscale is installed and running
-if ! command -v tailscale >/dev/null 2>&1; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../core/environment.sh
+source "$SCRIPT_DIR/../core/environment.sh"
+# shellcheck source=lib/tailscale.sh
+source "$SCRIPT_DIR/lib/tailscale.sh"
+
+# Check if Tailscale is installed and running (the Mac app's CLI isn't on PATH;
+# tailscale_cli finds it)
+if ! tailscale_cli >/dev/null; then
     echo "ERROR: Tailscale not found. Please run scripts/infrastructure/install_tailscale.sh first"
     exit 1
 fi
 
 # Check Tailscale status
-if ! tailscale status >/dev/null 2>&1; then
-    echo "ERROR: Tailscale not connected. Please run: sudo tailscale up --accept-dns=true"
+if ! ts status >/dev/null 2>&1; then
+    echo "ERROR: Tailscale not connected. Open the Tailscale app, or run: tailscale up --accept-dns=true"
     exit 1
 fi
 
 # Get current Tailscale IP and hostname
-TAILSCALE_IP=$(tailscale status --json | grep -A1 '"TailscaleIPs"' | grep -o '"[0-9.]*"' | tr -d '"' | head -1 || echo "")
-TAILSCALE_HOSTNAME=$(tailscale status --json | grep '"DNSName"' | cut -d'"' -f4 | sed 's/\.$//' || echo "")
+TAILSCALE_IP=$(ts ip -4 2>/dev/null | head -1 || echo "")
+TAILSCALE_HOSTNAME=$(ts_hostname)
 
 if [[ -z "$TAILSCALE_IP" || -z "$TAILSCALE_HOSTNAME" ]]; then
     echo "ERROR: Could not determine Tailscale IP or hostname"
@@ -77,36 +84,26 @@ else
     echo "WARNING: DNS may not be fully working yet, continuing..."
 fi
 
-# Configure HTTPS serving for Immich
-echo "Configuring HTTPS serving for Immich..."
-sudo tailscale serve --bg --https=443 http://localhost:2283
-
-# Configure HTTPS serving for Plex (if running)
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:32400 | grep -q "401\|302"; then
-    echo "Configuring HTTPS serving for Plex..."
-    sudo tailscale serve --bg --https=32400 http://localhost:32400
-else
-    echo "WARNING: Plex not detected on port 32400, skipping HTTPS configuration"
-fi
+# Configure HTTPS serving. One list of mappings (config/tailscale_serve.txt) for
+# every service; this script used to point 443 at Immich while enable_landing.sh
+# pointed it at the landing page, so the result depended on which ran last.
+echo "Applying tailnet HTTPS mappings from config/tailscale_serve.txt..."
+"$SCRIPT_DIR/apply_tailscale_serve.sh" --wait 30 || echo "WARNING: some mappings were not applied; re-run scripts/infrastructure/apply_tailscale_serve.sh"
 
 # Show serve status
 echo "Current Tailscale serve configuration:"
-sudo tailscale serve status
+ts serve status || true
 
-# Test HTTPS URLs
-echo "Testing HTTPS URLs..."
 echo
-echo "SECURE HTTPS URLS:"
-echo "Immich (Photos): https://$TAILSCALE_HOSTNAME"
-if sudo tailscale serve status | grep -q ":32400"; then
-    echo "Plex (Media): https://$TAILSCALE_HOSTNAME:32400"
-fi
-echo
-echo "Mobile Apps:"
-echo "Immich Server: https://$TAILSCALE_HOSTNAME"
-if sudo tailscale serve status | grep -q ":32400"; then
-    echo "Plex Server: https://$TAILSCALE_HOSTNAME:32400"
-fi
+echo "SECURE HTTPS URLS (tailnet only, from config/tailscale_serve.txt):"
+while read -r port _ service _; do
+    [[ -z "${port:-}" || "$port" == \#* ]] && continue
+    if [[ "$port" == 443 ]]; then
+        printf '  %-9s https://%s\n' "$service" "$TAILSCALE_HOSTNAME"
+    else
+        printf '  %-9s https://%s:%s\n' "$service" "$TAILSCALE_HOSTNAME" "$port"
+    fi
+done <"$HOMELAB_REPO/config/tailscale_serve.txt"
 
 # Test connectivity
 if curl -s -I "https://$TAILSCALE_HOSTNAME" | grep -q "HTTP/2"; then

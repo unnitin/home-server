@@ -15,11 +15,11 @@ If your home server is completely down after a power outage or restart:
 ./diagnostics/run_all.sh
 
 # 2. Manual recovery sequence (if automation fails)
-./scripts/ensure_storage_mounts.sh           # Recreate mount points
-./scripts/21_start_colima.sh                 # Start Docker
-./scripts/30_deploy_services.sh              # Start Immich
-./scripts/start_plex_safe.sh                 # Start Plex safely
-./scripts/37_enable_simple_landing.sh        # Setup landing page
+./scripts/storage/setup_direct_mounts.sh           # Recreate mount points
+./scripts/infrastructure/start_docker.sh                 # Start Docker
+./scripts/services/deploy_containers.sh              # Start Immich
+./scripts/services/start_plex_safe.sh                 # Start Plex safely
+./scripts/services/enable_landing.sh        # Setup landing page
 
 # 3. Verify everything is working
 # Replace YOUR-DEVICE.YOUR-TAILNET.ts.net with your actual hostname
@@ -37,12 +37,12 @@ curl -I https://YOUR-DEVICE.YOUR-TAILNET.ts.net:32400
 ls -la /Volumes/
 
 # Recreate mount structure
-./scripts/ensure_storage_mounts.sh
+./scripts/storage/setup_direct_mounts.sh
 
 # Verify mount points
 ls -la /Volumes/warmstore/Movies/
 ls -la /Volumes/faststore/
-ls -la /Volumes/Archive/
+ls -la /Volumes/coldstore/
 ```
 
 #### **Docker/Immich Not Starting**
@@ -80,7 +80,7 @@ sudo tailscale serve --bg --https=32400 http://localhost:32400
 pkill -f "python3 -m http.server 8080"
 
 # Restart landing page
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 
 # Check HTTP server
 curl -I http://localhost:8080
@@ -135,7 +135,7 @@ launchctl kickstart gui/$(id -u)/io.homelab.updatecheck
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/io.homelab.*.plist
 
 # Reinstall enhanced automation
-./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 ```
 
 ### **View Service Logs**
@@ -168,7 +168,7 @@ tailscale status
 sudo tailscale up --accept-dns=true
 
 # Reconfigure HTTPS serving
-./scripts/37_enable_simple_landing.sh
+./scripts/services/enable_landing.sh
 ```
 
 ### **"Immich Database Connection Failed"**
@@ -197,7 +197,7 @@ ls -la /Volumes/warmstore/Movies/
 ls -la /Volumes/warmstore/TV/
 
 # Recreate mounts if missing
-./scripts/ensure_storage_mounts.sh
+./scripts/storage/setup_direct_mounts.sh
 
 # Restart Plex
 pkill -f "Plex Media Server"
@@ -217,7 +217,7 @@ ls -la /Volumes/warmstore/
 ./diagnostics/check_raid_status.sh
 
 # If warmstore exists, recreate mounts
-./scripts/ensure_storage_mounts.sh
+./scripts/storage/setup_direct_mounts.sh
 ```
 
 ---
@@ -287,7 +287,7 @@ cp ~/homeserver-backup/$BACKUP_DATE/.env services/immich/
 cp -r ~/homeserver-backup/$BACKUP_DATE/launchd/ ./
 
 # Reinstall services
-./scripts/40_configure_launchd.sh
+./scripts/automation/configure_launchd.sh
 ```
 
 ---

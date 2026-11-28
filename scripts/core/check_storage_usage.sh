@@ -1,90 +1,60 @@
 #!/usr/bin/env bash
-# Storage Usage Monitor for Home Server
-# Checks storage usage and alerts if thresholds are exceeded
+# Storage usage for every tier in the manifest (config/homelab.yaml), against
+# each tier's own warn and crit thresholds.
+#
+# Usage: ./scripts/core/check_storage_usage.sh
+# Exit:  0 = every mounted tier below its warn threshold
+#        1 = at least one mounted tier at or above warn (or crit)
+#
+# A tier counts only when diskutil says a volume is mounted there. An empty
+# mount-point folder isn't storage: df would report the internal disk (D22).
 
 set -euo pipefail
 
-# Configuration
-FASTSTORE_PATH="/Volumes/faststore"
-WARMSTORE_PATH="/Volumes/warmstore"
-WARNING_THRESHOLD=80
-CRITICAL_THRESHOLD=90
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=environment.sh
+source "${SCRIPT_DIR}/environment.sh"
 
-# Colors for output
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-
-echo "🔍 Home Server Storage Usage Report"
-echo "=================================="
+echo "Home server storage usage"
+echo "========================="
 echo ""
 
-# Check faststore (Immich photos)
-if [ -d "$FASTSTORE_PATH" ]; then
-    FASTSTORE_USAGE=$(df "$FASTSTORE_PATH" | tail -1 | awk '{print $5}' | sed 's/%//')
-    FASTSTORE_SIZE=$(df -h "$FASTSTORE_PATH" | tail -1 | awk '{print $2}')
-    FASTSTORE_USED=$(df -h "$FASTSTORE_PATH" | tail -1 | awk '{print $3}')
-    FASTSTORE_AVAIL=$(df -h "$FASTSTORE_PATH" | tail -1 | awk '{print $4}')
-    
-    echo "📸 Faststore (Immich Photos):"
-    echo "  Size: $FASTSTORE_SIZE | Used: $FASTSTORE_USED | Available: $FASTSTORE_AVAIL"
-    echo "  Usage: ${FASTSTORE_USAGE}%"
-    
-    if [ "$FASTSTORE_USAGE" -ge "$CRITICAL_THRESHOLD" ]; then
-        echo "  Status: ${RED}CRITICAL${NC} - Usage above ${CRITICAL_THRESHOLD}%"
-    elif [ "$FASTSTORE_USAGE" -ge "$WARNING_THRESHOLD" ]; then
-        echo "  Status: ${YELLOW}WARNING${NC} - Usage above ${WARNING_THRESHOLD}%"
+high=0
+for tier in $HOMELAB_TIERS; do
+    upper=$(printf '%s' "$tier" | tr '[:lower:]' '[:upper:]')
+    use_var="HOMELAB_TIER_${upper}_USE"
+    warn_var="HOMELAB_TIER_${upper}_WARN_PCT"
+    crit_var="HOMELAB_TIER_${upper}_CRIT_PCT"
+    mount=$(homelab_tier_mount "$tier")
+    warn="${!warn_var}"
+    crit="${!crit_var}"
+
+    echo "$tier ($mount): ${!use_var}"
+    if ! homelab_is_mounted "$mount"; then
+        echo "  Not mounted"
+        echo ""
+        continue
+    fi
+
+    # df -P: one line per filesystem in a fixed format; -h for readable sizes
+    used_pct=$(df -P "$mount" | awk 'NR == 2 { sub("%", "", $5); print $5 }')
+    read -r size used avail < <(df -h "$mount" | awk 'NR == 2 { print $2, $3, $4 }')
+    echo "  Size: $size | Used: $used | Available: $avail | Usage: ${used_pct}%"
+    if (( used_pct >= crit )); then
+        echo "  Status: CRITICAL (at or above ${crit}%)"
+        high=1
+    elif (( used_pct >= warn )); then
+        echo "  Status: WARNING (at or above ${warn}%)"
+        high=1
     else
-        echo "  Status: ${GREEN}OK${NC}"
+        echo "  Status: OK (warns at ${warn}%)"
     fi
     echo ""
+done
+
+if (( high )); then
+    echo "Storage usage is high: clean up or expand the tiers marked above."
 else
-    echo "❌ Faststore not mounted: $FASTSTORE_PATH"
-    echo ""
+    echo "Storage usage is within limits on every mounted tier."
 fi
-
-# Check warmstore (Plex media)
-if [ -d "$WARMSTORE_PATH" ]; then
-    WARMSTORE_USAGE=$(df "$WARMSTORE_PATH" | tail -1 | awk '{print $5}' | sed 's/%//')
-    WARMSTORE_SIZE=$(df -h "$WARMSTORE_PATH" | tail -1 | awk '{print $2}')
-    WARMSTORE_USED=$(df -h "$WARMSTORE_PATH" | tail -1 | awk '{print $3}')
-    WARMSTORE_AVAIL=$(df -h "$WARMSTORE_PATH" | tail -1 | awk '{print $4}')
-    
-    echo "🎬 Warmstore (Plex Media):"
-    echo "  Size: $WARMSTORE_SIZE | Used: $WARMSTORE_USED | Available: $WARMSTORE_AVAIL"
-    echo "  Usage: ${WARMSTORE_USAGE}%"
-    
-    if [ "$WARMSTORE_USAGE" -ge "$CRITICAL_THRESHOLD" ]; then
-        echo "  Status: ${RED}CRITICAL${NC} - Usage above ${CRITICAL_THRESHOLD}%"
-    elif [ "$WARMSTORE_USAGE" -ge "$WARNING_THRESHOLD" ]; then
-        echo "  Status: ${YELLOW}WARNING${NC} - Usage above ${WARNING_THRESHOLD}%"
-    else
-        echo "  Status: ${GREEN}OK${NC}"
-    fi
-    echo ""
-else
-    echo "❌ Warmstore not mounted: $WARMSTORE_PATH"
-    echo ""
-fi
-
-# Check Immich directory specifically
-if [ -d "$FASTSTORE_PATH/immich" ]; then
-    IMMICH_SIZE=$(du -sh "$FASTSTORE_PATH/immich" | awk '{print $1}')
-    echo "📁 Immich Directory Size: $IMMICH_SIZE"
-    echo ""
-fi
-
-# Summary
-echo "📊 Summary:"
-if [ "$FASTSTORE_USAGE" -ge "$WARNING_THRESHOLD" ] || [ "$WARMSTORE_USAGE" -ge "$WARNING_THRESHOLD" ]; then
-    echo "⚠️  Storage usage is high - consider cleanup or expansion"
-else
-    echo "✅ Storage usage is within normal limits"
-fi
-
-echo ""
-echo "💡 Tips:"
-echo "  - Run this script regularly to monitor usage"
-echo "  - Consider setting up automated alerts"
-echo "  - Clean up old media files if usage gets high"
+exit "$high"

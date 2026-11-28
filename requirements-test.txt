@@ -12,6 +12,10 @@ requests>=2.31.0
 
 # Configuration and data handling
 PyYAML>=6.0.1
+pydantic>=2.5,<3      # homelab/config.py (the manifest)
+mcp>=1.27,<2          # homelab_mcp/: server tests and the tool-schema portability lint
+uvicorn
+starlette
 python-dotenv>=1.0.0
 
 # macOS system integration

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "json": [
+    {
+      "id": "alb-2",
+      "albumName": "Family",
+      "assetCount": 120,
+      "shared": true,
+      "ownerId": "user-1",
+      "startDate": "2019-01-01T00:00:00.000Z",
+      "endDate": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "id": "alb-3",
+      "albumName": "Their Album",
+      "assetCount": 9,
+      "shared": true,
+      "ownerId": "user-2",
+      "startDate": null,
+      "endDate": null
+    }
+  ]
+}

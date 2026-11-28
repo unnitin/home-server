@@ -7,7 +7,7 @@
     <string>/usr/bin/env</string>
     <string>bash</string>
     <string>-lc</string>
-    <string>sleep 90 &amp;&amp; __HOME__/Documents/home-server/scripts/storage/wait_for_storage.sh &amp;&amp; /Users/nitinsrivastava/Documents/home-server/scripts/infrastructure/compose_wrapper.sh /Users/nitinsrivastava/Documents/home-server/services/immich up -d</string>
+    <string>sleep 90 &amp;&amp; __REPO__/scripts/storage/wait_for_storage.sh faststore &amp;&amp; __REPO__/scripts/infrastructure/compose_wrapper.sh __REPO__/services/immich up -d</string>
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

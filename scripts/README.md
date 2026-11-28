@@ -10,7 +10,7 @@ The scripts are organized into 6 functional modules with layered dependencies:
 
 ```
 scripts/
-├── core/           # 🔧 System bootstrap & environment (4 scripts)
+├── core/           # 🔧 System bootstrap & environment (6 scripts)
 ├── storage/        # 💾 RAID & storage management (10 scripts + lib)
 ├── infrastructure/ # 🏗️ Docker, networking, VPN (7 scripts + lib)
 ├── services/       # 🚀 Application deployment (10 scripts)
@@ -28,15 +28,18 @@ scripts/
 ### **🔧 Core Module**
 | Script | Purpose | Used By |
 |--------|---------|---------|
+| [`core/environment.sh`](core/README.md#environmentsh) | Shared configuration: every `HOMELAB_*` value from the manifest | Sourced by every module |
 | [`core/fix_permissions.sh`](core/README.md#fix_permissionssh) | Fix script permissions | Manual maintenance |
 | [`core/ensure_power_settings.sh`](core/README.md#ensure_power_settingssh) | Monitor power settings | LaunchD io.homelab.powermgmt |
 | [`core/health_check.sh`](core/README.md#health_checksh) | System health validation | Manual troubleshooting |
 | [`core/check_storage_usage.sh`](core/README.md#check_storage_usagesh) | Monitor storage usage | Manual monitoring |
+| [`core/install_sudoers.sh`](core/README.md#install_sudoerssh) | Install the scoped sudo rule (exact `pmset` commands only) | `sudo`, by hand at setup |
 
 ### **💾 Storage Module**
 | Script | Purpose | Used By |
 |--------|---------|---------|
 | [`storage/lib/raid_common.sh`](storage/README.md#libraidcommonsh) | RAID utilities library | All RAID creation scripts |
+| [`storage/lib/mount_common.sh`](storage/README.md#libmountcommonsh) | Mount checks via diskutil (D22) | storage/setup_direct_mounts.sh, storage/wait_for_storage.sh |
 | [`storage/create_ssd_raid.sh`](storage/README.md#create_ssd_raidsh) | Create SSD RAID mirror | setup_full.sh, setup_flags.sh |
 | [`storage/create_nvme_raid.sh`](storage/README.md#create_nvme_raidsh) | Create NVMe RAID mirror | setup_full.sh, setup_flags.sh |
 | [`storage/create_hdd_raid.sh`](storage/README.md#create_hdd_raidsh) | Create HDD RAID mirror | setup_full.sh, setup_flags.sh |
@@ -44,8 +47,8 @@ scripts/
 | [`storage/cleanup_disks.sh`](storage/README.md#cleanup_diskssh) | Prepare disks for RAID | storage/preclean_disks.sh |
 | [`storage/preclean_disks.sh`](storage/README.md#preclean_diskssh) | Pre-RAID cleanup | setup_full.sh, setup_flags.sh |
 | [`storage/rebuild_storage.sh`](storage/README.md#rebuild_storagesh) | Manual RAID rebuild | Manual use only |
-| [`storage/setup_direct_mounts.sh`](storage/README.md#setup_direct_mountssh) | Direct mount directory structure | LaunchD io.homelab.storage |
-| [`storage/wait_for_storage.sh`](storage/README.md#wait_for_storagesh) | Storage dependency check | LaunchD io.homelab.compose.immich |
+| [`storage/setup_direct_mounts.sh`](storage/README.md#setup_direct_mountssh) | Create missing tier folders on mounted volumes only | LaunchD io.homelab.storage, setup_full.sh |
+| [`storage/wait_for_storage.sh`](storage/README.md#wait_for_storagesh) | Wait for the tiers a service needs to be mounted | LaunchD io.homelab.compose.immich (faststore) |
 
 ### **🏗️ Infrastructure Module**
 | Script | Purpose | Used By |
@@ -56,6 +59,8 @@ scripts/
 | [`infrastructure/compose_wrapper.sh`](infrastructure/README.md#compose_wrappersh) | Docker Compose wrapper | services/deploy_containers.sh, LaunchD |
 | [`infrastructure/install_tailscale.sh`](infrastructure/README.md#install_tailscalesh) | Install VPN service | setup_full.sh, setup_flags.sh |
 | [`infrastructure/configure_https.sh`](infrastructure/README.md#configure_httpssh) | Configure HTTPS serving | setup_full.sh, setup_flags.sh |
+| [`infrastructure/apply_tailscale_serve.sh`](infrastructure/README.md#apply_tailscale_servesh) | Publish services to the tailnet from `config/tailscale_serve.txt` | services/enable_landing.sh, configure_https.sh |
+| [`infrastructure/lib/tailscale.sh`](infrastructure/README.md#libtailscalesh) | Tailscale CLI helpers (finds the Mac app's CLI) | apply_tailscale_serve.sh, configure_https.sh, enable_landing.sh |
 | [`infrastructure/configure_power.sh`](infrastructure/README.md#configure_powersh) | Power management setup | setup_full.sh, setup_flags.sh |
 
 ### **🚀 Services Module**
@@ -67,6 +72,8 @@ scripts/
 | [`services/start_jellyfin_safe.sh`](services/README.md#start_jellyfin_safesh) | Safe Jellyfin startup | LaunchD io.homelab.jellyfin |
 | [`services/install_plex.sh`](services/README.md#install_plexsh) | Install Plex Media Server | setup_full.sh, setup_flags.sh |
 | [`services/start_plex_safe.sh`](services/README.md#start_plex_safesh) | Safe Plex startup | LaunchD io.homelab.plex |
+| [`services/lib/native_app.sh`](services/README.md#libnative_appsh) | Start a native app from the manifest safely | start_plex_safe.sh, start_jellyfin_safe.sh |
+| [`services/restart_native_app.sh`](services/README.md#restart_native_appsh) | Quit and start a native app (Plex, Jellyfin) | MCP `service_restart` (a job) |
 | [`services/configure_plex_direct.sh`](services/README.md#configure_plex_directsh) | Configure Plex direct paths | setup_full.sh, Manual |
 | [`services/enable_landing.sh`](services/README.md#enable_landingsh) | Landing page service | setup_full.sh, LaunchD |
 | [`services/import_takeout.sh`](services/README.md#import_takeoutsh) | Google Takeout import wrapper | Manual |

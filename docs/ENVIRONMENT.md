@@ -87,7 +87,7 @@ export SSD_DISKS="disk4 disk5 disk6 disk7"  # 4 disks = RAID10
 export NVME_DISKS="disk2 disk3"             # 2 disks = mirror
 export NVME_DISKS="disk2 disk3 disk8 disk9" # 4 disks = RAID10
 
-# HDD Array (coldstore) - for archive at /Volumes/Archive
+# HDD Array (coldstore) - for archive at /Volumes/coldstore
 export COLD_DISKS="disk6"                   # Single disk
 export COLD_DISKS="disk6 disk7"             # 2 disks = mirror
 ```
@@ -98,7 +98,7 @@ export COLD_DISKS="disk6 disk7"             # 2 disks = mirror
 |------------|---------------|---------|---------------|
 | `faststore` | `/Volumes/faststore` | Immich photos (high-speed) | `NVME_DISKS` |
 | `warmstore` | `/Volumes/warmstore` | Plex media (good speed) | `SSD_DISKS` |
-| `coldstore` | `/Volumes/Archive` | Archive storage (capacity) | `COLD_DISKS` |
+| `coldstore` | `/Volumes/coldstore` | Archive storage (capacity) | `COLD_DISKS` |
 
 **Custom names/mounts** *(advanced)*:
 ```bash
@@ -145,15 +145,11 @@ sudo tailscale up --accept-dns=true
 sudo tailscale up --accept-dns=true --advertise-exit-node --ssh
 ```
 
-**HTTPS serving** (after setup):
+**HTTPS serving** (after setup): every tailnet mapping is listed once in `config/tailscale_serve.txt` (443 landing page, 2283 Immich, 32400 Plex, 8096 Jellyfin, 8765 MCP). Apply it, adding whatever is missing without touching the rest:
 ```bash
-# Direct service access
-sudo tailscale serve --https=443   http://localhost:2283    # Immich
-sudo tailscale serve --https=32400 http://localhost:32400   # Plex
-
-# With reverse proxy (replaces direct Immich access)
-sudo tailscale serve --https=443   http://localhost:8443    # Caddy proxy
+./scripts/infrastructure/apply_tailscale_serve.sh
 ```
+There is no reverse proxy: each service has its own HTTPS port on the tailnet.
 
 ---
 

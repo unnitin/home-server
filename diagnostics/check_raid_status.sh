@@ -22,7 +22,7 @@ if raid_output=$(diskutil appleRAID list 2>/dev/null); then
     else
         ok "AppleRAID sets found"
         echo "$raid_output"
-        
+
         # Parse and check each RAID set status
         while IFS= read -r line; do
             if [[ $line =~ Name:[[:space:]]+(.+) ]]; then
@@ -53,16 +53,16 @@ fi
 
 # Check individual disk health for known arrays
 echo -e "\n${YELLOW}Checking storage mount points...${NC}"
-for mount_point in "/Volumes/warmstore" "/Volumes/faststore" "/Volumes/Archive"; do
+for mount_point in "$(diag_tier_mount warmstore /Volumes/warmstore)" "$(diag_tier_mount faststore /Volumes/faststore)" "$(diag_tier_mount coldstore /Volumes/coldstore)"; do
     if [[ -d "$mount_point" ]]; then
         ok "Mount point exists: $mount_point"
-        
+
         # Get disk info for this mount
         if disk_info=$(df "$mount_point" 2>/dev/null | tail -1); then
             device=$(echo "$disk_info" | awk '{print $1}')
             usage=$(echo "$disk_info" | awk '{print $5}')
             ok "  Device: $device, Usage: $usage"
-            
+
             # Check if usage is getting high
             usage_num=$(echo "$usage" | sed 's/%//')
             if [[ $usage_num -gt 90 ]]; then

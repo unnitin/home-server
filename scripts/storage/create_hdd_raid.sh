@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source "$(dirname "$0")/lib/raid_common.sh"
+source "$(dirname "$0")/../core/environment.sh"
 require_guard
 parse_disks COLD_DISKS
 
@@ -9,7 +10,8 @@ for d in "${DISKS[@]}"; do
 done
 
 COLD_RAID_NAME="${COLD_RAID_NAME:-coldstore}"
-ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-/Volumes/Archive}"
+# The manifest says where coldstore mounts: /Volumes/coldstore, since 2026-11-26 (D25)
+ARCHIVE_MOUNT="${ARCHIVE_MOUNT:-$HOMELAB_TIER_COLDSTORE_MOUNT}"
 
 delete_raids_containing_disks "${DISKS[@]}"
 delete_raid_by_name "$COLD_RAID_NAME"

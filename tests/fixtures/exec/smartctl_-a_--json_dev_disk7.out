@@ -1,0 +1,51 @@
+{
+  "device": {
+    "name": "/dev/disk7",
+    "info_name": "/dev/disk7",
+    "type": "nvme",
+    "protocol": "NVMe"
+  },
+  "model_name": "ORICO",
+  "smart_status": {
+    "passed": true,
+    "nvme": {
+      "value": 0
+    }
+  },
+  "temperature": {
+    "op_limit_max": 90,
+    "critical_limit_max": 95,
+    "current": 41
+  },
+  "power_on_time": {
+    "hours": 5929
+  },
+  "nvme_smart_health_information_log": {
+    "nsid": -1,
+    "critical_warning": 0,
+    "temperature": 41,
+    "available_spare": 100,
+    "available_spare_threshold": 1,
+    "percentage_used": 0,
+    "data_units_read": 2534606,
+    "data_units_written": 5549048,
+    "host_reads": 15269720,
+    "host_writes": 28131273,
+    "controller_busy_time": 220,
+    "power_cycles": 8,
+    "power_on_hours": 5929,
+    "unsafe_shutdowns": 5,
+    "media_errors": 0,
+    "num_err_log_entries": 0,
+    "warning_temp_time": 0,
+    "critical_comp_time": 0,
+    "temperature_sensors": [
+      41,
+      29
+    ]
+  },
+  "serial_number": "SERIAL-1",
+  "smartctl": {
+    "exit_status": 0
+  }
+}

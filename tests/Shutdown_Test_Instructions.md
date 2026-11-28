@@ -17,7 +17,7 @@ This test validates that the automated recovery system works correctly after a c
 ### ✅ **1. Verify Current System Status**
 ```bash
 cd ~/Documents/home-server
-./scripts/post_boot_health_check.sh
+./scripts/core/health_check.sh
 ```
 
 **Expected Result:** "🎉 ALL SYSTEMS OPERATIONAL!"
@@ -36,8 +36,8 @@ Open in browser or test with curl:
 ### ✅ **3. Create Recovery Reference**
 ```bash
 echo "POST-BOOT RECOVERY COMMANDS:" > ~/recovery_reference.txt
-echo "1. Health check: ./scripts/post_boot_health_check.sh" >> ~/recovery_reference.txt
-echo "2. Auto-recovery: ./scripts/post_boot_health_check.sh --auto-recover" >> ~/recovery_reference.txt
+echo "1. Health check: ./scripts/core/health_check.sh" >> ~/recovery_reference.txt
+echo "2. Auto-recovery: ./scripts/core/health_check.sh --auto-recover" >> ~/recovery_reference.txt
 echo "3. Monitor logs: tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}" >> ~/recovery_reference.txt
 ```
 
@@ -94,7 +94,7 @@ tail -f /tmp/{storage,colima,immich,plex,landing}.{out,err}
 
 ### **1. Health Check**
 ```bash
-./scripts/post_boot_health_check.sh
+./scripts/core/health_check.sh
 ```
 
 **Expected Output Checklist:**
@@ -128,7 +128,7 @@ Test from another device:
 
 ### **1. Auto-Recovery Attempt**
 ```bash
-./scripts/post_boot_health_check.sh --auto-recovery
+./scripts/core/health_check.sh --auto-recovery
 ```
 
 **Record what auto-recovery fixed:**
@@ -141,9 +141,8 @@ Test from another device:
 If auto-recovery shows manual commands needed:
 
 ```bash
-# Storage fixes (if needed):
-sudo ln -sf /Volumes/warmstore/Photos /Volumes/Photos
-sudo mkdir -p /Volumes/Archive
+# Storage: nothing to create by hand. Mount points come from diskutil
+# (see docs/STORAGE.md); check with: diskutil appleRAID list
 
 # HTTPS fixes (if needed):
 sudo tailscale serve --bg --https=443 http://localhost:8080
@@ -189,7 +188,7 @@ cat /tmp/landing.{out,err}
 ### **Final Service Status:**
 ```bash
 # Run final health check and paste results:
-./scripts/post_boot_health_check.sh
+./scripts/core/health_check.sh
 ```
 
 **Final Results:**
@@ -232,7 +231,7 @@ cat /tmp/landing.{out,err}
 
 - ✅ This test does not modify RAID or user data
 - ✅ All automation is user-level (LaunchAgents), not system-level
-- ✅ Automation can be disabled if needed: `./scripts/40_configure_launchd.sh` + manual bootout
+- ✅ Automation can be disabled if needed: `./scripts/automation/configure_launchd.sh` + manual bootout
 - ✅ All actions are logged for troubleshooting
 
 ---

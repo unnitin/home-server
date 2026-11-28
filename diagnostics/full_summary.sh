@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# A free-text report for people. Its structured equivalent is run_all.sh, so
+# JSON mode (DIAG_FORMAT=json, see diag_lib.sh) hands over to it.
+if [[ "${DIAG_FORMAT:-text}" == json ]]; then
+  exec "$(cd "$(dirname "$0")" && pwd)/run_all.sh"
+fi
+
 echo "=== Hakuna Mateti HomeServer Diagnostics ==="
 date
 
@@ -12,7 +18,7 @@ else
 fi
 
 echo -e "\n--- Storage mountpoints ---"
-for d in /Volumes/warmstore /Volumes/faststore /Volumes/Archive; do
+for d in "$(diag_tier_mount warmstore /Volumes/warmstore)" "$(diag_tier_mount faststore /Volumes/faststore)" "$(diag_tier_mount coldstore /Volumes/coldstore)"; do
   echo "Checking $d"
   df -h "$d" 2>/dev/null || echo "❌ Not mounted"
 done
@@ -26,15 +32,7 @@ fi
 
 echo -e "\n--- Immich containers ---"
 if command -v docker >/dev/null 2>&1; then
-  cd "$(dirname "$0")/../services/immich"
-  if scripts/compose_helper.sh services/immich version >/dev/null 2>&1; then
-    scripts/compose_helper.sh services/immich ps || true
-  elif command -v scripts/compose_helper.sh services/immich >/dev/null 2>&1; then
-    scripts/compose_helper.sh services/immich ps || true
-  else
-    echo "❌ Neither 'docker compose' nor 'docker-compose' found"
-  fi
-  cd - >/dev/null || true
+  docker compose -p immich ps 2>/dev/null || echo "❌ Could not list the immich compose project"
 else
   echo "❌ Docker not installed or not in PATH"
 fi
@@ -44,7 +42,7 @@ docker context ls 2>/dev/null || true
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || true
 
 echo -e "\n--- Network checks ---"
-for port in 32400 2283 8443; do
+for port in 32400 2283 8096 18765; do  # Plex, Immich, Jellyfin, MCP (loopback)
   echo -n "Port $port: "
   nc -z localhost $port >/dev/null 2>&1 && echo "✅ Open" || echo "❌ Closed"
 done

@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "json": {
+    "MediaContainer": {
+      "size": 2,
+      "Directory": [
+        {
+          "key": "1",
+          "title": "Movies",
+          "type": "movie",
+          "scannedAt": 1795000000,
+          "refreshing": false,
+          "Location": [
+            {
+              "id": 1,
+              "path": "/Volumes/warmstore/movies"
+            }
+          ]
+        },
+        {
+          "key": "2",
+          "title": "TV Shows",
+          "type": "show",
+          "scannedAt": 1795000100,
+          "refreshing": false,
+          "Location": [
+            {
+              "id": 2,
+              "path": "/Volumes/warmstore/tv-shows"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

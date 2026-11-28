@@ -1,37 +1,47 @@
 #!/usr/bin/env bash
-# scripts/wait_for_storage.sh
-# Wait for storage mounts and directory structure to be ready before starting services
+# Wait until the storage a service needs is mounted, then exit 0.
+# Used by LaunchD jobs before they start a service.
+#
+#   wait_for_storage.sh [TIER...]     TIER: a tier in the manifest (default: faststore warmstore)
+#
+# A tier counts as ready only when diskutil reports a volume mounted at it; an
+# empty mount-point folder is not enough (D22). The photos tier also needs its
+# photo library folder. Waits up to WAIT_TIMEOUT seconds (default 300), then exits 1.
 
 set -euo pipefail
 
-TIMEOUT=300  # 5 minutes max wait
-echo "$(date): Waiting for storage prerequisites..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/mount_common.sh
+source "$SCRIPT_DIR/lib/mount_common.sh"
 
-# Function to wait for directory with timeout
-wait_for_directory() {
-    local dir_path="$1"
-    local description="$2"
-    local count=0
-    
-    while [[ ! -d "$dir_path" && $count -lt $TIMEOUT ]]; do
-        echo "Waiting for $description... ($count/$TIMEOUT)"
-        sleep 2
-        ((count += 2))
-    done
-    
-    if [[ ! -d "$dir_path" ]]; then
-        echo "ERROR: $description not available after $TIMEOUT seconds"
-        exit 1
-    fi
-    
-    echo "✅ $description ready: $(ls -ld "$dir_path")"
+TIMEOUT="${WAIT_TIMEOUT:-300}"
+INTERVAL="${WAIT_INTERVAL:-2}"
+tiers=("$@")
+((${#tiers[@]})) || tiers=(faststore warmstore)
+
+ready() {
+    local tier="$1" path
+    path="$(tier_path "$tier")" || return 2
+    is_mount_point "$path" || return 1
+    [[ "$HOMELAB_PHOTOS_LIBRARY" != "$path"/* || -d "$HOMELAB_PHOTOS_LIBRARY" ]]
 }
 
-# Wait for required storage mounts and directories
-wait_for_directory "/Volumes/warmstore" "warmstore RAID"
-wait_for_directory "/Volumes/faststore" "faststore RAID" 
-wait_for_directory "/Volumes/faststore/immich" "Immich service directory"
-
-echo "✅ All storage prerequisites ready for service startup"
-
-exit 0
+echo "$(date): Waiting for storage: ${tiers[*]}"
+for tier in "${tiers[@]}"; do
+    if ! tier_path "$tier" >/dev/null; then
+        echo "ERROR: unknown storage tier '$tier' (known: $HOMELAB_TIERS)" >&2
+        exit 2
+    fi
+    waited=0
+    until ready "$tier"; do
+        if ((waited >= TIMEOUT)); then
+            echo "ERROR: $tier not mounted at $(tier_path "$tier") after ${TIMEOUT}s" >&2
+            exit 1
+        fi
+        echo "Waiting for $tier... (${waited}/${TIMEOUT}s)"
+        sleep "$INTERVAL"
+        waited=$((waited + INTERVAL))
+    done
+    echo "✅ $tier mounted at $(tier_path "$tier")"
+done
+echo "✅ Storage ready: ${tiers[*]}"
