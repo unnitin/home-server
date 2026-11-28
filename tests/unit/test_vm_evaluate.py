@@ -281,7 +281,7 @@ def test_phase3_a_lost_job_or_a_leaky_scope_fails(tmp_path):
     assert {
         "A job survives an MCP server restart",
         "An observe token sees no T1 tool and can't call one",
-        "The sudo rule installs and allows pmset only",
+        "The sudo rule installs, and only its pmset commands skip the password",
     } <= set(failed(checks))
 
 

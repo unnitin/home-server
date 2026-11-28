@@ -300,13 +300,13 @@ def evaluate_phase3(p3: dict[str, Any], check) -> None:
     )
     su = p3.get("sudoers") or {}
     check(
-        "The sudo rule installs and allows pmset only",
+        "The sudo rule installs, and only its pmset commands skip the password",
         su.get("install_rc") == 0
         and su.get("check_rc") == 0
         and su.get("diskutil_allowed") is False
         and su.get("other_value_allowed") is False,
         f"install {su.get('install_rc')}, check {su.get('check_rc')}, diskutil "
-        f"allowed: {su.get('diskutil_allowed')}, other pmset value allowed: "
+        f"without a password: {su.get('diskutil_allowed')}, other pmset use: "
         f"{su.get('other_value_allowed')}",
     )
     pw = p3.get("power") or {}

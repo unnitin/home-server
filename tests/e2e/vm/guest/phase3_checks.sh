@@ -6,7 +6,8 @@
 #   - service_restart restarts Jellyfin for real (its PID changes, it answers);
 #   - a Plex restart job survives `launchctl kickstart -k` of the MCP server;
 #   - every call is in the audit log, refused ones too;
-#   - the scoped sudo rule installs (visudo), allows pmset only, and
+#   - the scoped sudo rule installs (visudo); without a password only its pmset
+#     commands run (diskutil and other pmset uses still ask for one); and
 #     power_ensure puts a drifted setting back with it;
 #   - logs_collect builds a bundle;
 #   - D32: the Plex and Jellyfin jobs don't relaunch while the apps run.
@@ -74,8 +75,10 @@ sudoers_rc=$?
 sudo -k
 "$PY" -m homelab sudoers check >"$OUT/sudoers-check.txt" 2>&1
 sudoers_check_rc=$?
-if sudo -n -l /usr/sbin/diskutil list >/dev/null 2>&1; then diskutil_allowed=true; else diskutil_allowed=false; fi
-if sudo -n -l /usr/bin/pmset -a sleep 5 >/dev/null 2>&1; then other_value_allowed=true; else other_value_allowed=false; fi
+# What runs WITHOUT a password: try read-only commands outside the rule.
+# (`sudo -n -l CMD` would say yes for anything an admin may run with one.)
+if sudo -n /usr/sbin/diskutil list >/dev/null 2>&1; then diskutil_allowed=true; else diskutil_allowed=false; fi
+if sudo -n /usr/bin/pmset -g >/dev/null 2>&1; then other_value_allowed=true; else other_value_allowed=false; fi
 mcp call "$URL" "$OPS" power_ensure '{}' >"$OUT/power-dry.json" 2>&1
 mcp call "$URL" "$OPS" power_ensure '{"dry_run": false}' >"$OUT/power-run.json" 2>&1
 displaysleep=$(pmset -g | awk '$1 == "displaysleep" {print $2}')
